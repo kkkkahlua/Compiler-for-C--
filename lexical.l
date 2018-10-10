@@ -12,7 +12,7 @@ extern TreeNode* yylval;
 
 int error_lex = 0;
 
-void CheckInt(char* text, int base);
+void CheckNumber(int base);
 
 // int yycolumn = 1;
 // #define YY_USER_ACTION \
@@ -84,10 +84,10 @@ blank					[ \n\t]
 %%
 \n						{   }
 {blank}					{	}
-{oct_number}			{   CheckInt(yytext, 8); return INT; }
-{dec_number}			{	CheckInt(yytext, 10); return INT; }
-{hex_number}			{	CheckInt(yytext, 16); return INT; }
-{FLOAT}					{	yylval = NewNumberTreeNode(yytext, 0); return FLOAT; }
+{oct_number}			{   CheckNumber(8); return INT; }
+{dec_number}			{	CheckNumber(10); return INT; }
+{hex_number}			{	CheckNumber(16); return INT; }
+{FLOAT}					{	CheckNumber(0); return FLOAT; }
 {SEMI}					{	yylval = NewSymbolTreeNode("SEMI"); return SEMI; }
 {COMMA}					{	yylval = NewSymbolTreeNode("COMMA"); return COMMA; }
 {ge}					{	yylval = NewRelopTreeNode(kGE); return RELOP; }
@@ -126,8 +126,8 @@ blank					[ \n\t]
 .						{	printf("Error type A at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext); error_lex = 1; }
 %%
 
-void ReadAll(char* text, char c) {
-    while (isalnum(c) || c == '_') {
+void ReadAll(char* text, char c, int base) {
+    while (isalnum(c) || c == '_' || (base == 0 ? c == '.' : 0)) {
         *text++ = c;
         c = input();
     }
@@ -139,16 +139,38 @@ void OutputErrorMsg(const char* type, const char* content) {
     printf("Error type A at Line %d: Illegal %s number '%s'\n", yylineno, type, content);
 }
 
-void CheckInt(char* text, int base) {
-    int len_valid = strlen(text);
+int LegalFloat(char c) {
+    if (isalpha(c) || c == '_') return 0;
+
+    int len = strlen(yytext);
+    char last_char = yytext[len - 1];
+    if (c == ' ' && 
+        (last_char == '.' || last_char == 'e' || last_char == 'E')) return 0;
+
+    int i = 0;
+    int conflicting_part = 0;
+    for (; i < len; ++i) {
+        if (yytext[i] == 'e' || yytext[i] == 'E' || yytext[i] == '.') { conflicting_part = 1; break; }
+    }
+    if (c == '.' && conflicting_part == 1) return 0;
+
+    return 1;
+}
+
+void CheckNumber(int base) {
+    int len_valid = strlen(yytext);
 
     int error_int = 0;
     char c = input();
+    printf("c = %c\n", c);
     switch (base) {
+        case 0: {
+            if (!LegalFloat(c)) error_int = 1;
+            break;
+        }
         case 10: {
-            if (len_valid > 1 || (len_valid == 1 && text[0] != '0')) {
+            if (len_valid > 1 || (len_valid == 1 && yytext[0] != '0')) {
                 if (isalpha(c) || c == '_') {
-                    base = 10;
                     error_int = 1;
                 }
                 break;
@@ -163,7 +185,6 @@ void CheckInt(char* text, int base) {
         }
         case 16: {
             if (('g' <= c && c <= 'z') || ('G' <= c && c <= 'Z') || c == '_') {
-                base = 16;
                 error_int = 1;
             }
             break;
@@ -172,13 +193,15 @@ void CheckInt(char* text, int base) {
 
     if (error_int == 1) {
         error_lex = 1;
-        ReadAll(text+len_valid, c);
-        OutputErrorMsg(base == 8 ? "octal" : (base == 10 ? "decimal" : "hexadecimal"), text);
+        ReadAll(yytext+len_valid, c, base);
+        OutputErrorMsg(base == 0 ? "floating point" :
+                        (base == 8 ? "octal" : 
+                            (base == 10 ? "decimal" : "hexadecimal")),
+                       yytext);
         yylval = NewNumberTreeNode("0", base);
         return;
     }
     unput(c);
-    puts("Pass the check");
-    text[len_valid] = '\0';
-    yylval = NewNumberTreeNode(text, base);
+    yytext[len_valid] = '\0';
+    yylval = NewNumberTreeNode(yytext, base);
 }
