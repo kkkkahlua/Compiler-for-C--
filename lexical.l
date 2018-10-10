@@ -12,7 +12,7 @@ extern TreeNode* yylval;
 
 int error_lex = 0;
 
-int CheckOctNumber(char* text);
+void CheckInt(char* text, int base);
 
 // int yycolumn = 1;
 // #define YY_USER_ACTION \
@@ -84,14 +84,9 @@ blank					[ \n\t]
 %%
 \n						{   }
 {blank}					{	}
-{oct_number}			{
-    if (CheckOctNumber(yytext) == 1) {
-        yylval = NewNumberTreeNode(yytext, 8);
-        return INT;
-    }
-}
-{dec_number}			{	yylval = NewNumberTreeNode(yytext, 10); return INT; }
-{hex_number}			{	yylval = NewNumberTreeNode(yytext, 16); return INT; }
+{oct_number}			{   CheckInt(yytext, 8); return INT; }
+{dec_number}			{	CheckInt(yytext, 10); return INT; }
+{hex_number}			{	CheckInt(yytext, 16); return INT; }
 {FLOAT}					{	yylval = NewNumberTreeNode(yytext, 0); return FLOAT; }
 {SEMI}					{	yylval = NewSymbolTreeNode("SEMI"); return SEMI; }
 {COMMA}					{	yylval = NewSymbolTreeNode("COMMA"); return COMMA; }
@@ -132,11 +127,11 @@ blank					[ \n\t]
 %%
 
 void ReadAll(char* text, char c) {
-    char* beg = text;
     while (isalnum(c) || c == '_') {
         *text++ = c;
         c = input();
     }
+    unput(c);
     *text++ = '\0';
 }
 
@@ -144,19 +139,46 @@ void OutputErrorMsg(const char* type, const char* content) {
     printf("Error type A at Line %d: Illegal %s number '%s'\n", yylineno, type, content);
 }
 
-int CheckOctNumber(char* text) {
-    puts("CheckOctNumber");
+void CheckInt(char* text, int base) {
     int len_valid = strlen(text);
 
+    int error_int = 0;
     char c = input();
-    if ('8' <= c && c <= '9' || isalpha(c) || c == '_') {
-        error_lex = 1;
-        puts("To Output");
-        ReadAll(text+len_valid, c);
-        OutputErrorMsg("octal number", text);
-        return 0;
+    switch (base) {
+        case 10: {
+            if (len_valid > 1 || (len_valid == 1 && text[0] != '0')) {
+                if (isalpha(c) || c == '_') {
+                    base = 10;
+                    error_int = 1;
+                }
+                break;
+            }
+        }
+        case 8: {
+            if (('8' <= c && c <= '9') || isalpha(c) || c == '_') {
+                base = 8;
+                error_int = 1;
+            }
+            break;
+        }
+        case 16: {
+            if (('g' <= c && c <= 'z') || ('G' <= c && c <= 'Z') || c == '_') {
+                base = 16;
+                error_int = 1;
+            }
+            break;
+        }
     }
-    puts("Pass the check");
+
+    if (error_int == 1) {
+        error_lex = 1;
+        ReadAll(text+len_valid, c);
+        OutputErrorMsg(base == 8 ? "octal" : (base == 10 ? "decimal" : "hexadecimal"), text);
+        yylval = NewNumberTreeNode("0", base);
+        return;
+    }
     unput(c);
-    return 1;
+    puts("Pass the check");
+    text[len_valid] = '\0';
+    yylval = NewNumberTreeNode(text, base);
 }
