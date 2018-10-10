@@ -61,6 +61,8 @@ PLUS					"+"
 MINUS					"-"
 STAR					"*"
 comment_line            "//"
+comment_block_begin     "/*"
+comment_block_end       "*/"
 DIV						"/"
 AND						&&
 OR						"||"
@@ -88,6 +90,15 @@ blank					[ \n\t]
 {dec_number}			{	CheckNumber(10); return INT; }
 {hex_number}			{	CheckNumber(16); return INT; }
 {FLOAT}					{	CheckNumber(0); return FLOAT; }
+{comment_block_begin}   {
+    char c1 = input(), c2;
+    while (1) {
+        while (c1 != '*') c1 = input();
+        c2 = input();
+        if (c2 == '/') break;
+        c1 = c2;
+    }
+}
 {SEMI}					{	yylval = NewSymbolTreeNode("SEMI"); return SEMI; }
 {COMMA}					{	yylval = NewSymbolTreeNode("COMMA"); return COMMA; }
 {ge}					{	yylval = NewRelopTreeNode(kGE); return RELOP; }

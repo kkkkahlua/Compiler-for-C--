@@ -135,5 +135,5 @@ int main(int argc, char** argv) {
 	return 0;
 }
 yyerror(char* msg) {
-	printf("Error Type B at line %d: %s\n", yylineno, msg);
+	printf("Error Type B at line %d: %s.\n", yylineno, msg);
 }
