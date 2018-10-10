@@ -13,6 +13,8 @@ extern TreeNode* yylval;
 int error_lex = 0;
 
 void CheckNumber(int base);
+void IgnoreBlockComment();
+void IgnoreLineComment();
 
 // int yycolumn = 1;
 // #define YY_USER_ACTION \
@@ -90,15 +92,7 @@ blank					[ \n\t]
 {dec_number}			{	CheckNumber(10); return INT; }
 {hex_number}			{	CheckNumber(16); return INT; }
 {FLOAT}					{	CheckNumber(0); return FLOAT; }
-{comment_block_begin}   {
-    char c1 = input(), c2;
-    while (1) {
-        while (c1 != '*') c1 = input();
-        c2 = input();
-        if (c2 == '/') break;
-        c1 = c2;
-    }
-}
+{comment_block_begin}   {   IgnoreBlockComment(); }
 {SEMI}					{	yylval = NewSymbolTreeNode("SEMI"); return SEMI; }
 {COMMA}					{	yylval = NewSymbolTreeNode("COMMA"); return COMMA; }
 {ge}					{	yylval = NewRelopTreeNode(kGE); return RELOP; }
@@ -111,10 +105,7 @@ blank					[ \n\t]
 {PLUS}					{	yylval = NewSymbolTreeNode("PLUS"); return PLUS; }
 {MINUS}					{	yylval = NewSymbolTreeNode("MINUS"); return MINUS; }
 {STAR}					{	yylval = NewSymbolTreeNode("STAR"); return STAR; }
-{comment_line}          {
-    char c = input();
-    while (c != '\n') c = input();
-}
+{comment_line}          {   IgnoreLineComment(); }
 {DIV}					{	yylval = NewSymbolTreeNode("DIV"); return DIV; }
 {AND}					{	yylval = NewSymbolTreeNode("AND"); return AND; }
 {OR}					{	yylval = NewSymbolTreeNode("OR"); return OR; }
@@ -136,6 +127,21 @@ blank					[ \n\t]
 {ID}					{	yylval = NewIDTreeNode(yytext); return ID; }
 .						{	printf("Error type A at Line %d: Mysterious characters \'%s\'.\n", yylineno, yytext); error_lex = 1; }
 %%
+
+void IgnoreBlockComment() {
+    char c1 = input(), c2;
+    while (1) {
+        while (c1 != '*') c1 = input();
+        c2 = input();
+        if (c2 == '/') break;
+        c1 = c2;
+    }
+}
+
+void IgnoreLineComment() {
+    char c = input();
+    while (c != '\n') c = input();
+}
 
 void ReadAll(char* text, char c, int base) {
     while (isalnum(c) || c == '_' || (base == 0 ? c == '.' : 0)) {

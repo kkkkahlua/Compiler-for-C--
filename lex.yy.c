@@ -551,6 +551,8 @@ extern TreeNode* yylval;
 int error_lex = 0;
 
 void CheckNumber(int base);
+void IgnoreBlockComment();
+void IgnoreLineComment();
 
 // int yycolumn = 1;
 // #define YY_USER_ACTION \
@@ -558,7 +560,7 @@ void CheckNumber(int base);
 // 	yylloc.first_column = yycolumn;
 // 	yylloc.last_column = yycolumn + yyleng - 1;
 // 	yycolumn += yyleng;
-#line 562 "lex.yy.c"
+#line 564 "lex.yy.c"
 
 #define INITIAL 0
 
@@ -776,9 +778,9 @@ YY_DECL
 		}
 
 	{
-#line 86 "lexical.l"
+#line 88 "lexical.l"
 
-#line 782 "lex.yy.c"
+#line 784 "lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -848,222 +850,211 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 /* rule 1 can match eol */
 YY_RULE_SETUP
-#line 87 "lexical.l"
+#line 89 "lexical.l"
 {   }
 	YY_BREAK
 case 2:
 /* rule 2 can match eol */
 YY_RULE_SETUP
-#line 88 "lexical.l"
+#line 90 "lexical.l"
 {	}
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 89 "lexical.l"
+#line 91 "lexical.l"
 {   CheckNumber(8); return INT; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 90 "lexical.l"
+#line 92 "lexical.l"
 {	CheckNumber(10); return INT; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 91 "lexical.l"
+#line 93 "lexical.l"
 {	CheckNumber(16); return INT; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 92 "lexical.l"
+#line 94 "lexical.l"
 {	CheckNumber(0); return FLOAT; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 93 "lexical.l"
-{
-    char c1 = input(), c2;
-    while (1) {
-        while (c1 != '*') c1 = input();
-        c2 = input();
-        if (c2 == '/') break;
-        c1 = c2;
-    }
-}
+#line 95 "lexical.l"
+{   IgnoreBlockComment(); }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 102 "lexical.l"
+#line 96 "lexical.l"
 {	yylval = NewSymbolTreeNode("SEMI"); return SEMI; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 103 "lexical.l"
+#line 97 "lexical.l"
 {	yylval = NewSymbolTreeNode("COMMA"); return COMMA; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 104 "lexical.l"
+#line 98 "lexical.l"
 {	yylval = NewRelopTreeNode(kGE); return RELOP; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 105 "lexical.l"
+#line 99 "lexical.l"
 {	yylval = NewRelopTreeNode(kGT); return RELOP; }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 106 "lexical.l"
+#line 100 "lexical.l"
 {	yylval = NewRelopTreeNode(kLE); return RELOP; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 107 "lexical.l"
+#line 101 "lexical.l"
 {	yylval = NewRelopTreeNode(kLT); return RELOP; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 108 "lexical.l"
+#line 102 "lexical.l"
 {	yylval = NewRelopTreeNode(kEQ); return RELOP; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 109 "lexical.l"
+#line 103 "lexical.l"
 {	yylval = NewRelopTreeNode(kNE); return RELOP; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 110 "lexical.l"
+#line 104 "lexical.l"
 {	yylval = NewSymbolTreeNode("ASSIGNOP"); return ASSIGNOP; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 111 "lexical.l"
+#line 105 "lexical.l"
 {	yylval = NewSymbolTreeNode("PLUS"); return PLUS; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 112 "lexical.l"
+#line 106 "lexical.l"
 {	yylval = NewSymbolTreeNode("MINUS"); return MINUS; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 113 "lexical.l"
+#line 107 "lexical.l"
 {	yylval = NewSymbolTreeNode("STAR"); return STAR; }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 114 "lexical.l"
-{
-    char c = input();
-    while (c != '\n') c = input();
-}
+#line 108 "lexical.l"
+{   IgnoreLineComment(); }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 118 "lexical.l"
+#line 109 "lexical.l"
 {	yylval = NewSymbolTreeNode("DIV"); return DIV; }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 119 "lexical.l"
+#line 110 "lexical.l"
 {	yylval = NewSymbolTreeNode("AND"); return AND; }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 120 "lexical.l"
+#line 111 "lexical.l"
 {	yylval = NewSymbolTreeNode("OR"); return OR; }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 121 "lexical.l"
+#line 112 "lexical.l"
 {	yylval = NewSymbolTreeNode("DOT"); return DOT; }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 122 "lexical.l"
+#line 113 "lexical.l"
 {	yylval = NewSymbolTreeNode("NOT"); return NOT; }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 123 "lexical.l"
+#line 114 "lexical.l"
 {	yylval = NewTypeTreeNode("int"); return TYPE; }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 124 "lexical.l"
+#line 115 "lexical.l"
 {	yylval = NewTypeTreeNode("float"); return TYPE; }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 125 "lexical.l"
+#line 116 "lexical.l"
 {	yylval = NewSymbolTreeNode("LP"); return LP; }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 126 "lexical.l"
+#line 117 "lexical.l"
 {	yylval = NewSymbolTreeNode("RP"); return RP; }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 127 "lexical.l"
+#line 118 "lexical.l"
 {	yylval = NewSymbolTreeNode("LB"); return LB; }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 128 "lexical.l"
+#line 119 "lexical.l"
 {	yylval = NewSymbolTreeNode("RB"); return RB; }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 129 "lexical.l"
+#line 120 "lexical.l"
 {	yylval = NewSymbolTreeNode("LC"); return LC; }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 130 "lexical.l"
+#line 121 "lexical.l"
 {	yylval = NewSymbolTreeNode("RC"); return RC; }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 131 "lexical.l"
+#line 122 "lexical.l"
 {	yylval = NewSymbolTreeNode("STRUCT"); return STRUCT; }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 132 "lexical.l"
+#line 123 "lexical.l"
 {	yylval = NewSymbolTreeNode("RETURN"); return RETURN; }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 133 "lexical.l"
+#line 124 "lexical.l"
 {	yylval = NewSymbolTreeNode("IF"); return IF; }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 134 "lexical.l"
+#line 125 "lexical.l"
 {	yylval = NewSymbolTreeNode("ELSE"); return ELSE; }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 135 "lexical.l"
+#line 126 "lexical.l"
 {	yylval = NewSymbolTreeNode("WHILE"); return WHILE; }
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 136 "lexical.l"
+#line 127 "lexical.l"
 {	yylval = NewIDTreeNode(yytext); return ID; }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 137 "lexical.l"
+#line 128 "lexical.l"
 {	printf("Error type A at Line %d: Mysterious characters \'%s\'.\n", yylineno, yytext); error_lex = 1; }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 138 "lexical.l"
+#line 129 "lexical.l"
 ECHO;
 	YY_BREAK
-#line 1067 "lex.yy.c"
+#line 1058 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2076,9 +2067,24 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 138 "lexical.l"
+#line 129 "lexical.l"
 
 
+
+void IgnoreBlockComment() {
+    char c1 = input(), c2;
+    while (1) {
+        while (c1 != '*') c1 = input();
+        c2 = input();
+        if (c2 == '/') break;
+        c1 = c2;
+    }
+}
+
+void IgnoreLineComment() {
+    char c = input();
+    while (c != '\n') c = input();
+}
 
 void ReadAll(char* text, char c, int base) {
     while (isalnum(c) || c == '_' || (base == 0 ? c == '.' : 0)) {

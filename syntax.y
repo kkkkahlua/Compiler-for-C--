@@ -8,6 +8,7 @@
 
 extern int error_lex;
 extern int yylineno;
+int error_syntax = 0;
 
 TreeNode* root;
 %}
@@ -70,6 +71,7 @@ ParamDec:	Specifier VarDec			{ $$ = CreateInternalTreeNode("ParamDec", 2, $1, $2
 
 //	Statements
 CompSt:		LC DefList StmtList RC		{ $$ = CreateInternalTreeNode("CompSt", 4, $1, $2, $3, $4); }
+	|		error RC					{ yyerrok; }
 ;
 StmtList:	Stmt StmtList				{ $$ = CreateInternalTreeNode("StmtList", 2, $1, $2); }
 	|		/*	empty	*/				{ $$ = CreateInternalTreeNode("StmtList", 0); }
@@ -80,6 +82,7 @@ Stmt:		Exp SEMI					{ $$ = CreateInternalTreeNode("Stmt", 2, $1, $2); }
 	|		IF LP Exp RP Stmt	%prec LOWER_THAN_ELSE	{ $$ = CreateInternalTreeNode("Stmt", 5, $1, $2, $3, $4, $5); }
 	|		IF LP Exp RP Stmt ELSE Stmt	{ $$ = CreateInternalTreeNode("Stmt", 7, $1, $2, $3, $4, $5, $6, $7); }
 	|		WHILE LP Exp RP Stmt		{ $$ = CreateInternalTreeNode("Stmt", 5, $1, $2, $3, $4, $5); }
+	|		error SEMI					{ yyerrok; }
 ;
 
 //	Local Definitions
@@ -87,6 +90,7 @@ DefList: 	Def DefList					{ $$ = CreateInternalTreeNode("DefList", 2, $1, $2); }
 	|		/*	empty	*/				{ $$ = CreateInternalTreeNode("DefList", 0); }
 ;
 Def:		Specifier DecList SEMI		{ $$ = CreateInternalTreeNode("Def", 3, $1, $2, $3); }
+	|		error SEMI					{ yyerrok; }
 ;
 DecList:	Dec							{ $$ = CreateInternalTreeNode("DecList", 1, $1); }
 	|		Dec COMMA DecList			{ $$ = CreateInternalTreeNode("DecList", 3, $1, $2, $3); }
@@ -114,6 +118,7 @@ Exp:		Exp ASSIGNOP Exp			{ $$ = CreateInternalTreeNode("Exp", 3, $1, $2, $3); }
 	|		ID							{ $$ = CreateInternalTreeNode("Exp", 1, $1); }
 	|		INT							{ $$ = CreateInternalTreeNode("Exp", 1, $1); }
 	|		FLOAT						{ $$ = CreateInternalTreeNode("Exp", 1, $1); }
+	|		error RP					{ yyerrok; }
 ;
 Args:		Exp COMMA Args				{ $$ = CreateInternalTreeNode("Args", 3, $1, $2, $3); }
 	|		Exp							{ $$ = CreateInternalTreeNode("Args", 1, $1); }
@@ -129,11 +134,12 @@ int main(int argc, char** argv) {
 	}
 	yyparse();
 
-	if (error_lex == 1) return 0;
+	if (error_lex == 1 || error_syntax == 1) return 0;
 
 	OutputTree(root, 0);
 	return 0;
 }
 yyerror(char* msg) {
 	printf("Error Type B at line %d: %s.\n", yylineno, msg);
+	error_syntax = 1;
 }
