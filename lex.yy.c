@@ -2079,22 +2079,22 @@ void OutputErrorMsg(const char* type, const char* content) {
     printf("Error type A at Line %d: Illegal %s number '%s'\n", yylineno, type, content);
 }
 
-int LegalFloat(char c) {
-    if (isalpha(c) || c == '_') return 0;
+int CheckIllegalFloat(char c) {
+    if (c == '.' || c == 'e' || c == 'E') return 1;
+    if (isalpha(c) || c == '_') return 1;
+    return 0;
+}
 
-    int len = strlen(yytext);
-    char last_char = yytext[len - 1];
-    if (c == ' ' && 
-        (last_char == '.' || last_char == 'e' || last_char == 'E')) return 0;
+int CheckIllegalOct(char c) {
+    return ('8' <= c && c <= '9') || isalpha(c) || c == '_';
+}
 
-    int i = 0;
-    int conflicting_part = 0;
-    for (; i < len; ++i) {
-        if (yytext[i] == 'e' || yytext[i] == 'E' || yytext[i] == '.') { conflicting_part = 1; break; }
-    }
-    if (c == '.' && conflicting_part == 1) return 0;
+int CheckIllegalDec(char c) {
+    return isalpha(c) || c == '_';
+}
 
-    return 1;
+int CheckIllegalHex(char c) {
+    return ('g' <= c && c <= 'z') || ('G' <= c && c <= 'Z') || c == '_';
 }
 
 void CheckNumber(int base) {
@@ -2102,33 +2102,16 @@ void CheckNumber(int base) {
 
     int error_int = 0;
     char c = input();
-    printf("c = %c\n", c);
     switch (base) {
-        case 0: {
-            if (!LegalFloat(c)) error_int = 1;
-            break;
-        }
+        case 0: error_int = CheckIllegalFloat(c); break;
+        case 8: error_int = CheckIllegalOct(c); break;
         case 10: {
-            if (len_valid > 1 || (len_valid == 1 && yytext[0] != '0')) {
-                if (isalpha(c) || c == '_') {
-                    error_int = 1;
-                }
-                break;
-            }
-        }
-        case 8: {
-            if (('8' <= c && c <= '9') || isalpha(c) || c == '_') {
-                base = 8;
-                error_int = 1;
-            }
+            if (len_valid == 1 && yytext[0] == '0') { base = 8; error_int = CheckIllegalOct(c); }
+            else if (c == '.' || c == 'e' || c == 'E') { base = 0; error_int = CheckIllegalFloat(c); }
+            else error_int = CheckIllegalDec(c);
             break;
         }
-        case 16: {
-            if (('g' <= c && c <= 'z') || ('G' <= c && c <= 'Z') || c == '_') {
-                error_int = 1;
-            }
-            break;
-        }
+        case 16: error_int = CheckIllegalHex(c); break;
     }
 
     if (error_int == 1) {
