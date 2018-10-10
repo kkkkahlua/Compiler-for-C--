@@ -1,10 +1,12 @@
 %{
 #define YYSTYPE TreeNode*
+#define YYERROR_VERBOSE 1
 
 #include "lex.yy.c"
 
 #include <stdio.h>
 
+extern int error_lex;
 extern int yylineno;
 
 TreeNode* root;
@@ -126,9 +128,12 @@ int main(int argc, char** argv) {
 		}
 	}
 	yyparse();
+
+	if (error_lex == 1) return 0;
+
 	OutputTree(root, 0);
 	return 0;
 }
 yyerror(char* msg) {
-    fprintf(stderr, "error: %s\n", msg);
+	printf("Error Type B at line %d: %s\n", yylineno, msg);
 }

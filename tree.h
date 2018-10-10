@@ -1,5 +1,7 @@
-#ifndef __TREE_H
-#define __TREE_H
+#ifndef __TREE_H_INCLUDED
+#define __TREE_H_INCLUDED
+
+extern int yylineno;
 
 typedef enum NodeType {
     kINTERNAL,
@@ -35,17 +37,17 @@ typedef struct TreeNode {
     struct TreeNode* bro;
 } TreeNode;
 
-TreeNode* NewTreeNode(NodeType type, NodeVal val, int lineno);
+TreeNode* NewTreeNode(NodeType type, NodeVal val);
 
-TreeNode* NewNumberTreeNode(const char* s, int base, int lineno);
+TreeNode* NewNumberTreeNode(const char* s, int base);
 
-TreeNode* NewSymbolTreeNode(const char* s, int lineno);
+TreeNode* NewSymbolTreeNode(const char* s);
 
-TreeNode* NewIDTreeNode(const char* s, int lineno);
+TreeNode* NewIDTreeNode(const char* s);
 
-TreeNode* NewTypeTreeNode(const char* s, int lineno);
+TreeNode* NewTypeTreeNode(const char* s);
 
-TreeNode* NewRelopTreeNode(RelopType type, int lineno);
+TreeNode* NewRelopTreeNode(RelopType type);
 
 TreeNode* CreateInternalTreeNode(const char* s, int n, ...);
 

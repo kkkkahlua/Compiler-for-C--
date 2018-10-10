@@ -1,14 +1,18 @@
-%{ 
+%{
 #include "tree.h"
 #define YYSTYPE TreeNode*
 
 #include "syntax.tab.h"
 
 #include <stdio.h>
+#include <string.h>
+#include <ctype.h>
 
 extern TreeNode* yylval;
 
-NodeVal node_val;
+int error_lex = 0;
+
+int CheckOctNumber(char* text);
 
 // int yycolumn = 1;
 // #define YY_USER_ACTION \
@@ -56,6 +60,7 @@ ASSIGNOP				=
 PLUS					"+"
 MINUS					"-"
 STAR					"*"
+comment_line            "//"
 DIV						"/"
 AND						&&
 OR						"||"
@@ -79,40 +84,79 @@ blank					[ \n\t]
 %%
 \n						{   }
 {blank}					{	}
-{oct_number}			{	yylval = NewNumberTreeNode(yytext, 8, yylineno); return INT; }
-{dec_number}			{	yylval = NewNumberTreeNode(yytext, 10, yylineno); return INT; }
-{hex_number}			{	yylval = NewNumberTreeNode(yytext, 16, yylineno); return INT; }
-{FLOAT}					{	printf("%s\n", yytext); yylval = NewNumberTreeNode(yytext, 0, yylineno); return FLOAT; }
-{SEMI}					{	yylval = NewSymbolTreeNode("SEMI", yylineno); return SEMI; }
-{COMMA}					{	yylval = NewSymbolTreeNode("COMMA", yylineno); return COMMA; }
-{ge}					{	yylval = NewRelopTreeNode(kGE, yylineno); return RELOP; }
-{gt}					{	yylval = NewRelopTreeNode(kGT, yylineno); return RELOP; }
-{le}					{	yylval = NewRelopTreeNode(kLE, yylineno); return RELOP; }
-{lt}					{	yylval = NewRelopTreeNode(kLT, yylineno); return RELOP; }
-{eq}					{	yylval = NewRelopTreeNode(kEQ, yylineno); return RELOP; }
-{ne}					{	yylval = NewRelopTreeNode(kNE, yylineno); return RELOP; }
-{ASSIGNOP}				{	yylval = NewSymbolTreeNode("ASSIGNOP", yylineno); return ASSIGNOP; }
-{PLUS}					{	yylval = NewSymbolTreeNode("PLUS", yylineno); return PLUS; }
-{MINUS}					{	yylval = NewSymbolTreeNode("MINUS", yylineno); return MINUS; }
-{STAR}					{	yylval = NewSymbolTreeNode("STAR", yylineno); return STAR; }
-{DIV}					{	yylval = NewSymbolTreeNode("DIV", yylineno); return DIV; }
-{AND}					{	yylval = NewSymbolTreeNode("AND", yylineno); return AND; }
-{OR}					{	yylval = NewSymbolTreeNode("OR", yylineno); return OR; }
-{DOT}					{	yylval = NewSymbolTreeNode("DOT", yylineno); return DOT; }
-{NOT}					{	yylval = NewSymbolTreeNode("NOT", yylineno); return NOT; }
-{int}					{	yylval = NewTypeTreeNode("int", yylineno); return TYPE; }
-{float}					{	yylval = NewTypeTreeNode("float", yylineno); return TYPE; }
-{LP}					{	yylval = NewSymbolTreeNode("LP", yylineno); return LP; }
-{RP}					{	yylval = NewSymbolTreeNode("RP", yylineno); return RP; }
-{LB}					{	yylval = NewSymbolTreeNode("LB", yylineno); return LB; }
-{RB}					{	yylval = NewSymbolTreeNode("RB", yylineno); return RB; }
-{LC}					{	yylval = NewSymbolTreeNode("LC", yylineno); return LC; }
-{RC}					{	yylval = NewSymbolTreeNode("RC", yylineno); return RC; }
-{STRUCT}				{	yylval = NewSymbolTreeNode("STRUCT", yylineno); return STRUCT; }
-{RETURN}				{	yylval = NewSymbolTreeNode("RETURN", yylineno); return RETURN; }
-{IF}					{	yylval = NewSymbolTreeNode("IF", yylineno); return IF; }
-{ELSE}					{	yylval = NewSymbolTreeNode("ELSE", yylineno); return ELSE; }
-{WHILE}					{	yylval = NewSymbolTreeNode("WHILE", yylineno); return WHILE; }
-{ID}					{	yylval = NewIDTreeNode(yytext, yylineno); return ID; }
-.						{	printf("Error type A at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext); }
+{oct_number}			{
+    if (CheckOctNumber(yytext) == 1) {
+        yylval = NewNumberTreeNode(yytext, 8);
+        return INT;
+    }
+}
+{dec_number}			{	yylval = NewNumberTreeNode(yytext, 10); return INT; }
+{hex_number}			{	yylval = NewNumberTreeNode(yytext, 16); return INT; }
+{FLOAT}					{	yylval = NewNumberTreeNode(yytext, 0); return FLOAT; }
+{SEMI}					{	yylval = NewSymbolTreeNode("SEMI"); return SEMI; }
+{COMMA}					{	yylval = NewSymbolTreeNode("COMMA"); return COMMA; }
+{ge}					{	yylval = NewRelopTreeNode(kGE); return RELOP; }
+{gt}					{	yylval = NewRelopTreeNode(kGT); return RELOP; }
+{le}					{	yylval = NewRelopTreeNode(kLE); return RELOP; }
+{lt}					{	yylval = NewRelopTreeNode(kLT); return RELOP; }
+{eq}					{	yylval = NewRelopTreeNode(kEQ); return RELOP; }
+{ne}					{	yylval = NewRelopTreeNode(kNE); return RELOP; }
+{ASSIGNOP}				{	yylval = NewSymbolTreeNode("ASSIGNOP"); return ASSIGNOP; }
+{PLUS}					{	yylval = NewSymbolTreeNode("PLUS"); return PLUS; }
+{MINUS}					{	yylval = NewSymbolTreeNode("MINUS"); return MINUS; }
+{STAR}					{	yylval = NewSymbolTreeNode("STAR"); return STAR; }
+{comment_line}          {
+    char c = input();
+    while (c != '\n') c = input();
+}
+{DIV}					{	yylval = NewSymbolTreeNode("DIV"); return DIV; }
+{AND}					{	yylval = NewSymbolTreeNode("AND"); return AND; }
+{OR}					{	yylval = NewSymbolTreeNode("OR"); return OR; }
+{DOT}					{	yylval = NewSymbolTreeNode("DOT"); return DOT; }
+{NOT}					{	yylval = NewSymbolTreeNode("NOT"); return NOT; }
+{int}					{	yylval = NewTypeTreeNode("int"); return TYPE; }
+{float}					{	yylval = NewTypeTreeNode("float"); return TYPE; }
+{LP}					{	yylval = NewSymbolTreeNode("LP"); return LP; }
+{RP}					{	yylval = NewSymbolTreeNode("RP"); return RP; }
+{LB}					{	yylval = NewSymbolTreeNode("LB"); return LB; }
+{RB}					{	yylval = NewSymbolTreeNode("RB"); return RB; }
+{LC}					{	yylval = NewSymbolTreeNode("LC"); return LC; }
+{RC}					{	yylval = NewSymbolTreeNode("RC"); return RC; }
+{STRUCT}				{	yylval = NewSymbolTreeNode("STRUCT"); return STRUCT; }
+{RETURN}				{	yylval = NewSymbolTreeNode("RETURN"); return RETURN; }
+{IF}					{	yylval = NewSymbolTreeNode("IF"); return IF; }
+{ELSE}					{	yylval = NewSymbolTreeNode("ELSE"); return ELSE; }
+{WHILE}					{	yylval = NewSymbolTreeNode("WHILE"); return WHILE; }
+{ID}					{	yylval = NewIDTreeNode(yytext); return ID; }
+.						{	printf("Error type A at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext); error_lex = 1; }
 %%
+
+void ReadAll(char* text, char c) {
+    char* beg = text;
+    while (isalnum(c) || c == '_') {
+        *text++ = c;
+        c = input();
+    }
+    *text++ = '\0';
+}
+
+void OutputErrorMsg(const char* type, const char* content) {
+    printf("Error type A at Line %d: Illegal %s number '%s'\n", yylineno, type, content);
+}
+
+int CheckOctNumber(char* text) {
+    puts("CheckOctNumber");
+    int len_valid = strlen(text);
+
+    char c = input();
+    if ('8' <= c && c <= '9' || isalpha(c) || c == '_') {
+        error_lex = 1;
+        puts("To Output");
+        ReadAll(text+len_valid, c);
+        OutputErrorMsg("octal number", text);
+        return 0;
+    }
+    puts("Pass the check");
+    unput(c);
+    return 1;
+}

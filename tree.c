@@ -5,51 +5,51 @@
 #include <string.h>
 #include <stdarg.h>
 
-TreeNode* NewTreeNode(NodeType type, NodeVal val, int lineno) {
+TreeNode* NewTreeNode(NodeType type, NodeVal val) {
     TreeNode* node = (TreeNode*)malloc(sizeof(TreeNode));
     node->type = type;
     node->val = val;
-    node->lineno = lineno;
+    node->lineno = yylineno;
     node->son = node->bro = NULL;
     return node;
 }
 
-TreeNode* NewNumberTreeNode(const char* s, int base, int lineno) {
+TreeNode* NewNumberTreeNode(const char* s, int base) {
     NodeVal node_val;
     if (base) {
         node_val.ValInt = strtol(s, NULL, base);
-        return NewTreeNode(kINT, node_val, lineno);
+        return NewTreeNode(kINT, node_val);
     } else {
         node_val.ValFloat = strtof(s, NULL);
-        return NewTreeNode(kFLOAT, node_val, lineno);
+        return NewTreeNode(kFLOAT, node_val);
     }
 }
 
-TreeNode* NewSymbolTreeNode(const char* s, int lineno) {
+TreeNode* NewSymbolTreeNode(const char* s) {
     NodeVal node_val;
     node_val.ValString = (char*)malloc(strlen(s)+1);
     strcpy(node_val.ValString, s);
-    return NewTreeNode(kSYMBOL, node_val, lineno);
+    return NewTreeNode(kSYMBOL, node_val);
 }
 
-TreeNode* NewIDTreeNode(const char* s, int lineno) {
+TreeNode* NewIDTreeNode(const char* s) {
     NodeVal node_val;
     node_val.ValString = (char*)malloc(strlen(s)+1);
     strcpy(node_val.ValString, s);
-    return NewTreeNode(kID, node_val, lineno);
+    return NewTreeNode(kID, node_val);
 }
 
-TreeNode* NewTypeTreeNode(const char* s, int lineno) {
+TreeNode* NewTypeTreeNode(const char* s) {
     NodeVal node_val;
     node_val.ValString = (char*)malloc(strlen(s)+1);
     strcpy(node_val.ValString, s);
-    return NewTreeNode(kTYPE, node_val, lineno);
+    return NewTreeNode(kTYPE, node_val);
 }
 
-TreeNode* NewRelopTreeNode(RelopType type, int lineno) {
+TreeNode* NewRelopTreeNode(RelopType type) {
     NodeVal node_val;
     node_val.ValRelop = type;
-    return NewTreeNode(kRELOP, node_val, lineno);
+    return NewTreeNode(kRELOP, node_val);
 }
 
 TreeNode* CreateInternalTreeNode(const char* s, int n, ...) {
@@ -60,7 +60,7 @@ TreeNode* CreateInternalTreeNode(const char* s, int n, ...) {
     NodeVal node_val;
     node_val.ValString = (char*)malloc(strlen(s)+1);
     strcpy(node_val.ValString, s);
-    TreeNode* root = NewTreeNode(kINTERNAL, node_val, -1);
+    TreeNode* root = NewTreeNode(kINTERNAL, node_val);
 
     TreeNode* pre = va_arg(var_arg, TreeNode*);
     root->son = pre;
@@ -73,6 +73,8 @@ TreeNode* CreateInternalTreeNode(const char* s, int n, ...) {
         pre->bro = cur;
         pre = cur;
     }
+
+    va_end(var_arg);
     return root;
 }
 
