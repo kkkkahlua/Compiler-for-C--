@@ -38,6 +38,8 @@ ExtDefList:	ExtDef ExtDefList			{ $$ = CreateInternalTreeNode("ExtDefList", 2, $
 ExtDef:		Specifier ExtDecList SEMI	{ $$ = CreateInternalTreeNode("ExtDef", 3, $1, $2, $3); }
 	|		Specifier SEMI				{ $$ = CreateInternalTreeNode("ExtDef", 2, $1, $2); }
 	|		Specifier FunDec CompSt		{ $$ = CreateInternalTreeNode("ExtDef", 3, $1, $2, $3); }
+	|		Specifier error SEMI		{ yyerrok; }
+	|		error SEMI					{ yyerrok; }
 ;
 ExtDecList:	VarDec						{ $$ = CreateInternalTreeNode("ExtDecList", 1, $1); }
 	|		VarDec COMMA ExtDecList		{ $$ = CreateInternalTreeNode("ExtDecList", 3, $1, $2, $3); }
@@ -59,6 +61,7 @@ Tag:		ID							{ $$ = CreateInternalTreeNode("Tag", 1, $1); }
 //	Declarators
 VarDec:		ID							{ $$ = CreateInternalTreeNode("VarDec", 1, $1); }
 	|		VarDec LB INT RB			{ $$ = CreateInternalTreeNode("VarDec", 4, $1, $2, $3, $4); }
+	|		VarDec LB error RB			{ yyerrok; }
 ;
 FunDec:		ID LP VarList RP			{ $$ = CreateInternalTreeNode("FunDec", 4, $1, $2, $3, $4); }
 	|		ID LP RP					{ $$ = CreateInternalTreeNode("FunDec", 3, $1, $2, $3); }
@@ -71,7 +74,7 @@ ParamDec:	Specifier VarDec			{ $$ = CreateInternalTreeNode("ParamDec", 2, $1, $2
 
 //	Statements
 CompSt:		LC DefList StmtList RC		{ $$ = CreateInternalTreeNode("CompSt", 4, $1, $2, $3, $4); }
-	|		error RC					{ yyerrok; }
+	|		LC error RC					{ yyerrok; }
 ;
 StmtList:	Stmt StmtList				{ $$ = CreateInternalTreeNode("StmtList", 2, $1, $2); }
 	|		/*	empty	*/				{ $$ = CreateInternalTreeNode("StmtList", 0); }
@@ -79,10 +82,16 @@ StmtList:	Stmt StmtList				{ $$ = CreateInternalTreeNode("StmtList", 2, $1, $2);
 Stmt:		Exp SEMI					{ $$ = CreateInternalTreeNode("Stmt", 2, $1, $2); }
 	|		CompSt						{ $$ = CreateInternalTreeNode("Stmt", 1, $1); }
 	|		RETURN Exp SEMI				{ $$ = CreateInternalTreeNode("Stmt", 3, $1, $2, $3); }
+	|		RETURN error SEMI			{ yyerrok; }
 	|		IF LP Exp RP Stmt	%prec LOWER_THAN_ELSE	{ $$ = CreateInternalTreeNode("Stmt", 5, $1, $2, $3, $4, $5); }
 	|		IF LP Exp RP Stmt ELSE Stmt	{ $$ = CreateInternalTreeNode("Stmt", 7, $1, $2, $3, $4, $5, $6, $7); }
 	|		WHILE LP Exp RP Stmt		{ $$ = CreateInternalTreeNode("Stmt", 5, $1, $2, $3, $4, $5); }
-	|		error SEMI					{ yyerrok; }
+	|		IF LP error RP Stmt				{ yyerrok; }
+	|		IF LP error RP Stmt ELSE Stmt	{ yyerrok; }
+	|		IF LP Exp RP error ELSE Stmt	{ yyerrok; }
+	|		IF LP error RP error ELSE Stmt	{ yyerrok; }
+	|		WHILE LP error RP Stmt			{ yyerrok; }
+	|		error SEMI						{ yyerrok; }
 ;
 
 //	Local Definitions
@@ -118,7 +127,9 @@ Exp:		Exp ASSIGNOP Exp			{ $$ = CreateInternalTreeNode("Exp", 3, $1, $2, $3); }
 	|		ID							{ $$ = CreateInternalTreeNode("Exp", 1, $1); }
 	|		INT							{ $$ = CreateInternalTreeNode("Exp", 1, $1); }
 	|		FLOAT						{ $$ = CreateInternalTreeNode("Exp", 1, $1); }
-	|		error RP					{ yyerrok; }
+	|		LP error RP					{ yyerrok; }
+	|		ID LP error RP				{ yyerrok; }
+	|		Exp LB error RB				{ yyerrok; }
 	|		error ID					{ yyerrok; }
 ;
 Args:		Exp COMMA Args				{ $$ = CreateInternalTreeNode("Args", 3, $1, $2, $3); }
