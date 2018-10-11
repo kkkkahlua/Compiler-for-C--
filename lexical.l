@@ -9,19 +9,11 @@
 #include <ctype.h>
 
 extern TreeNode* yylval;
-
 int error_lex = 0;
 
 void CheckNumber(int base);
 void IgnoreBlockComment();
 void IgnoreLineComment();
-
-// int yycolumn = 1;
-// #define YY_USER_ACTION \
-// 	yylloc.first_line = yylloc.last_line = yylineno;
-// 	yylloc.first_column = yycolumn;
-// 	yylloc.last_column = yycolumn + yyleng - 1;
-// 	yycolumn += yyleng;
 %}
 %option yylineno 
 letter					[a-zA-Z]
@@ -203,5 +195,7 @@ void CheckNumber(int base) {
     }
     unput(c);
     yytext[len_valid] = '\0';
+
+    if (len_valid == 1 && yytext[0] == '0') base = 10;
     yylval = NewNumberTreeNode(yytext, base);
 }
