@@ -52,6 +52,18 @@ TreeNode* NewRelopTreeNode(RelopType type) {
     return NewTreeNode(kRELOP, node_val);
 }
 
+void OutputNodeInfo(TreeNode* root) {
+    switch (root->type) {
+        case kINT:              printf("  INT: %d\n", root->val.ValInt); break;
+        case kFLOAT:            printf("  FLOAT: %f\n", root->val.ValFloat); break;
+        case kTYPE:             printf("  TYPE: %s\n", root->val.ValString); break;
+        case kID:               printf("  ID: %s\n", root->val.ValString); break;
+        case kSYMBOL:           printf("  %s\n", root->val.ValString); break;
+        case kRELOP:            printf("  RELOP\n"); break;
+        case kINTERNAL:         printf("  %s (%d)\n", root->val.ValString, root->lineno); break;
+    }
+}
+
 TreeNode* CreateInternalTreeNode(const char* s, int n, ...) {
     if (n == 0) return NULL;
     va_list var_arg;
@@ -89,7 +101,7 @@ void OutputTree(TreeNode* root, int indent) {
         case kTYPE:             printf("TYPE: %s\n", root->val.ValString); break;
         case kID:               printf("ID: %s\n", root->val.ValString); break;
         case kSYMBOL:           printf("%s\n", root->val.ValString); break;
-        case kRELOP:            printf("RELOP\n");
+        case kRELOP:            printf("RELOP\n"); break;
         case kINTERNAL:         printf("%s (%d)\n", root->val.ValString, root->lineno); break;
     }
     OutputTree(root->son, indent+2);

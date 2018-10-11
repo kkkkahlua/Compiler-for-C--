@@ -1,0 +1,12 @@
+int main()
+{
+    float x1 = 1e;
+    float x2 = 1.5e;
+    float x3 = 1.2.3;
+    float x4 = 1.5e3;
+    float x5 = 1.5e23.;
+    float x6 = 1.5e.23;
+    float x7 = 1.5e2.3;
+    float x8 = 1.5 e2;
+    float x9 = 1.5_e2_3;
+}

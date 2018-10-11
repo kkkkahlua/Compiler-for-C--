@@ -1,0 +1,8 @@
+int main() {
+    int i = 1;
+    int j = ~i;
+    int k = ^j;
+    int p = +k;
+    int q = -p;
+    int x = * p / q;
+}
