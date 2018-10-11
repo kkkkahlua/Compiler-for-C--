@@ -119,6 +119,7 @@ Exp:		Exp ASSIGNOP Exp			{ $$ = CreateInternalTreeNode("Exp", 3, $1, $2, $3); }
 	|		INT							{ $$ = CreateInternalTreeNode("Exp", 1, $1); }
 	|		FLOAT						{ $$ = CreateInternalTreeNode("Exp", 1, $1); }
 	|		error RP					{ yyerrok; }
+	|		error ID					{ yyerrok; }
 ;
 Args:		Exp COMMA Args				{ $$ = CreateInternalTreeNode("Args", 3, $1, $2, $3); }
 	|		Exp							{ $$ = CreateInternalTreeNode("Args", 1, $1); }
