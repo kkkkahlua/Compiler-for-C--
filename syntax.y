@@ -9,6 +9,7 @@
 extern int error_lex;
 extern int yylineno;
 int error_syntax = 0;
+int yyerror(const char* msg);
 
 TreeNode* root;
 %}
@@ -75,6 +76,7 @@ ParamDec:	Specifier VarDec			{ $$ = CreateInternalTreeNode("ParamDec", 2, $1, $2
 
 //	Statements
 CompSt:		LC DefList StmtList RC		{ $$ = CreateInternalTreeNode("CompSt", 4, $1, $2, $3, $4); }
+	|		LC DefList StmtList			{ yyerror("syntax error, expecting RC"); yyerrok; }
 	|		LC error RC					{ yyerrok; }
 ;
 StmtList:	Stmt StmtList				{ $$ = CreateInternalTreeNode("StmtList", 2, $1, $2); }
@@ -87,12 +89,20 @@ Stmt:		Exp SEMI					{ $$ = CreateInternalTreeNode("Stmt", 2, $1, $2); }
 	|		IF LP Exp RP Stmt	%prec LOWER_THAN_ELSE	{ $$ = CreateInternalTreeNode("Stmt", 5, $1, $2, $3, $4, $5); }
 	|		IF LP Exp RP Stmt ELSE Stmt	{ $$ = CreateInternalTreeNode("Stmt", 7, $1, $2, $3, $4, $5, $6, $7); }
 	|		WHILE LP Exp RP Stmt		{ $$ = CreateInternalTreeNode("Stmt", 5, $1, $2, $3, $4, $5); }
+	|		WHILE LP Exp RP RedundantRP Stmt	{ yyerrok; }
+	|		WHILE LP Exp Stmt			{ yyerror("syntax error, expecting RP"); yyerrok; }
 	|		IF LP error RP Stmt				{ yyerrok; }
 	|		IF LP error RP Stmt ELSE Stmt	{ yyerrok; }
 	|		IF LP Exp RP error ELSE Stmt	{ yyerrok; }
 	|		IF LP error RP error ELSE Stmt	{ yyerrok; }
 	|		WHILE LP error RP Stmt			{ yyerrok; }
 	|		error SEMI						{ yyerrok; }
+;
+RedundantRP:	RP RedundantRP
+	|			RP							{ yyerror("syntax error, redundant RP"); yyerrok; }
+;
+RedundantLP: 	LP RedundantLP
+	|			LP
 ;
 
 //	Local Definitions
@@ -124,6 +134,7 @@ Exp:		Exp ASSIGNOP Exp			{ $$ = CreateInternalTreeNode("Exp", 3, $1, $2, $3); }
 	|		Exp STAR Exp				{ $$ = CreateInternalTreeNode("Exp", 3, $1, $2, $3); }
 	|		Exp DIV Exp					{ $$ = CreateInternalTreeNode("Exp", 3, $1, $2, $3); }
 	|		LP Exp RP					{ $$ = CreateInternalTreeNode("Exp", 3, $1, $2, $3); }
+	|		LP RedundantLP Exp RP		{ yyerror("syntax error, redundant LP"); yyerrok; }
 	|		MINUS Exp					{ $$ = CreateInternalTreeNode("Exp", 2, $1, $2); }
 	|		NOT Exp						{ $$ = CreateInternalTreeNode("Exp", 2, $1, $2); }
 	|		ID LP Args RP				{ $$ = CreateInternalTreeNode("Exp", 4, $1, $2, $3, $4); }
@@ -157,7 +168,7 @@ int main(int argc, char** argv) {
 	OutputTree(root, 0);
 	return 0;
 }
-yyerror(char* msg) {
+int yyerror(const char* msg) {
 	printf("Error Type B at line %d: %s.\n", yylineno, msg);
 	error_syntax = 1;
 }

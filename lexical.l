@@ -122,8 +122,13 @@ blank					[ \n\t]
 
 void IgnoreBlockComment() {
     char c1 = input(), c2;
+    int cnt = 0;
     while (1) {
-        while (c1 != '*') c1 = input();
+        while (c1 != '\0' && c1 != '*') c1 = input();
+        if (c1 == '\0') {
+            printf("Error type B at Line %d: syntax error, unclosed comment.\n", yylineno);
+            break;
+        }
         c2 = input();
         if (c2 == '/') break;
         c1 = c2;
