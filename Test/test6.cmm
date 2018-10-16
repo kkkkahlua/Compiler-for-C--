@@ -3,6 +3,8 @@ int main()
     int i = 09;
     int k = 01238;
     int l = 0123.1234;
+    int l_2 = 0123.;
+    int l_3 = .0321;
     int j = 0x3G;
     int p = 0X31413.0;
 }

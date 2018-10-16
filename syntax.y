@@ -90,12 +90,11 @@ Stmt:		Exp SEMI					{ $$ = CreateInternalTreeNode("Stmt", 2, $1, $2); }
 	|		IF LP Exp RP Stmt ELSE Stmt	{ $$ = CreateInternalTreeNode("Stmt", 7, $1, $2, $3, $4, $5, $6, $7); }
 	|		WHILE LP Exp RP Stmt		{ $$ = CreateInternalTreeNode("Stmt", 5, $1, $2, $3, $4, $5); }
 	|		WHILE LP Exp RP RedundantRP Stmt	{ yyerrok; }
-	|		WHILE LP Exp Stmt			{ yyerror("syntax error, expecting RP"); yyerrok; }
+	|		WHILE LP error RP Stmt			{ yyerrok; }
 	|		IF LP error RP Stmt				{ yyerrok; }
 	|		IF LP error RP Stmt ELSE Stmt	{ yyerrok; }
 	|		IF LP Exp RP error ELSE Stmt	{ yyerrok; }
 	|		IF LP error RP error ELSE Stmt	{ yyerrok; }
-	|		WHILE LP error RP Stmt			{ yyerrok; }
 	|		error SEMI						{ yyerrok; }
 ;
 RedundantRP:	RP RedundantRP
@@ -110,18 +109,15 @@ DefList: 	Def DefList					{ $$ = CreateInternalTreeNode("DefList", 2, $1, $2); }
 	|		/*	empty	*/				{ $$ = CreateInternalTreeNode("DefList", 0); }
 ;
 Def:		Specifier DecList SEMI		{ $$ = CreateInternalTreeNode("Def", 3, $1, $2, $3); }
-	|		Specifier DecList			{ yyerror("syntax error, expecting SEMI"); yyerrok; }
-	|		error SEMI					{ yyerrok; }
+	|		Specifier DecList error SEMI	{ yyerrok; }
 ;
 DecList:	Dec							{ $$ = CreateInternalTreeNode("DecList", 1, $1); }
 	|		Dec COMMA DecList			{ $$ = CreateInternalTreeNode("DecList", 3, $1, $2, $3); }
-	|		/*	empty	*/				{ yyerror("syntax error, redundant COMMA"); yyerrok; }
 ;
 Dec: 		VarDec						{ $$ = CreateInternalTreeNode("Dec", 1, $1); }
 	|		INT							{ yyerror("syntax error, unexpected INT, expecting ID"); yyerrok; }
 	|		FLOAT						{ yyerror("syntax error, unexpected FLOAT, expecting ID"); yyerrok; }
-	|		VarDec ASSIGNOP Exp			{ $$ = CreateInternalTreeNode("Dec", 3, $1, $2, $3); }
-	
+	|		VarDec ASSIGNOP Exp			{ $$ = CreateInternalTreeNode("Dec", 3, $1, $2, $3); }	
 ;
 
 //	Expressions
@@ -169,6 +165,6 @@ int main(int argc, char** argv) {
 	return 0;
 }
 int yyerror(const char* msg) {
-	printf("Error Type B at line %d: %s.\n", yylineno, msg);
+	printf("Error Type B at Line %d: %s.\n", yylineno, msg);
 	error_syntax = 1;
 }

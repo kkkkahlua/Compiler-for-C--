@@ -137,7 +137,7 @@ void IgnoreBlockComment() {
 
 void IgnoreLineComment() {
     char c = input();
-    while (c != '\n') c = input();
+    while (c != '\n' && c != '\0') c = input();
 }
 
 void ReadAll(char* text, char c, int base) {
