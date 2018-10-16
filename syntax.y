@@ -17,7 +17,7 @@ TreeNode* root;
 %token			TYPE
 %token 			ID INT FLOAT
 %token			RETURN IF WHILE STRUCT
-%left			ASSIGNOP
+%right			ASSIGNOP
 %left			OR
 %left			AND
 %left			RELOP
@@ -50,6 +50,7 @@ Specifier:	TYPE						{ $$ = CreateInternalTreeNode("Specifier", 1, $1); }
 	|		StructSpecifier				{ $$ = CreateInternalTreeNode("Specifier", 1, $1); }
 ;
 StructSpecifier:	STRUCT OptTag LC DefList RC	{ $$ = CreateInternalTreeNode("StructSpecifier", 5, $1, $2, $3, $4, $5); }
+	|				STRUCT OptTag LC error RC	{ yyerrok; }
 	|				STRUCT Tag					{ $$ = CreateInternalTreeNode("StructSpecifier", 2, $1, $2); }
 ;
 OptTag:		ID							{ $$ = CreateInternalTreeNode("OptTag", 1, $1); }
@@ -99,13 +100,18 @@ DefList: 	Def DefList					{ $$ = CreateInternalTreeNode("DefList", 2, $1, $2); }
 	|		/*	empty	*/				{ $$ = CreateInternalTreeNode("DefList", 0); }
 ;
 Def:		Specifier DecList SEMI		{ $$ = CreateInternalTreeNode("Def", 3, $1, $2, $3); }
+	|		Specifier DecList			{ yyerror("syntax error, expecting SEMI"); yyerrok; }
 	|		error SEMI					{ yyerrok; }
 ;
 DecList:	Dec							{ $$ = CreateInternalTreeNode("DecList", 1, $1); }
 	|		Dec COMMA DecList			{ $$ = CreateInternalTreeNode("DecList", 3, $1, $2, $3); }
+	|		/*	empty	*/				{ yyerror("syntax error, redundant COMMA"); yyerrok; }
 ;
 Dec: 		VarDec						{ $$ = CreateInternalTreeNode("Dec", 1, $1); }
+	|		INT							{ yyerror("syntax error, unexpected INT, expecting ID"); yyerrok; }
+	|		FLOAT						{ yyerror("syntax error, unexpected FLOAT, expecting ID"); yyerrok; }
 	|		VarDec ASSIGNOP Exp			{ $$ = CreateInternalTreeNode("Dec", 3, $1, $2, $3); }
+	
 ;
 
 //	Expressions

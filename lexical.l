@@ -30,8 +30,8 @@ oct_number				{oct_prefix}{oct_digit}+
 INT						{dec_number}|{oct_number}|{hex_number}
 
 dot 					\.
-regular_float			{dec_digit}+{dot}{dec_digit}+
-base					{dec_digit}+{dot}{dec_digit}*|{dot}{dec_digit}+
+regular_float			{dec_digit}+{dot}{dec_digit}*|{dot}{dec_digit}+
+base					{regular_float}
 exponent_sign			[eE]
 exponent 				[+-]?{dec_digit}+
 scientific_float		{base}{exponent_sign}{exponent}
@@ -136,7 +136,7 @@ void IgnoreLineComment() {
 }
 
 void ReadAll(char* text, char c, int base) {
-    while (isalnum(c) || c == '_' || (base == 0 ? c == '.' : 0)) {
+    while (isalnum(c) || c == '_' || c == '.') {
         *text++ = c;
         c = input();
     }
@@ -163,7 +163,7 @@ int CheckIllegalDec(char c) {
 }
 
 int CheckIllegalHex(char c) {
-    return ('g' <= c && c <= 'z') || ('G' <= c && c <= 'Z') || c == '_';
+    return ('g' <= c && c <= 'z') || ('G' <= c && c <= 'Z') || c == '_' || c == '.';
 }
 
 void CheckNumber(int base) {
