@@ -88,6 +88,7 @@ Stmt:		Exp SEMI					{ $$ = CreateInternalTreeNode("Stmt", 2, $1, $2); }
 	|		RETURN error SEMI			{ yyerrok; }
 	|		IF LP Exp RP Stmt	%prec LOWER_THAN_ELSE	{ $$ = CreateInternalTreeNode("Stmt", 5, $1, $2, $3, $4, $5); }
 	|		IF LP Exp RP Stmt ELSE Stmt	{ $$ = CreateInternalTreeNode("Stmt", 7, $1, $2, $3, $4, $5, $6, $7); }
+	|		IF LP Exp RP RedundantRP Stmt	{ yyerrok; }
 	|		WHILE LP Exp RP Stmt		{ $$ = CreateInternalTreeNode("Stmt", 5, $1, $2, $3, $4, $5); }
 	|		WHILE LP Exp RP RedundantRP Stmt	{ yyerrok; }
 	|		WHILE LP error RP Stmt			{ yyerrok; }
