@@ -83,6 +83,7 @@ StmtList:	Stmt StmtList				{ $$ = CreateInternalTreeNode("StmtList", 2, $1, $2);
 	|		/*	empty	*/				{ $$ = CreateInternalTreeNode("StmtList", 0); }
 ;
 Stmt:		Exp SEMI					{ $$ = CreateInternalTreeNode("Stmt", 2, $1, $2); }
+	|		Exp							{ yyerror("syntax error, expecting SEMI"); yyerrok; }
 	|		CompSt						{ $$ = CreateInternalTreeNode("Stmt", 1, $1); }
 	|		RETURN Exp SEMI				{ $$ = CreateInternalTreeNode("Stmt", 3, $1, $2, $3); }
 	|		RETURN error SEMI			{ yyerrok; }
@@ -97,7 +98,6 @@ Stmt:		Exp SEMI					{ $$ = CreateInternalTreeNode("Stmt", 2, $1, $2); }
 	|		IF LP error RP Stmt ELSE Stmt	{ yyerrok; }
 	|		IF LP Exp RP error ELSE Stmt	{ yyerrok; }
 	|		IF LP error RP error ELSE Stmt	{ yyerrok; }
-	|		error SEMI						{ yyerrok; }
 ;
 RedundantRP:	RP 							{ yyerror("syntax error, redundant RP"); yyerrok; }
 	|			RP RedundantRP				{}
