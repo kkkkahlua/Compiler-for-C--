@@ -79,7 +79,7 @@ CompSt:		LC DefList StmtList RC		{ $$ = CreateInternalTreeNode("CompSt", 4, $1, 
 	|		LC DefList StmtList			{ yyerror("syntax error, expecting RC"); yyerrok; }
 	|		LC error RC					{ yyerrok; }
 ;
-StmtList:	Stmt StmtList				{ $$ = CreateInternalTreeNode("StmtList", 2, $1, $2); }
+StmtList:	Stmt StmtList				{ puts("Stmt"); $$ = CreateInternalTreeNode("StmtList", 2, $1, $2); }
 	|		/*	empty	*/				{ $$ = CreateInternalTreeNode("StmtList", 0); }
 ;
 Stmt:		Exp SEMI					{ $$ = CreateInternalTreeNode("Stmt", 2, $1, $2); }
@@ -89,20 +89,24 @@ Stmt:		Exp SEMI					{ $$ = CreateInternalTreeNode("Stmt", 2, $1, $2); }
 	|		IF LP Exp RP Stmt	%prec LOWER_THAN_ELSE	{ $$ = CreateInternalTreeNode("Stmt", 5, $1, $2, $3, $4, $5); }
 	|		IF LP Exp RP Stmt ELSE Stmt	{ $$ = CreateInternalTreeNode("Stmt", 7, $1, $2, $3, $4, $5, $6, $7); }
 	|		IF LP Exp RP RedundantRP Stmt	{ yyerrok; }
-	|		WHILE LP Exp RP Stmt		{ $$ = CreateInternalTreeNode("Stmt", 5, $1, $2, $3, $4, $5); }
-	|		WHILE LP Exp RP RedundantRP Stmt	{ yyerrok; }
-	|		WHILE LP error RP Stmt			{ yyerrok; }
+	|		WHILE LP Exp RP Stmt		{ puts("while_1"); $$ = CreateInternalTreeNode("Stmt", 5, $1, $2, $3, $4, $5); }
+	|		WHILE LP Exp RP RedundantRP Stmt	{ puts("while_2"); }
+	|		WHILE Exp RedundantRP Stmt		{ yyerrok; }
+	|		WHILE RedundantLP Exp Stmt		{ yyerrok; }
+	|		WHILE LP error RP Stmt			{ puts("while_3"); yyerrok; }
+	|		WHILE RedundantLP LP Exp RP Stmt	{ puts("while_4"); yyerrok; }
 	|		IF LP error RP Stmt				{ yyerrok; }
 	|		IF LP error RP Stmt ELSE Stmt	{ yyerrok; }
 	|		IF LP Exp RP error ELSE Stmt	{ yyerrok; }
 	|		IF LP error RP error ELSE Stmt	{ yyerrok; }
 	|		error SEMI						{ yyerrok; }
 ;
-RedundantRP:	RP RedundantRP
-	|			RP							{ yyerror("syntax error, redundant RP"); yyerrok; }
+RedundantRP:	RP 							{ yyerror("syntax error, redundant RP"); yyerrok; }
+	|			RP RP						{ yyerror("syntax error, redundant RP"); yyerrok; }
+	|			RP RP RP					{ yyerror("syntax error, redundant RP"); yyerrok; }					
 ;
-RedundantLP: 	LP RedundantLP
-	|			LP
+RedundantLP: 	LP 							{ yyerror("syntax error, redundatn LP"); yyerrok; }
+	|			LP RedundantLP    
 ;
 
 //	Local Definitions
