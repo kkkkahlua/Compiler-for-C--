@@ -3,6 +3,7 @@
 #define YYERROR_VERBOSE 1
 
 #include "lex.yy.c"
+#include "semantic.h"
 
 #include <stdio.h>
 
@@ -39,6 +40,7 @@ ExtDefList:	ExtDef ExtDefList			{ $$ = CreateInternalTreeNode("ExtDefList", 2, $
 ExtDef:		Specifier ExtDecList SEMI	{ $$ = CreateInternalTreeNode("ExtDef", 3, $1, $2, $3); }
 	|		Specifier SEMI				{ $$ = CreateInternalTreeNode("ExtDef", 2, $1, $2); }
 	|		Specifier FunDec CompSt		{ $$ = CreateInternalTreeNode("ExtDef", 3, $1, $2, $3); }
+	|		Specifier FunDec SEMI		{ $$ = CreateInternalTreeNode("ExtDef", 3, $1, $2, $3); }
 	|		Specifier error SEMI		{ yyerrok; }
 	|		error SEMI					{ yyerrok; }
 ;
@@ -159,7 +161,10 @@ int main(int argc, char** argv) {
 
 	if (error_lex == 1 || error_syntax == 1) return 0;
 
-	OutputTree(root, 0);
+	// OutputTree(root, 0);
+
+	AnalyzeProgram(root);
+
 	return 0;
 }
 int yyerror(const char* msg) {
