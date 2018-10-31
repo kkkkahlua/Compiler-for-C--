@@ -21,6 +21,46 @@ void ProcessExtDecList(TreeNode* ext_dec_list, Type type) {
     }
 }
 
+void FillParamDecIntoParam(TreeNode* param_dec, ParamList param) {
+    TreeNode* specifier = param_dec->son;
+    assert(CheckSymbolName(specifier, "Specifier"));
+    TreeNode* var_dec = specifier->bro;
+    assert(CheckSymbolName(var_dec, "VarDec"));
+
+    Type type = GetType(specifier);
+    char* name;
+    AnalyzeVarDec(var_dec, name, type);
+    
+    param = (ParamList)malloc(sizeof(ParamList_));
+    param->type = type;
+    param->tail = NULL;
+}
+
+void GetVarList(TreeNode* var_list, ParamList param_list) {
+    TreeNode* param_dec = var_list->son;
+    assert(CheckSymbolName(param_dec, "ParamDec"));
+    FillParamDecIntoParam(param_dec, param_list);
+    if (param_dec->bro == NULL) return;
+    GetVarList(var_list, param_list->tail);
+}
+
+Type GetTypeFunction(TreeNode* fun_def, Type type_ret) {
+    Type type = (Type)malloc(sizeof(Type_));
+    type->kind = kFUNCTION;
+    type->u.function.ret = type_ret;
+    type->u.function.param_list = NULL;
+    TreeNode* var_list = fun_def->son->bro->bro;
+    if (CheckSymbolName(var_list, "VarList")) {
+        GetVarList(var_list, type->u.function.param_list);
+    }
+    return type;
+}
+
+void ProcessFunDef(TreeNode* fun_def, Type type_ret) {
+    Type type = GetTypeFunction(fun_def, type_ret);
+
+}
+
 void AnalyzeExtDef(TreeNode* ext_def) {
     //  TODO: AnalyzeExtDef
     TreeNode* specifier = ext_def->son;
@@ -35,11 +75,23 @@ void AnalyzeExtDef(TreeNode* ext_def) {
     }
     assert(next->type == kINTERNAL);
     if (strcmp(next->val.ValString, "ExtDecList") == 0) {
+        //  Global Variable
         ProcessExtDecList(next, type);
         return;
     }
-    assert(strcmp(next->val.ValString, "FunDec") == 0);
-    
+
+    //  Function
+    TreeNode* fun_dec = next;
+    assert(CheckSymbolName(fun_dec, "FunDec"));
+
+    if (CheckSymbolName(fun_dec->bro, "SEMI")) {
+        //  TODO: Function Declaration
+        ProcessFunDec();
+        return;
+    }
+    //  Function Definition
+    assert(CheckSymbolName(fun_dec->bro, "CompSt"));
+    ProcessFunDef(fun_dec, type);
 }
 
 Type GetTypeBasic(TreeNode* root) {
@@ -123,13 +175,15 @@ void FillDefListIntoFieldList(TreeNode* def_list, FieldList field_list) {
 
 Type GetTypeStructure(TreeNode* root) {
     Type type = (Type)malloc(sizeof(Type_));
-    FieldList field_list = type->u.structure;
+
+    FieldList field_list = type->u.structure.field_list;
 
     type->kind = kSTRUCTURE;
 
     TreeNode* tag = root->bro;
 
-    char* struct_name = GetTagName(tag);
+    type->u.structure.name = GetTagName(tag);
+    //  TODO: combine struct_name with the definition of struct
 
     if (strcmp(tag->val.ValString, "OptTag") == 0) {    //  definition
         TreeNode* lc = tag->bro;

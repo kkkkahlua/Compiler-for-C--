@@ -5,14 +5,21 @@
 
 typedef struct Type_* Type;
 typedef struct FieldList_* FieldList;
+typedef struct ParamList_* ParamList;
 
 struct Type_ {
-    enum { kBASIC, kARRAY, kSTRUCTURE } kind;
+    enum { kBASIC, kARRAY, kSTRUCTURE, kFUNCTION } kind;
     union {
         int basic;      //  0: int; 1: float;
         struct { Type elem; int size; } array;
-        FieldList structure;
+        struct { char* name; FieldList field_list; } structure;
+        struct { Type ret; ParamList param_list; } function;
     } u;
+};
+
+struct ParamList_ {
+    Type type;
+    ParamList tail;
 };
 
 struct FieldList_ {
