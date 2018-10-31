@@ -1,6 +1,12 @@
 #include "semantic.h"
 
 #include <stdlib.h>
+#include <string.h>
+#include <assert.h>
+
+int CheckSymbolName(TreeNode* node, const char* name) {
+    return strcmp(node->val.ValString, name) == 0;
+}
 
 void AnalyzeProgram(TreeNode* root) {
     AnalyzeExtDefList(root->son);
@@ -12,7 +18,7 @@ void AnalyzeExtDefList(TreeNode* root) {
 }
 
 void ProcessExtDecList(TreeNode* ext_dec_list, Type type) {
-    Type* type_ori = (Type)malloc(Type_);
+    Type type_ori = (Type)malloc(sizeof(Type_));
     *type_ori = *type;
     char* name;
     AnalyzeVarDec(ext_dec_list->son, name, type);
@@ -34,6 +40,7 @@ void FillParamDecIntoParam(TreeNode* param_dec, ParamList param) {
     param = (ParamList)malloc(sizeof(ParamList_));
     param->type = type;
     param->tail = NULL;
+    //  TODO: add function definition into symbol table
 }
 
 void GetVarList(TreeNode* var_list, ParamList param_list) {
@@ -41,7 +48,7 @@ void GetVarList(TreeNode* var_list, ParamList param_list) {
     assert(CheckSymbolName(param_dec, "ParamDec"));
     FillParamDecIntoParam(param_dec, param_list);
     if (param_dec->bro == NULL) return;
-    GetVarList(var_list, param_list->tail);
+    GetVarList(param_dec->bro->bro, param_list->tail);
 }
 
 Type GetTypeFunction(TreeNode* fun_def, Type type_ret) {
@@ -58,7 +65,11 @@ Type GetTypeFunction(TreeNode* fun_def, Type type_ret) {
 
 void ProcessFunDef(TreeNode* fun_def, Type type_ret) {
     Type type = GetTypeFunction(fun_def, type_ret);
+    TreeNode* comp_st = fun_def->bro;
+}
 
+void ProcessFunDec(TreeNode* fun_def, Type type_ret) {
+    Type type = GetTypeFunction(fun_def, type_ret);
 }
 
 void AnalyzeExtDef(TreeNode* ext_def) {
@@ -86,7 +97,7 @@ void AnalyzeExtDef(TreeNode* ext_def) {
 
     if (CheckSymbolName(fun_dec->bro, "SEMI")) {
         //  TODO: Function Declaration
-        ProcessFunDec();
+        ProcessFunDec(fun_dec, type);
         return;
     }
     //  Function Definition
@@ -126,7 +137,7 @@ void AnalyzeVarDec(TreeNode* var_dec, char* name, Type type) {
         strcpy(name, var_dec->son->val.ValString);
         return;
     }
-    Type type_next = (Type)malloc(sizoef(Type_));
+    Type type_next = (Type)malloc(sizeof(Type_));
     *type_next = *type;
 
     TreeNode* var_dec_next = var_dec->son;
