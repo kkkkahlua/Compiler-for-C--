@@ -34,7 +34,7 @@ void ProcessExtDecList(TreeNode* ext_dec_list, Type type) {
     }
 }
 
-void FillParamDecIntoParam(TreeNode* param_dec, ParamList param) {
+ParamList ProcessParamDec(TreeNode* param_dec) {
     TreeNode* specifier = param_dec->son;
     assert(CheckSymbolName(specifier, "Specifier"));
     TreeNode* var_dec = specifier->bro;
@@ -44,18 +44,24 @@ void FillParamDecIntoParam(TreeNode* param_dec, ParamList param) {
     char* name;
     Type type_comp = AnalyzeVarDec(var_dec, name, type);
     
-    param = (ParamList)malloc(sizeof(ParamList_));
+    ParamList param = (ParamList)malloc(sizeof(ParamList_));
     param->type = type_comp;
     param->tail = NULL;
     //  TODO: add function definition into symbol table
+    return param;
 }
 
-void GetVarList(TreeNode* var_list, ParamList param_list) {
-    TreeNode* param_dec = var_list->son;
-    assert(CheckSymbolName(param_dec, "ParamDec"));
-    FillParamDecIntoParam(param_dec, param_list);
-    if (param_dec->bro == NULL) return;
-    GetVarList(param_dec->bro->bro, param_list->tail);
+ParamList GetVarList(TreeNode* var_list) {
+    ParamList param_list = ProcessParamDec(var_list->son),
+            pre_param = param_list;
+    while (1) {
+        if (!var_list->son->bro) return param_list;
+        var_list = var_list->son->bro->bro;
+
+        ParamList cur_param = ProcessParamDec(var_list->son);
+        pre_param->tail = cur_param;
+        pre_param = cur_param;
+    };
 }
 
 Type GetTypeFunction(TreeNode* fun_def, Type type_ret) {
@@ -65,14 +71,17 @@ Type GetTypeFunction(TreeNode* fun_def, Type type_ret) {
     type->u.function.param_list = NULL;
     TreeNode* var_list = fun_def->son->bro->bro;
     if (CheckSymbolName(var_list, "VarList")) {
-        GetVarList(var_list, type->u.function.param_list);
+        type->u.function.param_list = GetVarList(var_list);
     }
+    OutputType(type, 0);
     return type;
 }
 
 void ProcessFunDef(TreeNode* fun_def, Type type_ret) {
+    puts("true");
     Type type = GetTypeFunction(fun_def, type_ret);
     TreeNode* comp_st = fun_def->bro;
+    //  TODO: analyze the function body
 }
 
 void ProcessFunDec(TreeNode* fun_def, Type type_ret) {
@@ -146,8 +155,8 @@ Type AnalyzeVarDec(TreeNode* var_dec, char* name, Type type_base) {
         
             //  TODO: In ExtDecList, check name duplication
             strcpy(name, var_dec->son->val.ValString);
-            printf("name = %s\n", name);
-            OutputType(type_comp, 0);
+            // printf("name = %s\n", name);
+            // OutputType(type_comp, 0);
             return type_comp;
         }
         type_base = type_comp;
@@ -178,7 +187,6 @@ FieldList ProcessDec(TreeNode* dec, Type type) {
 FieldList ProcessDecList(TreeNode* dec_list, Type type) {
     FieldList field_list = ProcessDec(dec_list->son, type),
             pre_field = field_list;
-    int dec = 0;
     while (1) {
         if (!dec_list->son->bro) return field_list;
         dec_list = dec_list->son->bro->bro;
@@ -227,7 +235,6 @@ Type GetTypeStructure(TreeNode* struct_specifier) {
     TreeNode* tag = struct_specifier->son->bro;
 
     type->u.structure.name = GetTagName(tag);
-    //  TODO: combine struct_name with the definition of struct
 
     if (strcmp(tag->val.ValString, "OptTag") == 0) {    //  definition
         TreeNode* lc = tag->bro;
@@ -247,16 +254,24 @@ Type GetType(TreeNode* root) {
         type = GetTypeBasic(specifier);
     } else {
         type = GetTypeStructure(specifier);
+        OutputType(type, 0);
     }
     return type;
 }
 
 void OutputFieldList(FieldList field_list, int indent) {
-    if (field_list == NULL) return;
+    if (!field_list) return;
     for (int i = 0; i < indent; ++i) printf(" ");
     printf("%s\n", field_list->name);
-    OutputType(field_list->type, indent+2);
+    OutputType(field_list->type, indent);
     OutputFieldList(field_list->tail, indent);
+}
+
+void OutputParamList(ParamList param_list, int indent) {
+    if (!param_list) return;
+    for (int i = 0; i < indent; ++i) printf(" ");
+    OutputType(param_list->type, indent);
+    OutputParamList(param_list->tail, indent);
 }
 
 void OutputType(Type type, int indent) {
@@ -274,6 +289,10 @@ void OutputType(Type type, int indent) {
             OutputFieldList(type->u.structure.field_list, indent+2);
             break;
         case kFUNCTION:
-            puts("function here");
+            printf("function: %d\n", type->u.function.defined);
+            puts("  ret_type:");
+            OutputType(type->u.function.type_ret, indent+4);
+            puts("  param_list:");
+            OutputParamList(type->u.function.param_list, indent+4);
     }
 }

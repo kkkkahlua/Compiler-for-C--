@@ -36,9 +36,9 @@ void AnalyzeExtDefList(TreeNode* root);
 
 void ProcessExtDecList(TreeNode* ext_dec_list, Type type);
 
-void FillParamDecIntoParam(TreeNode* param_dec, ParamList param);
+ParamList ProcessParamDec(TreeNode* param_dec);
 
-void GetVarList(TreeNode* var_list, ParamList param_list);
+ParamList GetVarList(TreeNode* var_list);
 
 Type GetTypeFunction(TreeNode* fun_def, Type type_ret);
 

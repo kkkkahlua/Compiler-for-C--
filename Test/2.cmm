@@ -3,7 +3,7 @@ int main() {
     return 0;
 }
 
-int f(int x) {
+int f(int x, float j, struct node v) {
     int y;
     y = 1;
     return 1;
