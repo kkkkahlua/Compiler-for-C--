@@ -13,18 +13,24 @@ void AnalyzeProgram(TreeNode* root) {
     AnalyzeExtDefList(root->son);
 }
 
-void AnalyzeExtDefList(TreeNode* root) {
-    if (root == NULL) return;
-    AnalyzeExtDef(root->son);
+void AnalyzeExtDefList(TreeNode* ext_def_list) {
+    while (1) {
+        AnalyzeExtDef(ext_def_list->son);
+        ext_def_list = ext_def_list->son->bro;
+        if (!ext_def_list) return;
+    }
 }
 
 void ProcessExtDecList(TreeNode* ext_dec_list, Type type) {
-    Type type_ori = (Type)malloc(sizeof(Type_));
-    *type_ori = *type;
-    char* name;
-    Type type_comp = AnalyzeVarDec(ext_dec_list->son, name, type);
-    if (ext_dec_list->son->bro != NULL) {
-        ProcessExtDecList(ext_dec_list->son->bro->bro, type);
+    while (1) {
+        char* name;
+        Type type_comp = AnalyzeVarDec(ext_dec_list->son, name, type);
+        //  TODO: 
+        //  1. check variable duplication
+        //  2. add to symbol table
+
+        if (!ext_dec_list->son->bro) return;
+        ext_dec_list = ext_dec_list->son->bro->bro;
     }
 }
 
@@ -121,8 +127,7 @@ Type GetTypeBasic(TreeNode* root) {
 char* GetTagName(TreeNode* root) {
     char* name;
     if (root->son == NULL) {
-        name = (char*)malloc(1);
-        strcpy(name, "\0");
+        return NULL;
     } else {
         TreeNode* id = root->son;
         assert(id->type == kID);
@@ -142,6 +147,7 @@ Type AnalyzeVarDec(TreeNode* var_dec, char* name, Type type_base) {
             //  TODO: In ExtDecList, check name duplication
             strcpy(name, var_dec->son->val.ValString);
             printf("name = %s\n", name);
+            OutputType(type_comp, 0);
             return type_comp;
         }
         type_base = type_comp;
@@ -154,15 +160,12 @@ Type AnalyzeVarDec(TreeNode* var_dec, char* name, Type type_base) {
     }
 }
 
-int process_dec_cnt = 0;
-
 FieldList ProcessDec(TreeNode* dec, Type type) {
-    printf("process_dec = %d\n", process_dec_cnt++);
     char* name;
     Type type_comp = AnalyzeVarDec(dec->son, name, type);
-    puts("ProcessDec-begin");
-    OutputType(type_comp, 0);
-    puts("ProcessDec-end");
+    // puts("ProcessDec-begin");
+    // OutputType(type_comp, 0);
+    // puts("ProcessDec-end");
     FieldList field_list = (FieldList)malloc(sizeof(FieldList_));
     field_list->name = name;
     field_list->type = type_comp;
@@ -172,18 +175,80 @@ FieldList ProcessDec(TreeNode* dec, Type type) {
     return field_list;
 }
 
-
-void ProcessDecList(TreeNode* dec_list, Type type, FieldList field_list) {
-    field_list = ProcessDec(dec_list->son, type);
-    FieldList pre_field = field_list;
+FieldList ProcessDecList(TreeNode* dec_list, Type type) {
+    FieldList field_list = ProcessDec(dec_list->son, type),
+            pre_field = field_list;
+    int dec = 0;
     while (1) {
+        if (!dec_list->son->bro) return field_list;
         dec_list = dec_list->son->bro->bro;
-        if (!dec_list) return;
 
         FieldList cur_field = ProcessDec(dec_list->son, type);
         pre_field->tail = cur_field;
         pre_field = cur_field;
     };
+}
+
+FieldList FillDefIntoField(TreeNode* def) {
+    Type type = GetType(def->son);
+    return ProcessDecList(def->son->bro, type);
+}
+
+FieldList LastField(FieldList field_list) {
+    FieldList field = field_list;
+    while (1) {
+        FieldList nxt_field = field->tail;
+        if (!nxt_field) return field;
+        field = nxt_field;
+    }
+}
+
+int def_list_cnt = 0;
+FieldList FillDefListIntoFieldList(TreeNode* def_list) {
+    if (!def_list) return NULL;
+
+    FieldList field_list = FillDefIntoField(def_list->son),
+            pre_field = LastField(field_list);
+    while (1) {
+        def_list = def_list->son->bro;
+        if (!def_list) return field_list;
+
+        FieldList cur_field = FillDefIntoField(def_list->son);
+        pre_field->tail = cur_field;
+        pre_field = LastField(cur_field);
+    }
+}
+
+Type GetTypeStructure(TreeNode* struct_specifier) {
+    Type type = (Type)malloc(sizeof(Type_));
+
+    type->kind = kSTRUCTURE;
+
+    TreeNode* tag = struct_specifier->son->bro;
+
+    type->u.structure.name = GetTagName(tag);
+    //  TODO: combine struct_name with the definition of struct
+
+    if (strcmp(tag->val.ValString, "OptTag") == 0) {    //  definition
+        TreeNode* lc = tag->bro;
+        assert(lc->type == kSYMBOL && strcmp(lc->val.ValString, "LC") == 0);
+        TreeNode* def_list = lc->bro;
+        type->u.structure.field_list = FillDefListIntoFieldList(def_list);
+        OutputType(type, 0);
+    } else {    //  declaration
+        //  TODO: check whether the struct has been defined or not
+    }
+}
+
+Type GetType(TreeNode* root) {
+    Type type;
+    TreeNode* specifier = root->son;
+    if (specifier->type == kTYPE) {
+        type = GetTypeBasic(specifier);
+    } else {
+        type = GetTypeStructure(specifier);
+    }
+    return type;
 }
 
 void OutputFieldList(FieldList field_list, int indent) {
@@ -211,51 +276,4 @@ void OutputType(Type type, int indent) {
         case kFUNCTION:
             puts("function here");
     }
-}
-
-void FillDefIntoField(TreeNode* def, FieldList field_list) {
-    puts("true");
-    OutputTree(def, 0);
-    Type type = GetType(def->son);
-    OutputType(type, 0);
-    ProcessDecList(def->son->bro, type, field_list);
-}
-
-void FillDefListIntoFieldList(TreeNode* def_list, FieldList field_list) {
-    if (def_list == NULL) return;
-    FillDefIntoField(def_list->son, field_list);
-    FillDefListIntoFieldList(def_list->son->bro, field_list->tail);
-}
-
-Type GetTypeStructure(TreeNode* struct_specifier) {
-    Type type = (Type)malloc(sizeof(Type_));
-
-    FieldList field_list = type->u.structure.field_list;
-
-    type->kind = kSTRUCTURE;
-
-    TreeNode* tag = struct_specifier->son->bro;
-
-    type->u.structure.name = GetTagName(tag);
-    //  TODO: combine struct_name with the definition of struct
-
-    if (strcmp(tag->val.ValString, "OptTag") == 0) {    //  definition
-        TreeNode* lc = tag->bro;
-        assert(lc->type == kSYMBOL && strcmp(lc->val.ValString, "LC") == 0);
-        TreeNode* def_list = lc->bro;
-        FillDefListIntoFieldList(def_list, field_list);
-    } else {    //  declaration
-        //  TODO: check whether the struct has been defined or not
-    }
-}
-
-Type GetType(TreeNode* root) {
-    Type type;
-    TreeNode* specifier = root->son;
-    if (specifier->type == kTYPE) {
-        type = GetTypeBasic(specifier);
-    } else {
-        type = GetTypeStructure(specifier);
-    }
-    return type;
 }

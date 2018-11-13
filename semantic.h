@@ -56,11 +56,11 @@ Type AnalyzeVarDec(TreeNode* var_dec, char* name, Type type_base);
 
 FieldList ProcessDec(TreeNode* dec, Type type);
 
-void ProcessDecList(TreeNode* dec_list, Type type, FieldList field_list);
+FieldList ProcessDecList(TreeNode* dec_list, Type type);
 
-void FillDefIntoField(TreeNode* def, FieldList field_list);
+FieldList FillDefIntoField(TreeNode* def);
 
-void FillDefListIntoFieldList(TreeNode* def_list, FieldList field_list);
+FieldList FillDefListIntoFieldList(TreeNode* def_list);
 
 Type GetTypeStructure(TreeNode* root);
 
