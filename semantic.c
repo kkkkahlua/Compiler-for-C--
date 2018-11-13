@@ -1,8 +1,9 @@
 #include "semantic.h"
 
+#include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 
 int CheckSymbolName(TreeNode* node, const char* name) {
     return strcmp(node->val.ValString, name) == 0;
@@ -21,9 +22,9 @@ void ProcessExtDecList(TreeNode* ext_dec_list, Type type) {
     Type type_ori = (Type)malloc(sizeof(Type_));
     *type_ori = *type;
     char* name;
-    AnalyzeVarDec(ext_dec_list->son, name, type);
+    Type type_comp = AnalyzeVarDec(ext_dec_list->son, name, type);
     if (ext_dec_list->son->bro != NULL) {
-        ProcessExtDecList(ext_dec_list->son->bro->bro, type_ori);
+        ProcessExtDecList(ext_dec_list->son->bro->bro, type);
     }
 }
 
@@ -35,10 +36,10 @@ void FillParamDecIntoParam(TreeNode* param_dec, ParamList param) {
 
     Type type = GetType(specifier);
     char* name;
-    AnalyzeVarDec(var_dec, name, type);
+    Type type_comp = AnalyzeVarDec(var_dec, name, type);
     
     param = (ParamList)malloc(sizeof(ParamList_));
-    param->type = type;
+    param->type = type_comp;
     param->tail = NULL;
     //  TODO: add function definition into symbol table
 }
@@ -54,7 +55,7 @@ void GetVarList(TreeNode* var_list, ParamList param_list) {
 Type GetTypeFunction(TreeNode* fun_def, Type type_ret) {
     Type type = (Type)malloc(sizeof(Type_));
     type->kind = kFUNCTION;
-    type->u.function.ret = type_ret;
+    type->u.function.type_ret = type_ret;
     type->u.function.param_list = NULL;
     TreeNode* var_list = fun_def->son->bro->bro;
     if (CheckSymbolName(var_list, "VarList")) {
@@ -77,15 +78,16 @@ void AnalyzeExtDef(TreeNode* ext_def) {
     TreeNode* specifier = ext_def->son;
     Type type = GetType(specifier);
     TreeNode* next = specifier->bro;
-    if (next->type == kSYMBOL && strcmp(next->val.ValString, "SEMI") == 0) {
+    if (CheckSymbolName(next, "SEMI")) {
         //  Struct Definition
         //  TODO: 
         //  check duplication in struct element definition
         //  insert into symbol table
         return;
     }
+
     assert(next->type == kINTERNAL);
-    if (strcmp(next->val.ValString, "ExtDecList") == 0) {
+    if (CheckSymbolName(next, "ExtDecList")) {
         //  Global Variable
         ProcessExtDecList(next, type);
         return;
@@ -130,68 +132,109 @@ char* GetTagName(TreeNode* root) {
     return name;
 }
 
-void AnalyzeVarDec(TreeNode* var_dec, char* name, Type type) {
-    if (var_dec->son->type == kID) {
-        name = (char*)malloc(sizeof(var_dec->son->val.ValString) + 1);
-        //  TODO: In ExtDecList, check name duplication
-        strcpy(name, var_dec->son->val.ValString);
-        return;
-    }
-    Type type_next = (Type)malloc(sizeof(Type_));
-    *type_next = *type;
+Type AnalyzeVarDec(TreeNode* var_dec, char* name, Type type_base) {
+    Type type_comp = (Type)malloc(sizeof(Type_));
+    *type_comp = *type_base;
+    while (1) {
+        if (var_dec->son->type == kID) {
+            name = (char*)malloc(sizeof(var_dec->son->val.ValString) + 1);
+        
+            //  TODO: In ExtDecList, check name duplication
+            strcpy(name, var_dec->son->val.ValString);
+            printf("name = %s\n", name);
+            return type_comp;
+        }
+        type_base = type_comp;
+        type_comp = (Type)malloc(sizeof(Type_));
+        type_comp->kind = kARRAY;
+        type_comp->u.array.size = var_dec->son->bro->bro->val.ValInt;
+        type_comp->u.array.elem = type_base;
 
-    TreeNode* var_dec_next = var_dec->son;
-
-    type->kind = kARRAY;
-    type->u.array.size = var_dec_next->bro->bro->val.ValInt;
-    AnalyzeVarDec(var_dec_next, name, type_next);
-    type->u.array.elem = type_next;
-
-    if (var_dec->bro != NULL) {
-        TreeNode* exp = var_dec->bro->bro;
-        //  TODO: check whether expression is legal
+        var_dec = var_dec->son;
     }
 }
 
-void ProcessDec(TreeNode* dec, Type type, FieldList field_list) {
-    Type type_ori = (Type)malloc(sizeof(Type_));
-    *type_ori = *type;
+int process_dec_cnt = 0;
+
+FieldList ProcessDec(TreeNode* dec, Type type) {
+    printf("process_dec = %d\n", process_dec_cnt++);
     char* name;
-    AnalyzeVarDec(dec->son, name, type);
-    field_list = (FieldList)malloc(sizeof(FieldList_));
+    Type type_comp = AnalyzeVarDec(dec->son, name, type);
+    puts("ProcessDec-begin");
+    OutputType(type_comp, 0);
+    puts("ProcessDec-end");
+    FieldList field_list = (FieldList)malloc(sizeof(FieldList_));
     field_list->name = name;
-    field_list->type = type;
+    field_list->type = type_comp;
     field_list->tail = NULL;
-    if (dec->bro != NULL) {
-        ProcessDecList(dec->bro->bro, type_ori, field_list->tail);
-        //  move field_list to the end of this dec_list
-        field_list = field_list->tail;
-    }
+
+    //  TODO: Dec -> VarDec ASSIGNOP Exp
+    return field_list;
 }
+
 
 void ProcessDecList(TreeNode* dec_list, Type type, FieldList field_list) {
-    ProcessDec(dec_list->son, type, field_list);
+    field_list = ProcessDec(dec_list->son, type);
+    FieldList pre_field = field_list;
+    while (1) {
+        dec_list = dec_list->son->bro->bro;
+        if (!dec_list) return;
+
+        FieldList cur_field = ProcessDec(dec_list->son, type);
+        pre_field->tail = cur_field;
+        pre_field = cur_field;
+    };
+}
+
+void OutputFieldList(FieldList field_list, int indent) {
+    if (field_list == NULL) return;
+    for (int i = 0; i < indent; ++i) printf(" ");
+    printf("%s\n", field_list->name);
+    OutputType(field_list->type, indent+2);
+    OutputFieldList(field_list->tail, indent);
+}
+
+void OutputType(Type type, int indent) {
+    for (int i = 0; i < indent; ++i) printf(" ");
+    switch (type->kind) {
+        case kBASIC:
+            printf("basic: %s\n", type->u.basic ? "float" : "int");
+            break;
+        case kARRAY:
+            printf("array: %d\n", type->u.array.size);
+            OutputType(type->u.array.elem, indent+2);
+            break;
+        case kSTRUCTURE:
+            printf("structure: %s\n", type->u.structure.name);
+            OutputFieldList(type->u.structure.field_list, indent+2);
+            break;
+        case kFUNCTION:
+            puts("function here");
+    }
 }
 
 void FillDefIntoField(TreeNode* def, FieldList field_list) {
+    puts("true");
+    OutputTree(def, 0);
     Type type = GetType(def->son);
+    OutputType(type, 0);
     ProcessDecList(def->son->bro, type, field_list);
-    FillDefListIntoFieldList(def->bro, field_list->tail);
 }
 
 void FillDefListIntoFieldList(TreeNode* def_list, FieldList field_list) {
     if (def_list == NULL) return;
     FillDefIntoField(def_list->son, field_list);
+    FillDefListIntoFieldList(def_list->son->bro, field_list->tail);
 }
 
-Type GetTypeStructure(TreeNode* root) {
+Type GetTypeStructure(TreeNode* struct_specifier) {
     Type type = (Type)malloc(sizeof(Type_));
 
     FieldList field_list = type->u.structure.field_list;
 
     type->kind = kSTRUCTURE;
 
-    TreeNode* tag = root->bro;
+    TreeNode* tag = struct_specifier->son->bro;
 
     type->u.structure.name = GetTagName(tag);
     //  TODO: combine struct_name with the definition of struct

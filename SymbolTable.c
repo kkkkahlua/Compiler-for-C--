@@ -1,6 +1,7 @@
 #include "SymbolTable.h"
 
 #include <string.h>
+#include <stdlib.h>
 
 unsigned int hash_pjw(const char* name) {
     unsigned int val = 0, i;

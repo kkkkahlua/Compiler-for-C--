@@ -28,6 +28,8 @@ typedef struct FieldList_ {
     FieldList tail;
 } FieldList_;
 
+void OutputType(Type type, int indent);
+
 void AnalyzeProgram(TreeNode* root);
 
 void AnalyzeExtDefList(TreeNode* root);
@@ -50,9 +52,9 @@ Type GetTypeBasic(TreeNode* root);
 
 char* GetTagName(TreeNode* root);
 
-void AnalyzeVarDec(TreeNode* var_dec, char* name, Type type);
+Type AnalyzeVarDec(TreeNode* var_dec, char* name, Type type_base);
 
-void ProcessDec(TreeNode* dec, Type type, FieldList field_list);
+FieldList ProcessDec(TreeNode* dec, Type type);
 
 void ProcessDecList(TreeNode* dec_list, Type type, FieldList field_list);
 
