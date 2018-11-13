@@ -1,9 +1,15 @@
 #include "semantic.h"
 
+#include "SymbolTable.h"
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+int layer = 0;
+
+const int kErrorMsgLen = 100;
 
 int CheckSymbolName(TreeNode* node, const char* name) {
     return strcmp(node->val.ValString, name) == 0;
@@ -24,10 +30,17 @@ void AnalyzeExtDefList(TreeNode* ext_def_list) {
 void ProcessExtDecList(TreeNode* ext_dec_list, Type type) {
     while (1) {
         char* name;
-        Type type_comp = AnalyzeVarDec(ext_dec_list->son, name, type);
-        //  TODO: 
+        Type type_comp = AnalyzeVarDec(ext_dec_list->son, &name, type);
+
         //  1. check variable duplication
         //  2. add to symbol table
+        if (LookupVariable(name, layer)) {
+            char* error_msg = (char*)malloc(kErrorMsgLen);
+            sprintf(error_msg, "Redefined variable \"%s\"", name);
+            OutputSemanticErrorMsg(3, ext_dec_list->son->lineno, error_msg);
+        } else {
+            insert(name, type, layer);
+        }
 
         if (!ext_dec_list->son->bro) return;
         ext_dec_list = ext_dec_list->son->bro->bro;
@@ -42,7 +55,7 @@ ParamList ProcessParamDec(TreeNode* param_dec) {
 
     Type type = GetType(specifier);
     char* name;
-    Type type_comp = AnalyzeVarDec(var_dec, name, type);
+    Type type_comp = AnalyzeVarDec(var_dec, &name, type);
     
     ParamList param = (ParamList)malloc(sizeof(ParamList_));
     param->type = type_comp;
@@ -73,12 +86,11 @@ Type GetTypeFunction(TreeNode* fun_def, Type type_ret) {
     if (CheckSymbolName(var_list, "VarList")) {
         type->u.function.param_list = GetVarList(var_list);
     }
-    OutputType(type, 0);
+    // OutputType(type, 0);
     return type;
 }
 
 void ProcessFunDef(TreeNode* fun_def, Type type_ret) {
-    puts("true");
     Type type = GetTypeFunction(fun_def, type_ret);
     TreeNode* comp_st = fun_def->bro;
     //  TODO: analyze the function body
@@ -89,15 +101,14 @@ void ProcessFunDec(TreeNode* fun_def, Type type_ret) {
 }
 
 void AnalyzeExtDef(TreeNode* ext_def) {
-    //  TODO: AnalyzeExtDef
     TreeNode* specifier = ext_def->son;
     Type type = GetType(specifier);
     TreeNode* next = specifier->bro;
+
     if (CheckSymbolName(next, "SEMI")) {
         //  Struct Definition
-        //  TODO: 
-        //  check duplication in struct element definition
         //  insert into symbol table
+        insert(type->u.structure.name, type, layer);
         return;
     }
 
@@ -146,17 +157,14 @@ char* GetTagName(TreeNode* root) {
     return name;
 }
 
-Type AnalyzeVarDec(TreeNode* var_dec, char* name, Type type_base) {
+Type AnalyzeVarDec(TreeNode* var_dec, char** name, Type type_base) {
     Type type_comp = (Type)malloc(sizeof(Type_));
     *type_comp = *type_base;
     while (1) {
         if (var_dec->son->type == kID) {
-            name = (char*)malloc(sizeof(var_dec->son->val.ValString) + 1);
+            *name = (char*)malloc(sizeof(var_dec->son->val.ValString) + 1);
         
-            //  TODO: In ExtDecList, check name duplication
-            strcpy(name, var_dec->son->val.ValString);
-            // printf("name = %s\n", name);
-            // OutputType(type_comp, 0);
+            strcpy(*name, var_dec->son->val.ValString);
             return type_comp;
         }
         type_base = type_comp;
@@ -171,7 +179,16 @@ Type AnalyzeVarDec(TreeNode* var_dec, char* name, Type type_base) {
 
 FieldList ProcessDec(TreeNode* dec, Type type) {
     char* name;
-    Type type_comp = AnalyzeVarDec(dec->son, name, type);
+    Type type_comp = AnalyzeVarDec(dec->son, &name, type);
+
+    if (LookupVariable(name, layer)) {
+        char* error_msg = (char*)malloc(kErrorMsgLen);
+        sprintf(error_msg, "Redefined field \"%s\"", name);
+        OutputSemanticErrorMsg(15, dec->son->lineno, error_msg);
+    } else {
+        insert(name, type, layer);
+    }
+
     // puts("ProcessDec-begin");
     // OutputType(type_comp, 0);
     // puts("ProcessDec-end");
@@ -180,7 +197,10 @@ FieldList ProcessDec(TreeNode* dec, Type type) {
     field_list->type = type_comp;
     field_list->tail = NULL;
 
-    //  TODO: Dec -> VarDec ASSIGNOP Exp
+    //  Error 15: assignment in sturct definition
+    if (dec->son->bro) {
+        OutputSemanticErrorMsg(15, dec->son->bro->lineno, "Assignment in struct definition");
+    }
     return field_list;
 }
 
@@ -241,9 +261,19 @@ Type GetTypeStructure(TreeNode* struct_specifier) {
         assert(lc->type == kSYMBOL && strcmp(lc->val.ValString, "LC") == 0);
         TreeNode* def_list = lc->bro;
         type->u.structure.field_list = FillDefListIntoFieldList(def_list);
-        OutputType(type, 0);
+        return type;
     } else {    //  declaration
         //  TODO: check whether the struct has been defined or not
+    }
+}
+
+void RemoveStructElement(Type type) {
+    assert(type->kind == kSTRUCTURE);
+    FieldList field_list = type->u.structure.field_list;
+    while (1) {
+        if (!field_list) return;
+        RemoveVariable(field_list->name, layer);
+        field_list = field_list->tail;
     }
 }
 
@@ -253,8 +283,11 @@ Type GetType(TreeNode* root) {
     if (specifier->type == kTYPE) {
         type = GetTypeBasic(specifier);
     } else {
+        ++layer;
         type = GetTypeStructure(specifier);
-        OutputType(type, 0);
+        RemoveStructElement(type);
+        --layer;
+        // OutputType(type, 0);
     }
     return type;
 }
@@ -295,4 +328,8 @@ void OutputType(Type type, int indent) {
             puts("  param_list:");
             OutputParamList(type->u.function.param_list, indent+4);
     }
+}
+
+void OutputSemanticErrorMsg(int error_type, int lineno, const char* error_msg) {
+    printf("Error type %d at Line %d: %s\n", error_type, lineno, error_msg);
 }
