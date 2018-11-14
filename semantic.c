@@ -61,7 +61,6 @@ ParamList ProcessParamDec(TreeNode* param_dec) {
     ParamList param = (ParamList)malloc(sizeof(ParamList_));
     param->type = type_comp;
     param->tail = NULL;
-    //  TODO: add function definition into symbol table
     return param;
 }
 
@@ -94,19 +93,28 @@ Type GetTypeFunction(TreeNode* fun_def, Type type_ret) {
 
 void ProcessFunDef(TreeNode* fun_def, Type type_ret) {
     Type type = GetTypeFunction(fun_def, type_ret);
-    switch (LookupFunction(type->u.function.name, type_ret, type->u.function.param_list, 1)) {
-        case 0:
-        //  TODO: add function definition to symbol table
+    switch (LookupFunction(type->u.function.name, type_ret, type->u.function.param_list)) {
+        case 0: //  function neither defined nor declared
+            type->u.function.defined = 1;
+            insert(type->u.function.name, type, layer);
             break;
-        case 1:
-        //  TODO: function already declared but not yet defined
+        case 1: //  function already declared but not yet defined
+            UpdateFunctionStatus(type->u.function.name);
             break;
-        case 2:
-        //  TODO: Error 19, conflict
+        case 2: {//  Error 19, type conflict
+            char* error_msg = (char*)malloc(kErrorMsgLen);
+            sprintf(error_msg, "Inconsistent declaration/definition of function \"%s\"", type->u.function.name);
+            OutputSemanticErrorMsg(19, fun_def->lineno, error_msg);
+            free(error_msg);
             break;
-        case 3:
-        //  TODO: Error 19, multiple definition
+        }
+        case 3: {//  Error 19, multiple definition
+            char* error_msg = (char*)malloc(kErrorMsgLen);
+            sprintf(error_msg, "multiple definition of function \"%s\"", type->u.function.name);
+            OutputSemanticErrorMsg(19, fun_def->lineno, error_msg);
+            free(error_msg);
             break;
+        }
     }
 
     TreeNode* comp_st = fun_def->bro;
@@ -115,6 +123,23 @@ void ProcessFunDef(TreeNode* fun_def, Type type_ret) {
 
 void ProcessFunDec(TreeNode* fun_def, Type type_ret) {
     Type type = GetTypeFunction(fun_def, type_ret);
+    switch (LookupFunction(type->u.function.name, type_ret, type->u.function.param_list)) {
+        case 0: //  neither defined nor declared
+            type->u.function.defined = 0;
+            insert(type->u.function.name, type, layer);
+            break;
+        case 1: //  function already declared but not yet defined
+            break;
+        case 2: {//  Error 19, type conflict
+            char* error_msg = (char*)malloc(kErrorMsgLen);
+            sprintf(error_msg, "Inconsistent declaration/definition of function \"%s\"", type->u.function.name);
+            OutputSemanticErrorMsg(19, fun_def->lineno, error_msg);
+            free(error_msg);
+            break;
+        }
+        case 3: //  already defined
+            break;
+    }
 }
 
 void AnalyzeExtDef(TreeNode* ext_def) {
@@ -124,7 +149,6 @@ void AnalyzeExtDef(TreeNode* ext_def) {
 
     if (CheckSymbolName(next, "SEMI")) {
         //  Struct Definition
-        //  insert into symbol table
         insert(type->u.structure.name, type, layer);
         return;
     }
@@ -140,11 +164,12 @@ void AnalyzeExtDef(TreeNode* ext_def) {
     TreeNode* fun_dec = next;
     assert(CheckSymbolName(fun_dec, "FunDec"));
 
+    //  Function Declaration
     if (CheckSymbolName(fun_dec->bro, "SEMI")) {
-        //  TODO: Function Declaration
         ProcessFunDec(fun_dec, type);
         return;
     }
+
     //  Function Definition
     assert(CheckSymbolName(fun_dec->bro, "CompSt"));
     ProcessFunDef(fun_dec, type);

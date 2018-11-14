@@ -26,12 +26,14 @@ int LookupVariable(const char* name, int layer);
 
 int LookupStructDefinition(const char* name, Type type, int layer);
 
-int LookupFunction(const char* name, Type type_ret, ParamList param_list, int is_define);
+int LookupFunction(const char* name, Type type_ret, ParamList param_list);
 
 void insert(const char* name, Type type, int layer);
 
 void RemoveVariable(const char* name, int layer);
 
 void OutputLayerNode(const char* name, LayerNode* layer_node);
+
+void UpdateFunctionStatus(const char* name);
 
 #endif

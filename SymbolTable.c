@@ -62,7 +62,7 @@ int TypeConsistentFunction(
 
 int LookupFunctionAt(
     const char* name, SymbolTableNode* symbol_table_node, 
-    Type type, ParamList param_list, int is_define) {
+    Type type, ParamList param_list) {
     if (symbol_table_node == NULL) return 0;    //  neither defined nor declared yet
     if (strcmp(symbol_table_node->name, name) == 0) {
         if (!TypeConsistentFunction(
@@ -72,17 +72,32 @@ int LookupFunctionAt(
             param_list)) {
             return 2;  //  Type inconsistent
         }
-        if (is_define && symbol_table_node->type->u.function.defined) {
-            return 3;  //  Redefinition
+        if (symbol_table_node->type->u.function.defined) {  //  already defined
+            return 3;
+        } else {    //  not defined
+            return 1;
         }
-        return 1;
     }
-    return LookupFunctionAt(name, symbol_table_node->next, type, param_list, is_define);
+    return LookupFunctionAt(name, symbol_table_node->next, type, param_list);
 }
 
-int LookupFunction(const char* name, Type type, ParamList param_list, int is_define) {
+void UpdateFunctionStatusAt(const char* name, SymbolTableNode* symbol_table_node) {
+    assert(symbol_table_node);
+    if (strcmp(symbol_table_node->name, name) == 0) {
+        symbol_table_node->type->u.function.defined = 1;
+        return;
+    }
+    UpdateFunctionStatusAt(name, symbol_table_node->next);
+}
+
+void UpdateFunctionStatus(const char* name) {
     unsigned int val = hash_pjw(name);
-    return LookupFunctionAt(name, symbol_table[val], type, param_list, is_define);
+    UpdateFunctionStatusAt(name, symbol_table[val]);
+}
+
+int LookupFunction(const char* name, Type type, ParamList param_list) {
+    unsigned int val = hash_pjw(name);
+    return LookupFunctionAt(name, symbol_table[val], type, param_list);
 }
 
 int LookupStructDefinitionAt(const char* name, SymbolTableNode* symbol_table_node, Type type, int layer) {

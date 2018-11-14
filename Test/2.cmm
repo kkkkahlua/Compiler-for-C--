@@ -3,6 +3,10 @@ int main() {
     return 0;
 }
 
+struct node {
+    int x, y;
+};
+
 int f(int x, float j, struct node v) {
     int y;
     y = 1;
