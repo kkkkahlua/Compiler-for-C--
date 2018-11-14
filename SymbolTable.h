@@ -24,6 +24,8 @@ unsigned int hash_pjw(const char* name);
 
 int LookupVariable(const char* name, int layer);
 
+int LookupStructDefinition(const char* name, Type type, int layer);
+
 int LookupFunction(const char* name, Type type_ret, ParamList param_list, int is_define);
 
 void insert(const char* name, Type type, int layer);

@@ -32,13 +32,14 @@ void ProcessExtDecList(TreeNode* ext_dec_list, Type type) {
         char* name;
         Type type_comp = AnalyzeVarDec(ext_dec_list->son, &name, type);
 
-        //  1. check variable duplication
-        //  2. add to symbol table
-        if (LookupVariable(name, layer)) {
+        if (LookupVariable(name, layer) == 1) {
+            //  Error 3: redefinition in global variable
             char* error_msg = (char*)malloc(kErrorMsgLen);
             sprintf(error_msg, "Redefined variable \"%s\"", name);
             OutputSemanticErrorMsg(3, ext_dec_list->son->lineno, error_msg);
+            free(error_msg);
         } else {
+            //  add to symbol table
             insert(name, type, layer);
         }
 
@@ -181,10 +182,12 @@ FieldList ProcessDec(TreeNode* dec, Type type) {
     char* name;
     Type type_comp = AnalyzeVarDec(dec->son, &name, type);
 
-    if (LookupVariable(name, layer)) {
+    //  Error 15: redefinition in struct field
+    if (LookupVariable(name, layer) == 1) {
         char* error_msg = (char*)malloc(kErrorMsgLen);
         sprintf(error_msg, "Redefined field \"%s\"", name);
         OutputSemanticErrorMsg(15, dec->son->lineno, error_msg);
+        free(error_msg);
     } else {
         insert(name, type, layer);
     }
@@ -260,11 +263,34 @@ Type GetTypeStructure(TreeNode* struct_specifier) {
         TreeNode* lc = tag->bro;
         assert(lc->type == kSYMBOL && strcmp(lc->val.ValString, "LC") == 0);
         TreeNode* def_list = lc->bro;
+
+        ++layer;
         type->u.structure.field_list = FillDefListIntoFieldList(def_list);
-        return type;
+        RemoveStructElement(type);
+        --layer;
     } else {    //  declaration
         //  TODO: check whether the struct has been defined or not
+        switch (LookupStructDefinition(type->u.structure.name, type, layer)) {
+            case 0: {    /* Error 17: struct type not defined  */
+                char* error_msg = (char*)malloc(kErrorMsgLen);
+                sprintf(error_msg, "Undefined structure \"%s\"", type->u.structure.name);
+                OutputSemanticErrorMsg(17, tag->lineno, error_msg);
+                free(error_msg);
+                break;
+            }
+            case 1: {   /*  consistent, to be added to symbol table */
+                break;
+            }
+            case 2: {   /*  Error 16: struct type duplicated    */
+                char* error_msg = (char*)malloc(kErrorMsgLen);
+                sprintf(error_msg, "Duplicated name \"%s\"", type->u.structure.name);
+                OutputSemanticErrorMsg(16, tag->lineno, error_msg);
+                free(error_msg);
+                break;
+            }
+        }
     }
+    return type;
 }
 
 void RemoveStructElement(Type type) {
@@ -283,10 +309,7 @@ Type GetType(TreeNode* root) {
     if (specifier->type == kTYPE) {
         type = GetTypeBasic(specifier);
     } else {
-        ++layer;
         type = GetTypeStructure(specifier);
-        RemoveStructElement(type);
-        --layer;
         // OutputType(type, 0);
     }
     return type;

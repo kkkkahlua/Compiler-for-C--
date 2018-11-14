@@ -6,4 +6,4 @@ struct node {
     int fushimi;
     int xx = 6;
 };
-int x;
+struct xx x;

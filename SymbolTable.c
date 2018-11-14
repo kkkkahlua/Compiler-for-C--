@@ -15,13 +15,15 @@ unsigned int hash_pjw(const char* name) {
 }
 
 int LookupVariableAt(const char* name, SymbolTableNode* symbol_table_node, int layer) {
-    if (symbol_table_node == NULL) return 0;
+    if (symbol_table_node == NULL) return 0;    //  not defined
     if (strcmp(symbol_table_node->name, name) == 0) {
+        //  already defined in current scope
         if (symbol_table_node->layer_node->layer == layer) {
             return 1;
         }
+        //  defined in outer scopes
         assert(symbol_table_node->layer_node->layer < layer);
-        return 0;
+        return 2;
     }
     return LookupVariableAt(name, symbol_table_node->next, layer);
 }
@@ -83,6 +85,28 @@ int LookupFunction(const char* name, Type type, ParamList param_list, int is_def
     return LookupFunctionAt(name, symbol_table[val], type, param_list, is_define);
 }
 
+int LookupStructDefinitionAt(const char* name, SymbolTableNode* symbol_table_node, Type type, int layer) {
+    if (symbol_table_node == NULL) return 0;    //  not defined
+    if (strcmp(symbol_table_node->name, name) == 0) {
+        assert(symbol_table_node->layer_node->layer <= layer);
+
+        //  Type consistent
+        if (symbol_table_node->type->kind == kSTRUCTURE) {
+            *type = *symbol_table_node->type;
+            return 1;
+        }
+
+        //  Type mismatch
+        return 2;
+    }
+    return LookupVariableAt(name, symbol_table_node->next, layer);   
+}
+
+int LookupStructDefinition(const char* name, Type type, int layer) {
+    unsigned int val = hash_pjw(name);
+    return LookupStructDefinitionAt(name, symbol_table[val], type, layer);
+}
+
 SymbolTableNode* CreateSymbolTableNode(const char* name, Type type, int layer) {
     SymbolTableNode* symbol_table_node = (SymbolTableNode*)malloc(sizeof(SymbolTableNode));
     symbol_table_node->name = name;
@@ -117,9 +141,6 @@ void InsertAt(const char* name, int idx, Type type, int layer) {
             layer_node->up = symbol_table_node->layer_node;
             symbol_table_node->layer_node = layer_node;
 
-            if (strcmp(name, "fushimi")) {
-                OutputLayerNode(name, symbol_table_node->layer_node);
-            }
             return;
         }
 

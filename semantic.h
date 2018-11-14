@@ -68,4 +68,6 @@ Type GetTypeStructure(TreeNode* root);
 
 Type GetType(TreeNode* root);
 
+void RemoveStructElement(Type type);
+
 #endif
