@@ -32,7 +32,7 @@ void ProcessExtDecList(TreeNode* ext_dec_list, Type type) {
         char* name;
         Type type_comp = AnalyzeVarDec(ext_dec_list->son, &name, type);
 
-        if (LookupVariable(name, layer) == 1) {
+        if (LookupVariable(name, &type_comp, layer) == 1) {
             //  Error 3: redefinition in global variable
             char* error_msg = (char*)malloc(kErrorMsgLen);
             sprintf(error_msg, "Redefined variable \"%s\"", name);
@@ -40,7 +40,7 @@ void ProcessExtDecList(TreeNode* ext_dec_list, Type type) {
             free(error_msg);
         } else {
             //  add to symbol table
-            insert(name, type, layer);
+            insert(name, type_comp, layer);
         }
 
         if (!ext_dec_list->son->bro) return;
@@ -91,9 +91,172 @@ Type GetTypeFunction(TreeNode* fun_def, Type type_ret) {
     return type;
 }
 
+ParamList FillArgIntoParam(TreeNode* exp) {
+    ParamList param_list = (ParamList)malloc(sizeof(ParamList_));
+    param_list->type = ProcessExp(exp);
+    param_list->tail = NULL;
+    return param_list;
+}
+
+ParamList FillArgsIntoParamList(TreeNode* args) {
+    ParamList param_list = FillArgIntoParam(args->son),
+            pre_param = param_list;
+    while (1) {
+        if (!args->son->bro) return param_list;
+        args = args->son->bro->bro;
+
+        ParamList cur_param = FillArgIntoParam(args->son);
+        pre_param->tail = cur_param;
+        pre_param = cur_param;
+    };
+}
+
+Type ProcessExp(TreeNode* exp) {
+    if (exp->son->type == kID) {
+        TreeNode* id = exp->son;
+        if (!id->bro) {   /*  Exp -> ID   */
+            Type type = NULL;
+            if (!LookupVariable(exp->son->val.ValString, &type, layer)) {
+                //  Error 1: undefined variable
+                char* error_msg = (char*)malloc(kErrorMsgLen);
+                sprintf(error_msg, "Undefined variable \"%s\"", id->val.ValString);
+                OutputSemanticErrorMsg(1, id->lineno, error_msg);
+                free(error_msg);
+            }
+            return type;
+        } else {        /*  function call   */
+            Type type_ret = NULL;
+            ParamList parma_list = NULL;
+            if (LookupFunction(id->val.ValString, type_ret, parma_list, 1)) {
+                ParamList cur_param_list = NULL;
+                if (CheckSymbolName(id->bro->bro, "Args") {
+                    parma_list = FillArgsIntoParamList(id->bro->bro);
+                }
+                if (!TypeConsistentParamList(param_list, cur_param_list)) {
+                    //  Error 9: function param inconsistent
+                    char* error_msg = (char*)malloc(kErrorMsgLen);
+                    sprintf(error_msg, "Function \"%s\" is not applicable to function call", id->val.ValString);
+                    OutputSemanticErrorMsg(9, id->lineno, error_msg);
+                    free(error_msg);    
+                }
+            } else {
+                //  Error 2: undefined function
+                char* error_msg = (char*)malloc(kErrorMsgLen);
+                sprintf(error_msg, "Undefined function \"%s\"", id->val.ValString);
+                OutputSemanticErrorMsg(2, id->lineno, error_msg);
+                free(error_msg);
+            }
+            return type_ret;
+        }
+    }
+    if (exp->type == kINT || exp->type == kFLOAT) {
+        Type type = (Type)malloc(sizeof(Type_));
+        type->kind = kBASIC;
+        type->u.basic = exp->type == kINT ? 0 : 1;
+        return type;
+    }
+
+    if (CheckSymbolName(exp->son, "Exp")) {
+        TreeNode* exp_1 = exp->son;
+        if (CheckSymbolName(exp_1->bro), "ASSIGNOP") {
+            if (!CheckLvalue(exp_1)) {
+                //  Error 6: rvalue on the left-hand side of an assignment
+                OutputSemanticErrorMsg(6, exp_1->lineno, "The left-hand side of an assignment must be a variable");
+            }
+            //  TODO: 
+            //  consider whether to continue processing or not 
+            //  when the left side is not an lvalue
+            Type type_r = ProcessExp(exp_1->bro->bro),
+                type_l = ProcessExp(exp_1);
+            
+            if (!TypeConsistent(type_r, type_l)) {
+                OutputSemanticErrorMsg(6, exp_1->lineno, "Type mismatched for assignment");
+            }
+            return type_l;
+        } else if (CheckSymbolName(exp_1->bro, "LB")) {
+            Type type_base = ProcessExp(exp_1->bro),
+                type_idx = ProcessExp(exp_1->bro->bro);
+            if (type_base->kind != kARRAY) {
+                //  Error 10: [ ] operated on a non-array variable
+                char* error_msg = (char*)malloc(kErrorMsgLen);
+                sprintf(error_msg, "\"%s\" is not an array", );
+                OutputSemanticErrorMsg(3, dec_list->son->lineno, error_msg);
+                free(error_msg);
+            }
+        }
+            /*if (CheckSymbolName(exp_1->bro, "AND")
+                || CheckSymbolName(exp_1->bro, "OR")
+                || CheckSymbolName(exp_1->bro, "PLUS")
+                || CheckSymbolName(exp_1->bro, "MINUS")
+                || CheckSymbolName(exp_1->bro, "STAR")
+                || CheckSymbolName(exp_1->bro, "DIV")
+                || exp_1->bro->type == kRELOP)*/ {
+            Type type_l_base = ProcessExp(exp_1),
+                type_r_base = ProcessExp(exp_1->bro->bro);
+            if (!CheckTypeBaseConsistent(type_l_base, type_r_base)) {
+                OutputSemanticErrorMsg(6, exp_1->lineno, "Type mismatched for operands");
+            }
+            return type_l_base;    
+        }
+    } else if (CheckSymbolName(exp->son, "LP")) {
+        ProcessExp(exp->son->bro);
+    } else if ()
+
+}
+
+void AnalyzeDec(TreeNode* dec, char** name, Type type) {
+    Type type_comp = AnalyzeVarDec(dec->son, name, type);
+    jif (!dec->son->bro) return;
+    ProcessExp(dec->son->bro->bro);
+}
+
+void ProcessDecList(TreeNode* dec_list, Type type) {
+    while (1) {
+        char* name;
+        Type type_comp = AnalyzeDec(dec_list->son, &name, type);
+
+        if (LookupVariable(name, &type_comp, layer) == 1) {
+            //  Error 3: redefinition in variable
+            char* error_msg = (char*)malloc(kErrorMsgLen);
+            sprintf(error_msg, "Redefined variable \"%s\"", name);
+            OutputSemanticErrorMsg(3, dec_list->son->lineno, error_msg);
+            free(error_msg);
+        } else {
+            //  add to symbol table
+            insert(name, type_comp, layer);
+        }
+
+        if (!dec_list->son->bro) return;
+        dec_list = dec_list->son->bro->bro;
+    }
+}
+
+void ProcessDef(TreeNode* def) {
+    Type type = GetType(def->son);
+    return ProcessDecList(def->son->bro, type);    
+}
+
+void ProcessDefList(TreeNode* def_list) {
+    if (!def_list) return NULL;
+
+    while (1) {
+        def_list = def_list->son->bro;
+        if (!def_list) return;
+        ProcessDef(def_list->son);
+    }
+}
+
+void ProcessCompSt(TreeNode* comp_st) {
+    ++layer;
+    TreeNode* def_list = comp_st->son->bro,
+            * stmt_list = def_list->bro;
+    ProcessDefList(def_list);
+    --layer;
+}
+
 void ProcessFunDef(TreeNode* fun_def, Type type_ret) {
     Type type = GetTypeFunction(fun_def, type_ret);
-    switch (LookupFunction(type->u.function.name, type_ret, type->u.function.param_list)) {
+    switch (LookupFunction(type->u.function.name, &type_ret, &(type->u.function.param_list), 0)) {
         case 0: //  function neither defined nor declared
             type->u.function.defined = 1;
             insert(type->u.function.name, type, layer);
@@ -118,12 +281,13 @@ void ProcessFunDef(TreeNode* fun_def, Type type_ret) {
     }
 
     TreeNode* comp_st = fun_def->bro;
+    ProcessCompSt(comp_st);
     //  TODO: analyze the function body
 }
 
 void ProcessFunDec(TreeNode* fun_def, Type type_ret) {
     Type type = GetTypeFunction(fun_def, type_ret);
-    switch (LookupFunction(type->u.function.name, type_ret, type->u.function.param_list)) {
+    switch (LookupFunction(type->u.function.name, &type_ret, &(type->u.function.param_list), 0)) {
         case 0: //  neither defined nor declared
             type->u.function.defined = 0;
             insert(type->u.function.name, type, layer);
@@ -219,23 +383,20 @@ Type AnalyzeVarDec(TreeNode* var_dec, char** name, Type type_base) {
     }
 }
 
-FieldList ProcessDec(TreeNode* dec, Type type) {
+FieldList FillDecIntoField(TreeNode* dec, Type type) {
     char* name;
     Type type_comp = AnalyzeVarDec(dec->son, &name, type);
 
     //  Error 15: redefinition in struct field
-    if (LookupVariable(name, layer) == 1) {
+    if (LookupVariable(name, &type_comp, layer) == 1) {
         char* error_msg = (char*)malloc(kErrorMsgLen);
         sprintf(error_msg, "Redefined field \"%s\"", name);
         OutputSemanticErrorMsg(15, dec->son->lineno, error_msg);
         free(error_msg);
     } else {
-        insert(name, type, layer);
+        insert(name, type_comp, layer);
     }
 
-    // puts("ProcessDec-begin");
-    // OutputType(type_comp, 0);
-    // puts("ProcessDec-end");
     FieldList field_list = (FieldList)malloc(sizeof(FieldList_));
     field_list->name = name;
     field_list->type = type_comp;
@@ -248,22 +409,22 @@ FieldList ProcessDec(TreeNode* dec, Type type) {
     return field_list;
 }
 
-FieldList ProcessDecList(TreeNode* dec_list, Type type) {
-    FieldList field_list = ProcessDec(dec_list->son, type),
+FieldList FillDecListIntoFieldList(TreeNode* dec_list, Type type) {
+    FieldList field_list = FillDecIntoField(dec_list->son, type),
             pre_field = field_list;
     while (1) {
         if (!dec_list->son->bro) return field_list;
         dec_list = dec_list->son->bro->bro;
 
-        FieldList cur_field = ProcessDec(dec_list->son, type);
+        FieldList cur_field = FillDecIntoField(dec_list->son, type);
         pre_field->tail = cur_field;
         pre_field = cur_field;
     };
 }
 
-FieldList FillDefIntoField(TreeNode* def) {
+FieldList FillDefIntoFieldList(TreeNode* def) {
     Type type = GetType(def->son);
-    return ProcessDecList(def->son->bro, type);
+    return FillDecListIntoFieldList(def->son->bro, type);
 }
 
 FieldList LastField(FieldList field_list) {
@@ -279,13 +440,13 @@ int def_list_cnt = 0;
 FieldList FillDefListIntoFieldList(TreeNode* def_list) {
     if (!def_list) return NULL;
 
-    FieldList field_list = FillDefIntoField(def_list->son),
+    FieldList field_list = FillDefIntoFieldList(def_list->son),
             pre_field = LastField(field_list);
     while (1) {
         def_list = def_list->son->bro;
         if (!def_list) return field_list;
 
-        FieldList cur_field = FillDefIntoField(def_list->son);
+        FieldList cur_field = FillDefIntoFieldList(def_list->son);
         pre_field->tail = cur_field;
         pre_field = LastField(cur_field);
     }
@@ -310,7 +471,7 @@ Type GetTypeStructure(TreeNode* struct_specifier) {
         RemoveStructElement(type);
         --layer;
     } else {    //  declaration
-        switch (LookupStructDefinition(type->u.structure.name, type, layer)) {
+        switch (LookupStructDefinition(type->u.structure.name, &type, layer)) {
             case 0: {    /* Error 17: struct type not defined  */
                 char* error_msg = (char*)malloc(kErrorMsgLen);
                 sprintf(error_msg, "Undefined structure \"%s\"", type->u.structure.name);
@@ -394,5 +555,5 @@ void OutputType(Type type, int indent) {
 }
 
 void OutputSemanticErrorMsg(int error_type, int lineno, const char* error_msg) {
-    printf("Error type %d at Line %d: %s\n", error_type, lineno, error_msg);
+    printf("Error type %d at Line %d: %s.\n", error_type, lineno, error_msg);
 }

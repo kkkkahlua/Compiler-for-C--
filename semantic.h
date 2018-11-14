@@ -56,11 +56,11 @@ char* GetTagName(TreeNode* root);
 
 Type AnalyzeVarDec(TreeNode* var_dec, char** name, Type type_base);
 
-FieldList ProcessDec(TreeNode* dec, Type type);
+FieldList FillDecIntoField(TreeNode* dec, Type type);
 
-FieldList ProcessDecList(TreeNode* dec_list, Type type);
+FieldList FillDecListIntoFieldList(TreeNode* dec_list, Type type);
 
-FieldList FillDefIntoField(TreeNode* def);
+FieldList FillDefIntoFieldList(TreeNode* def);
 
 FieldList FillDefListIntoFieldList(TreeNode* def_list);
 
