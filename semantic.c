@@ -111,6 +111,12 @@ ParamList FillArgsIntoParamList(TreeNode* args) {
     };
 }
 
+int CheckLvalue(TreeNode* exp) {
+    return exp->son->type == kID ||
+        (exp->son->bro && (CheckSymbolName(exp->son->bro, "LB")
+                        || CheckSymbolName(exp->son->bro, "DOT")));
+}
+
 Type ProcessExp(TreeNode* exp) {
     if (exp->son->type == kID) {
         TreeNode* id = exp->son;
@@ -126,11 +132,12 @@ Type ProcessExp(TreeNode* exp) {
             return type;
         } else {        /*  function call   */
             Type type_ret = NULL;
-            ParamList parma_list = NULL;
-            if (LookupFunction(id->val.ValString, type_ret, parma_list, 1)) {
+            ParamList param_list = NULL;
+            if (LookupFunction(id->val.ValString, &type_ret, &param_list, 1)) {
                 ParamList cur_param_list = NULL;
-                if (CheckSymbolName(id->bro->bro, "Args") {
-                    parma_list = FillArgsIntoParamList(id->bro->bro);
+                if (CheckSymbolName(id->bro->bro, "Args")) {
+                    //  get function call param_list
+                    param_list = FillArgsIntoParamList(id->bro->bro);
                 }
                 if (!TypeConsistentParamList(param_list, cur_param_list)) {
                     //  Error 9: function param inconsistent
@@ -158,7 +165,7 @@ Type ProcessExp(TreeNode* exp) {
 
     if (CheckSymbolName(exp->son, "Exp")) {
         TreeNode* exp_1 = exp->son;
-        if (CheckSymbolName(exp_1->bro), "ASSIGNOP") {
+        if (CheckSymbolName(exp_1->bro, "ASSIGNOP")) {
             if (!CheckLvalue(exp_1)) {
                 //  Error 6: rvalue on the left-hand side of an assignment
                 OutputSemanticErrorMsg(6, exp_1->lineno, "The left-hand side of an assignment must be a variable");
@@ -170,19 +177,51 @@ Type ProcessExp(TreeNode* exp) {
                 type_l = ProcessExp(exp_1);
             
             if (!TypeConsistent(type_r, type_l)) {
+                //  Error 5: type mismatch
                 OutputSemanticErrorMsg(6, exp_1->lineno, "Type mismatched for assignment");
             }
             return type_l;
-        } else if (CheckSymbolName(exp_1->bro, "LB")) {
-            Type type_base = ProcessExp(exp_1->bro),
-                type_idx = ProcessExp(exp_1->bro->bro);
+        }
+        if (CheckSymbolName(exp_1->bro, "LB")) {
+            Type type_base = ProcessExp(exp_1),
+                type_idx = ProcessExp(exp_1->bro->bro),
+                type_ret = NULL;
             if (type_base->kind != kARRAY) {
-                //  Error 10: [ ] operated on a non-array variable
-                char* error_msg = (char*)malloc(kErrorMsgLen);
-                sprintf(error_msg, "\"%s\" is not an array", );
-                OutputSemanticErrorMsg(3, dec_list->son->lineno, error_msg);
-                free(error_msg);
+                //  Error 10: [ ] applied to a non-array variable
+                OutputSemanticErrorMsg(10, exp_1->son->lineno, "[] applied to non-array variable");
+            } else {
+                //  TODO: test a[2][3][4]
+                type_ret = type_base->u.array.elem;
             }
+            if (type_idx->kind != kINT) {
+                //  Error 12: array index not an integer
+                OutputSemanticErrorMsg(12, exp_1->bro->bro->lineno, "Array index not an integer");
+            }
+            
+            return type_ret;
+        }
+        if (CheckSymbolName(exp_1->bro, "DOT")) {
+            Type type_base = ProcessExp(exp_1);
+            if (type_base->kind != kSTRUCTURE) {
+                //  Error 13: "." applied to a non-struct variable
+                OutputSemanticErrorMsg(13, exp_1->lineno, "\".\" applied to a non-struct variable");
+                return NULL;
+            }
+
+            TreeNode* id = exp_1->bro->bro;
+            assert(id->type == kID);
+
+            Type type = NULL;
+            //  TODO: think about a.b.c.e
+            if (!LookupFieldInStruct(id->val.ValString, type_base, &type)) {
+                //  Error 14: non-existent filed
+                char* error_msg = (char*)malloc(kErrorMsgLen);
+                sprintf(error_msg, "Non-existent field \"%s\"", id->val.ValString);
+                OutputSemanticErrorMsg(14, id->lineno, error_msg);
+                free(error_msg);
+                return NULL;
+            }
+            return type;
         }
             /*if (CheckSymbolName(exp_1->bro, "AND")
                 || CheckSymbolName(exp_1->bro, "OR")
@@ -193,20 +232,20 @@ Type ProcessExp(TreeNode* exp) {
                 || exp_1->bro->type == kRELOP)*/ {
             Type type_l_base = ProcessExp(exp_1),
                 type_r_base = ProcessExp(exp_1->bro->bro);
-            if (!CheckTypeBaseConsistent(type_l_base, type_r_base)) {
+            if (!TypeConsistent(type_l_base, type_r_base)) {
                 OutputSemanticErrorMsg(6, exp_1->lineno, "Type mismatched for operands");
             }
             return type_l_base;    
         }
     } else if (CheckSymbolName(exp->son, "LP")) {
         ProcessExp(exp->son->bro);
-    } else if ()
+    }
 
 }
 
-void AnalyzeDec(TreeNode* dec, char** name, Type type) {
+Type AnalyzeDec(TreeNode* dec, char** name, Type type) {
     Type type_comp = AnalyzeVarDec(dec->son, name, type);
-    jif (!dec->son->bro) return;
+    if (!dec->son->bro) return type_comp;
     ProcessExp(dec->son->bro->bro);
 }
 
@@ -237,12 +276,12 @@ void ProcessDef(TreeNode* def) {
 }
 
 void ProcessDefList(TreeNode* def_list) {
-    if (!def_list) return NULL;
+    if (!def_list) return;
 
     while (1) {
+        ProcessDef(def_list->son);
         def_list = def_list->son->bro;
         if (!def_list) return;
-        ProcessDef(def_list->son);
     }
 }
 
@@ -251,6 +290,9 @@ void ProcessCompSt(TreeNode* comp_st) {
     TreeNode* def_list = comp_st->son->bro,
             * stmt_list = def_list->bro;
     ProcessDefList(def_list);
+    //  TODO: 
+    //  1. Analyze stmtlist
+    //  2. Remove Variable from Symbol Table
     --layer;
 }
 
@@ -282,7 +324,6 @@ void ProcessFunDef(TreeNode* fun_def, Type type_ret) {
 
     TreeNode* comp_st = fun_def->bro;
     ProcessCompSt(comp_st);
-    //  TODO: analyze the function body
 }
 
 void ProcessFunDec(TreeNode* fun_def, Type type_ret) {

@@ -70,4 +70,6 @@ Type GetType(TreeNode* root);
 
 void RemoveStructElement(Type type);
 
+Type ProcessExp(TreeNode* exp);
+
 #endif

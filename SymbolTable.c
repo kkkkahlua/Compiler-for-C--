@@ -69,8 +69,8 @@ int LookupFunctionAt(
     if (symbol_table_node == NULL) return 0;    //  neither defined nor declared yet
     if (strcmp(symbol_table_node->name, name) == 0) {
         if (is_call) {
-            *type = symbol_table_node->u.function.type_ret;
-            *param_list = symbol_table_node->u.function.param_list;
+            *type = symbol_table_node->type->u.function.type_ret;
+            *param_list = symbol_table_node->type->u.function.param_list;
             return 1;   /*  found   */
         }
         if (!TypeConsistentFunction(
@@ -86,7 +86,7 @@ int LookupFunctionAt(
             return 1;
         }
     }
-    return LookupFunctionAt(name, symbol_table_node->next, type, param_list);
+    return LookupFunctionAt(name, symbol_table_node->next, type, param_list, is_call);
 }
 
 void UpdateFunctionStatusAt(const char* name, SymbolTableNode* symbol_table_node) {
@@ -105,7 +105,7 @@ void UpdateFunctionStatus(const char* name) {
 
 int LookupFunction(const char* name, Type* type, ParamList* param_list, int is_call) {
     unsigned int val = hash_pjw(name);
-    return LookupFunctionAt(name, symbol_table[val], type, param_list, int is_call);
+    return LookupFunctionAt(name, symbol_table[val], type, param_list, is_call);
 }
 
 int LookupStructDefinitionAt(const char* name, SymbolTableNode* symbol_table_node, Type* type, int layer) {
@@ -128,6 +128,20 @@ int LookupStructDefinitionAt(const char* name, SymbolTableNode* symbol_table_nod
 int LookupStructDefinition(const char* name, Type* type, int layer) {
     unsigned int val = hash_pjw(name);
     return LookupStructDefinitionAt(name, symbol_table[val], type, layer);
+}
+
+//  TODO: think about whether exists a better structure so that 
+//  filed in struct can also be positioned in a hash table
+int LookupFieldInStruct(const char* name, Type type_struct, Type* type_field) {
+    FieldList field_list = type_struct->u.structure.field_list;
+    while (1) {
+        if (!field_list) return 0;
+        if (strcmp(field_list->name, name) == 0) {
+            *type_field = field_list->type;
+            return 1;
+        }
+        field_list = field_list->tail;
+    }
 }
 
 SymbolTableNode* CreateSymbolTableNode(const char* name, Type type, int layer) {
