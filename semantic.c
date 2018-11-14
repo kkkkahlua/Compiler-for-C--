@@ -81,6 +81,7 @@ ParamList GetVarList(TreeNode* var_list) {
 Type GetTypeFunction(TreeNode* fun_def, Type type_ret) {
     Type type = (Type)malloc(sizeof(Type_));
     type->kind = kFUNCTION;
+    type->u.function.name = fun_def->son->val.ValString;
     type->u.function.type_ret = type_ret;
     type->u.function.param_list = NULL;
     TreeNode* var_list = fun_def->son->bro->bro;
@@ -93,6 +94,21 @@ Type GetTypeFunction(TreeNode* fun_def, Type type_ret) {
 
 void ProcessFunDef(TreeNode* fun_def, Type type_ret) {
     Type type = GetTypeFunction(fun_def, type_ret);
+    switch (LookupFunction(type->u.function.name, type_ret, type->u.function.param_list, 1)) {
+        case 0:
+        //  TODO: add function definition to symbol table
+            break;
+        case 1:
+        //  TODO: function already declared but not yet defined
+            break;
+        case 2:
+        //  TODO: Error 19, conflict
+            break;
+        case 3:
+        //  TODO: Error 19, multiple definition
+            break;
+    }
+
     TreeNode* comp_st = fun_def->bro;
     //  TODO: analyze the function body
 }
@@ -269,7 +285,6 @@ Type GetTypeStructure(TreeNode* struct_specifier) {
         RemoveStructElement(type);
         --layer;
     } else {    //  declaration
-        //  TODO: check whether the struct has been defined or not
         switch (LookupStructDefinition(type->u.structure.name, type, layer)) {
             case 0: {    /* Error 17: struct type not defined  */
                 char* error_msg = (char*)malloc(kErrorMsgLen);

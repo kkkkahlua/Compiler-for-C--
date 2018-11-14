@@ -13,7 +13,7 @@ typedef struct Type_ {
         int basic;      //  0: int; 1: float;
         struct { Type elem; int size; } array;
         struct { char* name; FieldList field_list; } structure;
-        struct { Type type_ret; ParamList param_list; int defined; } function;
+        struct { char* name; Type type_ret; ParamList param_list; int defined; } function;
     } u;
 } Type_;
 

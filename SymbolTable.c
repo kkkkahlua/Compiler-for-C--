@@ -63,21 +63,21 @@ int TypeConsistentFunction(
 int LookupFunctionAt(
     const char* name, SymbolTableNode* symbol_table_node, 
     Type type, ParamList param_list, int is_define) {
-    if (symbol_table_node == NULL) return 0;    //  neither definede nor declared yet
+    if (symbol_table_node == NULL) return 0;    //  neither defined nor declared yet
     if (strcmp(symbol_table_node->name, name) == 0) {
-
         if (!TypeConsistentFunction(
             symbol_table_node->type->u.function.type_ret,
             type,
             symbol_table_node->type->u.function.param_list,
             param_list)) {
-                return -1;  //  Type inconsistent
+            return 2;  //  Type inconsistent
         }
         if (is_define && symbol_table_node->type->u.function.defined) {
-            return -2;  //  Redefinition
+            return 3;  //  Redefinition
         }
         return 1;
     }
+    return LookupFunctionAt(name, symbol_table_node->next, type, param_list, is_define);
 }
 
 int LookupFunction(const char* name, Type type, ParamList param_list, int is_define) {
