@@ -6,6 +6,7 @@
 typedef struct Type_* Type;
 typedef struct FieldList_* FieldList;
 typedef struct ParamList_* ParamList;
+typedef struct FunctionList_* FunctionList;
 
 typedef struct Type_ {
     enum { kBASIC, kARRAY, kSTRUCTURE, kFUNCTION } kind;
@@ -27,6 +28,11 @@ typedef struct FieldList_ {
     Type type;
     FieldList tail;
 } FieldList_;
+
+typedef struct FunctionList_ {
+    const char* name;
+    FunctionList tail;
+} FunctionList_;
 
 void OutputType(Type type, int indent);
 
@@ -71,5 +77,11 @@ Type GetType(TreeNode* root);
 void RemoveStructElement(Type type);
 
 Type ProcessExp(TreeNode* exp);
+
+void ProcessStmtList(TreeNode* stmt_list, Type type);
+
+void ProcessStmt(TreeNode* stmt, Type type);
+
+void ProcessCompSt(TreeNode* comp_st, Type type);
 
 #endif

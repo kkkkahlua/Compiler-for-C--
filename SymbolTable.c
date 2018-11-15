@@ -69,9 +69,13 @@ int LookupFunctionAt(
     if (symbol_table_node == NULL) return 0;    //  neither defined nor declared yet
     if (strcmp(symbol_table_node->name, name) == 0) {
         if (is_call) {
-            *type = symbol_table_node->type->u.function.type_ret;
-            *param_list = symbol_table_node->type->u.function.param_list;
-            return 1;   /*  found   */
+            if (symbol_table_node->type->kind == kFUNCTION) {
+                *type = symbol_table_node->type->u.function.type_ret;
+                *param_list = symbol_table_node->type->u.function.param_list;
+                return 1;   /*  function found   */
+            } else {
+                return 0;
+            }
         }
         if (!TypeConsistentFunction(
             symbol_table_node->type->u.function.type_ret,
