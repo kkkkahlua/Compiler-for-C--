@@ -39,11 +39,28 @@ int TypeConsistent(Type type_ori, Type type_now) {
     if (!type_ori || !type_now) return 0;
     if (type_ori->kind != type_now->kind) return 0;
     switch (type_ori->kind) {
-        case kBASIC: return type_ori->u.basic == type_now->u.basic;
-        case kARRAY: return TypeConsistent(type_ori->u.array.elem, type_now->u.array.elem)
-                            && type_ori->u.array.size == type_now->u.array.size;
-        case kSTRUCTURE: return strcmp(type_ori->u.structure.name, type_now->u.structure.name) == 0;
+        case kBASIC: 
+            return type_ori->u.basic == type_now->u.basic;
+        case kARRAY: 
+            return TypeConsistent(type_ori->u.array.elem, type_now->u.array.elem)
+                        && type_ori->u.array.size == type_now->u.array.size;
+        case kSTRUCTURE: 
+            return TypeConsistentFieldList(type_ori->u.structure.field_list, 
+                                            type_now->u.structure.field_list);
     }
+}
+
+int TypeConsistentBasic(Type type_1, Type type_2) {
+    return type_1 && type_2 
+            && type_1->kind == kBASIC && type_2->kind == kBASIC
+            && type_1->u.basic == type_2->u.basic;
+}
+
+int TypeConsistentFieldList(FieldList field_list_1, FieldList field_list_2) {
+    if (!field_list_1 && !field_list_2) return 1;
+    if (!field_list_1 || !field_list_2
+         || !TypeConsistent(field_list_1->type, field_list_2->type)) return 0;
+    return TypeConsistentFieldList(field_list_1->tail, field_list_2->tail);
 }
 
 int TypeConsistentParamList(ParamList param_list_ori, ParamList param_list_now) {
@@ -65,15 +82,20 @@ int TypeConsistentFunction(
 
 int LookupFunctionAt(
     const char* name, SymbolTableNode* symbol_table_node, 
-    Type* type, ParamList* param_list, FunctionOpType function_op) {
+    Type* type, ParamList param_list, FunctionOpType function_op) {
     if (symbol_table_node == NULL) return 0;    //  neither defined nor declared yet
     if (strcmp(symbol_table_node->name, name) == 0) {
         if (symbol_table_node->type->kind != kFUNCTION) return -1;   //  not a function
         switch (function_op) {
             case kCALL: {
-                *type = symbol_table_node->type->u.function.type_ret;
-                *param_list = symbol_table_node->type->u.function.param_list;
-                return 1;   /*  function exists */
+                if (!TypeConsistentParamList(
+                    param_list, 
+                    symbol_table_node->type->u.function.param_list)) {
+                    return 1;   /*  Type inconsistent   */
+                } else {
+                    *type = symbol_table_node->type->u.function.type_ret;
+                    return 2;   /*  Type consistent   */
+                }
             }
             case kCHECK: {
                 if (symbol_table_node->type->u.function.defined) {
@@ -84,7 +106,6 @@ int LookupFunctionAt(
             }
             case kDEFINE: {
                 if (symbol_table_node->type->u.function.defined) {
-                    puts("already defined");
                     return 1;   /*  function defined    */
                 }
             }
@@ -93,11 +114,9 @@ int LookupFunctionAt(
                     symbol_table_node->type->u.function.type_ret,
                     *type,
                     symbol_table_node->type->u.function.param_list,
-                    *param_list)) {
-                    puts("type inconsistent");
+                    param_list)) {
                     return 2;  /*  Type inconsistent    */
                 } else {
-                    puts("type consistent");
                     return 3;   /*  Type consistent     */
                 }
             }
@@ -120,31 +139,36 @@ void UpdateFunctionStatus(const char* name) {
     UpdateFunctionStatusAt(name, symbol_table[val]);
 }
 
-int LookupFunction(const char* name, Type* type, ParamList* param_list, FunctionOpType function_op) {
+int LookupFunction(const char* name, Type* type, ParamList param_list, FunctionOpType function_op) {
     unsigned int val = hash_pjw(name);
     return LookupFunctionAt(name, symbol_table[val], type, param_list, function_op);
 }
 
-int LookupStructDefinitionAt(const char* name, SymbolTableNode* symbol_table_node, Type* type, int layer) {
+int LookupStructAt(const char* name, SymbolTableNode* symbol_table_node, 
+                            Type* type, int layer, StructOpType struct_op) {
     if (symbol_table_node == NULL) return 0;    //  not defined
     if (strcmp(symbol_table_node->name, name) == 0) {
         assert(symbol_table_node->layer_node->layer <= layer);
 
-        //  Type consistent
-        if (symbol_table_node->type->kind == kSTRUCTURE) {
-            *type = symbol_table_node->type;
-            return 1;
+        switch (struct_op) {
+            case kStructDefine: return 1;
+            case kStructDeclare:
+                if (symbol_table_node->type->kind == kSTRUCTURE) {
+                    //  type consistent
+                    *type = symbol_table_node->type;
+                    return 1;
+                } else {
+                    //  mistake other varialbe name as struct definition
+                    return 2;
+                }
         }
-
-        //  Type mismatch
-        return 2;
     }
-    return LookupStructDefinitionAt(name, symbol_table_node->next, type, layer);   
+    return LookupStructAt(name, symbol_table_node->next, type, layer, struct_op);
 }
 
-int LookupStructDefinition(const char* name, Type* type, int layer) {
+int LookupStruct(const char* name, Type* type, int layer, StructOpType struct_op) {
     unsigned int val = hash_pjw(name);
-    return LookupStructDefinitionAt(name, symbol_table[val], type, layer);
+    return LookupStructAt(name, symbol_table[val], type, layer, struct_op);
 }
 
 //  TODO: think about whether exists a better structure so that 

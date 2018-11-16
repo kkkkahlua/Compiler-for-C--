@@ -7,6 +7,7 @@ typedef struct Type_* Type;
 typedef struct FieldList_* FieldList;
 typedef struct ParamList_* ParamList;
 typedef struct FunctionList_* FunctionList;
+typedef struct CompStDefList_* CompStDefList;
 
 typedef struct Type_ {
     enum { kBASIC, kARRAY, kSTRUCTURE, kFUNCTION } kind;
@@ -35,6 +36,11 @@ typedef struct FunctionList_ {
     int lineno;
     FunctionList tail;
 } FunctionList_;
+
+typedef struct CompStDefList_ {
+    const char* name;
+    CompStDefList tail;
+} CompStDefList_;
 
 void CheckFunctionDefinition();
 

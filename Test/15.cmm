@@ -6,4 +6,7 @@ struct Position
 
 int main()
 {
+    struct node {
+        int x, y;
+    } a;
 }
