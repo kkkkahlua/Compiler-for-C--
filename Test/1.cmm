@@ -1,9 +1,5 @@
-int fushimi;
-float fushimi;
-struct node {
-    int x, a[3], b[4][5][3];
-    float x;
-    int fushimi;
-    int xx = 6;
-};
-struct xx x;
+int main() 
+{
+    int i = 0;
+    j = i + 1;
+}

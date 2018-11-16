@@ -19,6 +19,7 @@ typedef struct Type_ {
 } Type_;
 
 typedef struct ParamList_ {
+    const char* name;
     Type type;
     ParamList tail;
 } ParamList_;
@@ -31,8 +32,11 @@ typedef struct FieldList_ {
 
 typedef struct FunctionList_ {
     const char* name;
+    int lineno;
     FunctionList tail;
 } FunctionList_;
+
+void CheckFunctionDefinition();
 
 void OutputType(Type type, int indent);
 

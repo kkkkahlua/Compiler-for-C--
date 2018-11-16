@@ -32,11 +32,11 @@ int LookupVariableAt(const char* name, SymbolTableNode* symbol_table_node, Type*
 
 int LookupVariable(const char* name, Type* type, int layer) {
     unsigned int val = hash_pjw(name);
-    // printf("lookup: name = %s\n", name);
     return LookupVariableAt(name, symbol_table[val], type, layer);
 }
 
 int TypeConsistent(Type type_ori, Type type_now) {
+    if (!type_ori || !type_now) return 0;
     if (type_ori->kind != type_now->kind) return 0;
     switch (type_ori->kind) {
         case kBASIC: return type_ori->u.basic == type_now->u.basic;
@@ -65,32 +65,45 @@ int TypeConsistentFunction(
 
 int LookupFunctionAt(
     const char* name, SymbolTableNode* symbol_table_node, 
-    Type* type, ParamList* param_list, int is_call) {
+    Type* type, ParamList* param_list, FunctionOpType function_op) {
     if (symbol_table_node == NULL) return 0;    //  neither defined nor declared yet
     if (strcmp(symbol_table_node->name, name) == 0) {
-        if (is_call) {
-            if (symbol_table_node->type->kind == kFUNCTION) {
+        if (symbol_table_node->type->kind != kFUNCTION) return -1;   //  not a function
+        switch (function_op) {
+            case kCALL: {
                 *type = symbol_table_node->type->u.function.type_ret;
                 *param_list = symbol_table_node->type->u.function.param_list;
-                return 1;   /*  function found   */
-            } else {
-                return 0;
+                return 1;   /*  function exists */
+            }
+            case kCHECK: {
+                if (symbol_table_node->type->u.function.defined) {
+                    return 1;   /*  function defined    */
+                } else {
+                    return 2;   /*  only declared but not defined   */
+                }
+            }
+            case kDEFINE: {
+                if (symbol_table_node->type->u.function.defined) {
+                    puts("already defined");
+                    return 1;   /*  function defined    */
+                }
+            }
+            case kDECLARE: {
+                if (!TypeConsistentFunction(
+                    symbol_table_node->type->u.function.type_ret,
+                    *type,
+                    symbol_table_node->type->u.function.param_list,
+                    *param_list)) {
+                    puts("type inconsistent");
+                    return 2;  /*  Type inconsistent    */
+                } else {
+                    puts("type consistent");
+                    return 3;   /*  Type consistent     */
+                }
             }
         }
-        if (!TypeConsistentFunction(
-            symbol_table_node->type->u.function.type_ret,
-            *type,
-            symbol_table_node->type->u.function.param_list,
-            *param_list)) {
-            return 2;  //  Type inconsistent
-        }
-        if (symbol_table_node->type->u.function.defined) {  //  already defined
-            return 3;
-        } else {    //  not defined
-            return 1;
-        }
     }
-    return LookupFunctionAt(name, symbol_table_node->next, type, param_list, is_call);
+    return LookupFunctionAt(name, symbol_table_node->next, type, param_list, function_op);
 }
 
 void UpdateFunctionStatusAt(const char* name, SymbolTableNode* symbol_table_node) {
@@ -107,9 +120,9 @@ void UpdateFunctionStatus(const char* name) {
     UpdateFunctionStatusAt(name, symbol_table[val]);
 }
 
-int LookupFunction(const char* name, Type* type, ParamList* param_list, int is_call) {
+int LookupFunction(const char* name, Type* type, ParamList* param_list, FunctionOpType function_op) {
     unsigned int val = hash_pjw(name);
-    return LookupFunctionAt(name, symbol_table[val], type, param_list, is_call);
+    return LookupFunctionAt(name, symbol_table[val], type, param_list, function_op);
 }
 
 int LookupStructDefinitionAt(const char* name, SymbolTableNode* symbol_table_node, Type* type, int layer) {
@@ -192,7 +205,6 @@ void InsertAt(const char* name, int idx, Type type, int layer) {
 
 void insert(const char* name, Type type, int layer) {
     unsigned int val = hash_pjw(name);
-    // printf("insert: name = %s, layer = %d\n", name, layer);
     InsertAt(name, val, type, layer);
 }
 

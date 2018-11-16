@@ -18,6 +18,13 @@ typedef struct LayerNode {
     LayerNode* up;
 } LayerNode;
 
+typedef enum FunctionOpType {
+    kDECLARE,
+    kDEFINE,
+    kCALL,
+    kCHECK
+} FunctionOpType;
+
 SymbolTableNode* symbol_table[16384];
 
 unsigned int hash_pjw(const char* name);
@@ -26,7 +33,7 @@ int LookupVariable(const char* name, Type* type, int layer);
 
 int LookupStructDefinition(const char* name, Type* type, int layer);
 
-int LookupFunction(const char* name, Type* type_ret, ParamList* param_list, int is_call);
+int LookupFunction(const char* name, Type* type_ret, ParamList* param_list, FunctionOpType function_op);
 
 int LookupFieldInStruct(const char* name, Type type_struct, Type* type_field);
 

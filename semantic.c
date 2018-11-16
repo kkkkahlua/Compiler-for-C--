@@ -14,12 +14,12 @@ const int kErrorMsgLen = 100;
 FunctionList function_list = NULL;
 
 int CheckSymbolName(TreeNode* node, const char* name) {
-    return strcmp(node->val.ValString, name) == 0;
+    return node->type != kRELOP && strcmp(node->val.ValString, name) == 0;
 }
 
 void AnalyzeProgram(TreeNode* root) {
     AnalyzeExtDefList(root->son);
-    CheckFunctionDefiniion();
+    CheckFunctionDefinition();
 }
 
 void AnalyzeExtDefList(TreeNode* ext_def_list) {
@@ -30,8 +30,26 @@ void AnalyzeExtDefList(TreeNode* ext_def_list) {
     }
 }
 
-void CheckFunctionDefiniion() {
-    //  TODO: check 
+void CheckFunctionDefinition() {
+    while (1) {
+        if (!function_list) return;
+        switch (LookupFunction(function_list->name, NULL, NULL, kCHECK)) {
+            case -1:    /*  function name conflict with variable name, checked before   */
+                break;
+            case 0:     /*  won't happen    */
+                break;
+            case 1:
+                break;  /*  decleared and defined, as expected  */
+            case 2: {
+                //  Error 18: function declared but not defined
+                char* error_msg = (char*)malloc(kErrorMsgLen);
+                sprintf(error_msg, "Undefined function \"%s\"", function_list->name);
+                OutputSemanticErrorMsg(18, function_list->lineno, error_msg);
+                free(error_msg);
+            }
+        }
+        function_list = function_list->tail;
+    }
 }
 
 void ProcessExtDecList(TreeNode* ext_dec_list, Type type) {
@@ -66,6 +84,7 @@ ParamList ProcessParamDec(TreeNode* param_dec) {
     Type type_comp = AnalyzeVarDec(var_dec, &name, type);
     
     ParamList param = (ParamList)malloc(sizeof(ParamList_));
+    param->name = name;
     param->type = type_comp;
     param->tail = NULL;
     return param;
@@ -94,6 +113,7 @@ Type GetTypeFunction(TreeNode* fun_def, Type type_ret) {
     if (CheckSymbolName(var_list, "VarList")) {
         type->u.function.param_list = GetVarList(var_list);
     }
+    type->u.function.defined = 0;
     // OutputType(type, 0);
     return type;
 }
@@ -140,7 +160,7 @@ Type ProcessExp(TreeNode* exp) {
         } else {        /*  function call   */
             Type type_ret = NULL;
             ParamList param_list = NULL;
-            switch (LookupFunction(id->val.ValString, &type_ret, &param_list, 1)) {
+            switch (LookupFunction(id->val.ValString, &type_ret, &param_list, kCALL)) {
                 case 0: {
                     //  Error 2: undefined function
                     char* error_msg = (char*)malloc(kErrorMsgLen);
@@ -164,7 +184,7 @@ Type ProcessExp(TreeNode* exp) {
                     }
                     break;
                 }
-                case 2: {
+                case -1: {
                     //  Error 11: "()" applied to non-function variable
                     OutputSemanticErrorMsg(11, id->lineno, "\"()\" applied to a non-function variable");
                 }
@@ -173,10 +193,10 @@ Type ProcessExp(TreeNode* exp) {
         }
     }
 
-    if (exp->type == kINT || exp->type == kFLOAT) {
+    if (exp->son->type == kINT || exp->son->type == kFLOAT) {
         Type type = (Type)malloc(sizeof(Type_));
         type->kind = kBASIC;
-        type->u.basic = exp->type == kINT ? 0 : 1;
+        type->u.basic = exp->son->type == kINT ? 0 : 1;
         return type;
     }
 
@@ -192,10 +212,10 @@ Type ProcessExp(TreeNode* exp) {
             //  when the left side is not an lvalue
             Type type_r = ProcessExp(exp_1->bro->bro),
                 type_l = ProcessExp(exp_1);
-            
+
             if (!TypeConsistent(type_r, type_l)) {
                 //  Error 5: type mismatch
-                OutputSemanticErrorMsg(6, exp_1->lineno, "Type mismatched for assignment");
+                OutputSemanticErrorMsg(5, exp_1->lineno, "Type mismatched for assignment");
             }
             return type_l;
         }
@@ -210,7 +230,7 @@ Type ProcessExp(TreeNode* exp) {
                 //  TODO: test a[2][3][4]
                 type_ret = type_base->u.array.elem;
             }
-            if (type_idx->kind != kINT) {
+            if (!(type_idx->kind == kBASIC && type_idx->u.basic == 0)) {
                 //  Error 12: array index not an integer
                 OutputSemanticErrorMsg(12, exp_1->bro->bro->lineno, "Array index not an integer");
             }
@@ -224,7 +244,6 @@ Type ProcessExp(TreeNode* exp) {
                 OutputSemanticErrorMsg(13, exp_1->lineno, "\".\" applied to a non-struct variable");
                 return NULL;
             }
-
             TreeNode* id = exp_1->bro->bro;
             assert(id->type == kID);
 
@@ -242,8 +261,7 @@ Type ProcessExp(TreeNode* exp) {
         }
         Type type_l = ProcessExp(exp_1),
             type_r = ProcessExp(exp_1->bro->bro);
-        if (type_l->kind != kBASIC || type_r->kind != kBASIC
-            || !TypeConsistent(type_l, type_r)) {
+        if (!type_l || !type_r || type_l->kind != kBASIC || type_r->kind != kBASIC) {
             //  Error 7: type mismatch
             OutputSemanticErrorMsg(7, exp_1->lineno, "Type mismatched for operands");
         }
@@ -263,7 +281,6 @@ void ProcessDecList(TreeNode* dec_list, Type type, int is_remove) {
     while (1) {
         char* name;
         Type type_comp = AnalyzeDec(dec_list->son, &name, type);
-
         if (is_remove) {
             RemoveVariable(name, layer);
         } else {    /*  is_def  */
@@ -301,11 +318,11 @@ void ProcessDefList(TreeNode* def_list, int is_remove) {
 
 void ProcessStmt(TreeNode* stmt, Type type_ret_func) {
     if (CheckSymbolName(stmt->son, "Exp")) {
-        ProcessExp(stmt->son->bro);
+        ProcessExp(stmt->son);
         return;
     }
     if (CheckSymbolName(stmt->son, "CompSt")) {
-        ProcessCompSt(stmt->son->bro, type_ret_func);
+        ProcessCompSt(stmt->son, type_ret_func);
         return;
     }
     if (CheckSymbolName(stmt->son, "IF")) {
@@ -319,6 +336,7 @@ void ProcessStmt(TreeNode* stmt, Type type_ret_func) {
         }
         return;
     }
+    //  TODO: what if no return?
     if (CheckSymbolName(stmt->son, "RETURN")) {
         Type type_ret_stmt = ProcessExp(stmt->son->bro);
         if (!TypeConsistent(type_ret_func, type_ret_stmt)) {
@@ -344,24 +362,59 @@ void ProcessStmtList(TreeNode* stmt_list, Type type_ret) {
 
 void ProcessCompSt(TreeNode* comp_st, Type type_ret) {
     ++layer;
-    TreeNode* def_list = comp_st->son->bro,
-            * stmt_list = def_list->bro;
+    puts("---------------------process compst");
+    TreeNode* def_list = NULL,
+            * stmt_list = NULL;
+    if (CheckSymbolName(comp_st->son->bro, "DefList")) {
+        def_list = comp_st->son->bro;
+        if (CheckSymbolName(def_list->bro, "StmtList")) {
+            stmt_list = def_list->bro;
+        }
+    } else if (CheckSymbolName(comp_st->son->bro, "StmtList")) {
+        stmt_list = comp_st->son->bro;
+    }
     ProcessDefList(def_list, 0);
+    puts("----------------------------def_list ok");
     ProcessStmtList(stmt_list, type_ret);
+    puts("----------------------------stmt_lsit ok");
     ProcessDefList(def_list, 1);
+    puts("----------------------------remove ok");
+    --layer;
+}
+
+void AddFormalParameterToSymbolTable(ParamList param_list) {
+    ++layer;
+    while (1) {
+        if (!param_list) return;
+        insert(param_list->name, param_list->type, layer);
+        param_list = param_list->tail;
+    }
     --layer;
 }
 
 void ProcessFunDef(TreeNode* fun_def, Type type_ret) {
     Type type = GetTypeFunction(fun_def, type_ret);
-    switch (LookupFunction(type->u.function.name, &type_ret, &(type->u.function.param_list), 0)) {
+    switch (LookupFunction(type->u.function.name, &type_ret, &(type->u.function.param_list), kDEFINE)) {
+        case -1: {
+            //  TODO: which type?
+            //  Error -1: function name conflict with variable name
+            char* error_msg = (char*)malloc(kErrorMsgLen);
+            sprintf(error_msg, "function \"%s\" has been defined as another variable", type->u.function.name);
+            OutputSemanticErrorMsg(-1, fun_def->lineno, error_msg);
+            free(error_msg);
+            break;
+        }
         case 0: //  function neither defined nor declared
             type->u.function.defined = 1;
             insert(type->u.function.name, type, layer);
             break;
-        case 1: //  function already declared but not yet defined
-            UpdateFunctionStatus(type->u.function.name);
+        case 1: {//  Error 19, multiple definition
+            char* error_msg = (char*)malloc(kErrorMsgLen);
+            sprintf(error_msg, "multiple definition of function \"%s\"", type->u.function.name);
+            OutputSemanticErrorMsg(19, fun_def->lineno, error_msg);
+            free(error_msg);
             break;
+        }
         case 2: {//  Error 19, type conflict
             char* error_msg = (char*)malloc(kErrorMsgLen);
             sprintf(error_msg, "Inconsistent declaration/definition of function \"%s\"", type->u.function.name);
@@ -369,22 +422,24 @@ void ProcessFunDef(TreeNode* fun_def, Type type_ret) {
             free(error_msg);
             break;
         }
-        case 3: {//  Error 19, multiple definition
-            char* error_msg = (char*)malloc(kErrorMsgLen);
-            sprintf(error_msg, "multiple definition of function \"%s\"", type->u.function.name);
-            OutputSemanticErrorMsg(19, fun_def->lineno, error_msg);
-            free(error_msg);
+        case 3: //  function already declared but not yet defined
+            UpdateFunctionStatus(type->u.function.name);
             break;
-        }
     }
+
+    //  add formal parameter to symbol table
+    AddFormalParameterToSymbolTable(type->u.function.param_list);
 
     TreeNode* comp_st = fun_def->bro;
     ProcessCompSt(comp_st, type_ret);
+    //  TODO: remove
+    // RemoveFormalParameterFromSymbolTable(type->u.function.param_list);
 }
 
-void AddNameToFunctionList(const char* name) {
+void AddFuncToFunctionList(const char* name, int lineno) {
     FunctionList function = (FunctionList)malloc(sizeof(FunctionList_));
     function->name = name;
+    function->lineno = lineno;
     function->tail = NULL;
     if (!function_list) {
         function_list = function;
@@ -396,12 +451,19 @@ void AddNameToFunctionList(const char* name) {
 
 void ProcessFunDec(TreeNode* fun_def, Type type_ret) {
     Type type = GetTypeFunction(fun_def, type_ret);
-    switch (LookupFunction(type->u.function.name, &type_ret, &(type->u.function.param_list), 0)) {
+    switch (LookupFunction(type->u.function.name, &type_ret, &(type->u.function.param_list), kDECLARE)) {
+        case -1: {
+            //  TODO: which type?
+            //  Error -1: function name conflict with variable name
+            char* error_msg = (char*)malloc(kErrorMsgLen);
+            sprintf(error_msg, "function \"%s\" has been defined as another variable", type->u.function.name);
+            OutputSemanticErrorMsg(-1, fun_def->lineno, error_msg);
+            free(error_msg);
+            break;
+        }
         case 0: //  neither defined nor declared
             type->u.function.defined = 0;
             insert(type->u.function.name, type, layer);
-            break;
-        case 1: //  function already declared but not yet defined
             break;
         case 2: {//  Error 19, type conflict
             char* error_msg = (char*)malloc(kErrorMsgLen);
@@ -410,10 +472,10 @@ void ProcessFunDec(TreeNode* fun_def, Type type_ret) {
             free(error_msg);
             break;
         }
-        case 3: //  already defined
+        case 3:
             break;
     }
-    AddNameToFunctionList(type->u.function.name);
+    AddFuncToFunctionList(type->u.function.name, fun_def->lineno);
 }
 
 void AnalyzeExtDef(TreeNode* ext_def) {
@@ -423,6 +485,10 @@ void AnalyzeExtDef(TreeNode* ext_def) {
 
     if (CheckSymbolName(next, "SEMI")) {
         //  Struct Definition
+        //  TODO: 
+        //  1. check struct duplication
+        //  2. undefined struct name in use
+        //  3. check type consistent in semantic or symbol table (function)?
         insert(type->u.structure.name, type, layer);
         return;
     }
