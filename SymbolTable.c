@@ -1,4 +1,5 @@
 #include "SymbolTable.h"
+#include "semantic.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -14,25 +15,31 @@ unsigned int hash_pjw(const char* name) {
     return val;
 }
 
-int LookupVariableAt(const char* name, SymbolTableNode* symbol_table_node, Type* type, int layer) {
+int LookupVariableAt(const char* name, SymbolTableNode* symbol_table_node, 
+                    Type* type, int layer, VariableOpType variable_op) {
     if (symbol_table_node == NULL) return 0;    //  not defined
     if (strcmp(symbol_table_node->name, name) == 0) {
-        //  already defined in current scope
-        if (symbol_table_node->layer_node->layer == layer) {
-            *type = symbol_table_node->type;
-            return 1;
+        assert(symbol_table_node->layer_node->layer <= layer);
+        switch (variable_op) {
+            case kVariableUse:
+                *type = symbol_table_node->layer_node->type;
+                return 1;
+            case kVariableDefine:
+                if (symbol_table_node->layer_node->layer == layer) {
+                    /*  defined in current scope    */
+                    return 1;
+                } else {
+                    /*  defined in outer scope  */
+                    return 2;
+                }
         }
-        //  defined in outer scopes
-        assert(symbol_table_node->layer_node->layer < layer);
-        *type = symbol_table_node->type;
-        return 2;
     }
-    return LookupVariableAt(name, symbol_table_node->next, type, layer);
+    return LookupVariableAt(name, symbol_table_node->next, type, layer, variable_op);
 }
 
-int LookupVariable(const char* name, Type* type, int layer) {
+int LookupVariable(const char* name, Type* type, int layer, VariableOpType variable_op) {
     unsigned int val = hash_pjw(name);
-    return LookupVariableAt(name, symbol_table[val], type, layer);
+    return LookupVariableAt(name, symbol_table[val], type, layer, variable_op);
 }
 
 int TypeConsistent(Type type_ori, Type type_now) {
@@ -85,35 +92,35 @@ int LookupFunctionAt(
     Type* type, ParamList param_list, FunctionOpType function_op) {
     if (symbol_table_node == NULL) return 0;    //  neither defined nor declared yet
     if (strcmp(symbol_table_node->name, name) == 0) {
-        if (symbol_table_node->type->kind != kFUNCTION) return -1;   //  not a function
+        if (symbol_table_node->layer_node->type->kind != kFUNCTION) return -1;   //  not a function
         switch (function_op) {
             case kCALL: {
                 if (!TypeConsistentParamList(
                     param_list, 
-                    symbol_table_node->type->u.function.param_list)) {
+                    symbol_table_node->layer_node->type->u.function.param_list)) {
                     return 1;   /*  Type inconsistent   */
                 } else {
-                    *type = symbol_table_node->type->u.function.type_ret;
+                    *type = symbol_table_node->layer_node->type->u.function.type_ret;
                     return 2;   /*  Type consistent   */
                 }
             }
             case kCHECK: {
-                if (symbol_table_node->type->u.function.defined) {
+                if (symbol_table_node->layer_node->type->u.function.defined) {
                     return 1;   /*  function defined    */
                 } else {
                     return 2;   /*  only declared but not defined   */
                 }
             }
             case kDEFINE: {
-                if (symbol_table_node->type->u.function.defined) {
+                if (symbol_table_node->layer_node->type->u.function.defined) {
                     return 1;   /*  function defined    */
                 }
             }
             case kDECLARE: {
                 if (!TypeConsistentFunction(
-                    symbol_table_node->type->u.function.type_ret,
+                    symbol_table_node->layer_node->type->u.function.type_ret,
                     *type,
-                    symbol_table_node->type->u.function.param_list,
+                    symbol_table_node->layer_node->type->u.function.param_list,
                     param_list)) {
                     return 2;  /*  Type inconsistent    */
                 } else {
@@ -128,7 +135,7 @@ int LookupFunctionAt(
 void UpdateFunctionStatusAt(const char* name, SymbolTableNode* symbol_table_node) {
     assert(symbol_table_node);
     if (strcmp(symbol_table_node->name, name) == 0) {
-        symbol_table_node->type->u.function.defined = 1;
+        symbol_table_node->layer_node->type->u.function.defined = 1;
         return;
     }
     UpdateFunctionStatusAt(name, symbol_table_node->next);
@@ -153,9 +160,9 @@ int LookupStructAt(const char* name, SymbolTableNode* symbol_table_node,
         switch (struct_op) {
             case kStructDefine: return 1;
             case kStructDeclare:
-                if (symbol_table_node->type->kind == kSTRUCTURE) {
+                if (symbol_table_node->layer_node->type->kind == kSTRUCTURE) {
                     //  type consistent
-                    *type = symbol_table_node->type;
+                    *type = symbol_table_node->layer_node->type;
                     return 1;
                 } else {
                     //  mistake other varialbe name as struct definition
@@ -188,10 +195,10 @@ int LookupFieldInStruct(const char* name, Type type_struct, Type* type_field) {
 SymbolTableNode* CreateSymbolTableNode(const char* name, Type type, int layer) {
     SymbolTableNode* symbol_table_node = (SymbolTableNode*)malloc(sizeof(SymbolTableNode));
     symbol_table_node->name = name;
-    symbol_table_node->type = type;
 
     LayerNode* layer_node = (LayerNode*)malloc(sizeof(LayerNode));
     layer_node->layer = layer;
+    layer_node->type = type;
     layer_node->up = NULL;
     symbol_table_node->layer_node = layer_node;
     symbol_table_node->next = NULL;
@@ -216,6 +223,7 @@ void InsertAt(const char* name, int idx, Type type, int layer) {
             LayerNode* layer_node = (LayerNode*)malloc(sizeof(LayerNode));
 
             layer_node->layer = layer;
+            layer_node->type = type;
             layer_node->up = symbol_table_node->layer_node;
             symbol_table_node->layer_node = layer_node;
 
@@ -236,7 +244,6 @@ void RemoveAt(const char* name, int idx, int layer) {
     SymbolTableNode* symbol_table_node = symbol_table[idx],
                     * pre_symbol_table_node = NULL;
     while (1) {
-
         //  happen only when removing the duplicate variable
         //  which has already been removed before
         if (!symbol_table_node) return;

@@ -13,8 +13,6 @@ const int kErrorMsgLen = 100;
 
 FunctionList function_list = NULL;
 
-CompStDefList comp_st_def_list = NULL;
-
 int CheckSymbolName(TreeNode* node, const char* name) {
     return node->type != kRELOP && strcmp(node->val.ValString, name) == 0;
 }
@@ -59,7 +57,7 @@ void ProcessExtDecList(TreeNode* ext_dec_list, Type type) {
         char* name;
         Type type_comp = AnalyzeVarDec(ext_dec_list->son, &name, type);
 
-        if (LookupVariable(name, &type_comp, layer) == 1) {
+        if (LookupVariable(name, NULL, layer, kVariableDefine) == 1) {
             //  Error 3: redefinition in global variable
             char* error_msg = (char*)malloc(kErrorMsgLen);
             sprintf(error_msg, "Redefined variable \"%s\"", name);
@@ -82,9 +80,9 @@ ParamList ProcessParamDec(TreeNode* param_dec) {
     assert(CheckSymbolName(var_dec, "VarDec"));
 
     Type type = GetType(specifier);
-    char* name;
+    char* name = NULL;
     Type type_comp = AnalyzeVarDec(var_dec, &name, type);
-    
+   
     ParamList param = (ParamList)malloc(sizeof(ParamList_));
     param->name = name;
     param->type = type_comp;
@@ -141,7 +139,7 @@ ParamList FillArgsIntoParamList(TreeNode* args) {
 }
 
 int CheckLvalue(TreeNode* exp) {
-    return exp->son->type == kID ||
+    return (exp->son->type == kID && !exp->son->bro) ||
         (exp->son->bro && (CheckSymbolName(exp->son->bro, "LB")
                         || CheckSymbolName(exp->son->bro, "DOT")));
 }
@@ -151,7 +149,7 @@ Type ProcessExp(TreeNode* exp) {
         TreeNode* id = exp->son;
         if (!id->bro) {   /*  Exp -> ID   */
             Type type = NULL;
-            if (!LookupVariable(exp->son->val.ValString, &type, layer)) {
+            if (!LookupVariable(exp->son->val.ValString, &type, layer, kVariableUse)) {
                 //  Error 1: undefined variable
                 char* error_msg = (char*)malloc(kErrorMsgLen);
                 sprintf(error_msg, "Undefined variable \"%s\"", id->val.ValString);
@@ -213,7 +211,6 @@ Type ProcessExp(TreeNode* exp) {
             //  when the left side is not an lvalue
             Type type_r = ProcessExp(exp_1->bro->bro),
                 type_l = ProcessExp(exp_1);
-
             if (!TypeConsistent(type_r, type_l)) {
                 //  Error 5: type mismatch
                 OutputSemanticErrorMsg(5, exp_1->lineno, "Type mismatched for assignment");
@@ -222,25 +219,24 @@ Type ProcessExp(TreeNode* exp) {
         }
         if (CheckSymbolName(exp_1->bro, "LB")) {
             Type type_base = ProcessExp(exp_1),
-                type_idx = ProcessExp(exp_1->bro->bro),
-                type_ret = NULL;
+                type_idx = ProcessExp(exp_1->bro->bro);
             if (type_base->kind != kARRAY) {
                 //  Error 10: [ ] applied to a non-array variable
                 OutputSemanticErrorMsg(10, exp_1->son->lineno, "[] applied to non-array variable");
+                return NULL;
             } else {
                 //  TODO: test a[2][3][4]
-                type_ret = type_base->u.array.elem;
+                return type_base->u.array.elem;
             }
             if (!(type_idx->kind == kBASIC && type_idx->u.basic == 0)) {
                 //  Error 12: array index not an integer
                 OutputSemanticErrorMsg(12, exp_1->bro->bro->lineno, "Array index not an integer");
+                return NULL;
             }
-            
-            return type_ret;
         }
         if (CheckSymbolName(exp_1->bro, "DOT")) {
             Type type_base = ProcessExp(exp_1);
-            if (type_base->kind != kSTRUCTURE) {
+            if (!type_base || type_base->kind != kSTRUCTURE) {
                 //  Error 13: "." applied to a non-struct variable
                 OutputSemanticErrorMsg(13, exp_1->lineno, "\".\" applied to a non-struct variable");
                 return NULL;
@@ -266,8 +262,9 @@ Type ProcessExp(TreeNode* exp) {
         if (!TypeConsistentBasic(type_l, type_r)) {
             //  Error 7: type mismatch
             OutputSemanticErrorMsg(7, exp_1->lineno, "Type mismatched for operands");
+            return NULL;
         }
-        return type_l;    
+        return type_l;  
     } 
     
     ProcessExp(exp->son->bro);
@@ -279,18 +276,18 @@ Type AnalyzeDec(TreeNode* dec, char** name, Type type) {
     ProcessExp(dec->son->bro->bro);
 }
 
-void AddCompStDefToCompStDefList(const char* name) {
+void AddCompStDefToCompStDefList(const char* name, CompStDefList comp_st_def_list) {
     CompStDefList comp_st_def = (CompStDefList)malloc(sizeof(CompStDefList_));
     comp_st_def->name = name;
     comp_st_def->tail = comp_st_def_list;
     comp_st_def_list = comp_st_def;
 }
 
-void ProcessDecList(TreeNode* dec_list, Type type) {
+void ProcessDecList(TreeNode* dec_list, Type type, CompStDefList comp_st_def_list) {
     while (1) {
         char* name;
         Type type_comp = AnalyzeDec(dec_list->son, &name, type);
-        if (LookupVariable(name, &type_comp, layer) == 1) {
+        if (LookupVariable(name, NULL, layer, kVariableDefine) == 1) {
             //  Error 3: redefinition in variable
             char* error_msg = (char*)malloc(kErrorMsgLen);
             sprintf(error_msg, "Redefined variable \"%s\"", name);
@@ -301,23 +298,23 @@ void ProcessDecList(TreeNode* dec_list, Type type) {
             insert(name, type_comp, layer);
         }
 
-        AddCompStDefToCompStDefList(name);
+        AddCompStDefToCompStDefList(name, comp_st_def_list);
 
         if (!dec_list->son->bro) return;
         dec_list = dec_list->son->bro->bro;
     }
 }
 
-void ProcessDef(TreeNode* def) {
+void ProcessDef(TreeNode* def, CompStDefList comp_st_def_list) {
     Type type = GetType(def->son);
-    return ProcessDecList(def->son->bro, type);    
+    return ProcessDecList(def->son->bro, type, comp_st_def_list);    
 }
 
-void ProcessDefList(TreeNode* def_list) {
+void ProcessDefList(TreeNode* def_list, CompStDefList comp_st_def_list) {
     if (!def_list) return;
 
     while (1) {
-        ProcessDef(def_list->son);
+        ProcessDef(def_list->son, comp_st_def_list);
         def_list = def_list->son->bro;
         if (!def_list) return;
     }
@@ -367,11 +364,13 @@ void ProcessStmtList(TreeNode* stmt_list, Type type_ret) {
     }
 }
 
-void RemoveCompStDef() {
+void RemoveCompStDef(CompStDefList comp_st_def_list) {
     while (1) {
         if (!comp_st_def_list) return;
         RemoveVariable(comp_st_def_list->name, layer);
+        CompStDefList pre_comp_st_def = comp_st_def_list;
         comp_st_def_list = comp_st_def_list->tail;
+        free(pre_comp_st_def);
     }
 }
 
@@ -387,20 +386,39 @@ void ProcessCompSt(TreeNode* comp_st, Type type_ret) {
     } else if (CheckSymbolName(comp_st->son->bro, "StmtList")) {
         stmt_list = comp_st->son->bro;
     }
-    ProcessDefList(def_list);
+
+    CompStDefList comp_st_def_list = NULL;
+    ProcessDefList(def_list, comp_st_def_list);
+    // puts("def_list");
     ProcessStmtList(stmt_list, type_ret);
-    RemoveCompStDef();
+    // puts("stmt_list");
+    RemoveCompStDef(comp_st_def_list);
+    // puts("remove");
     --layer;
 }
 
 void AddFormalParameterToSymbolTable(ParamList param_list) {
     ++layer;
     while (1) {
-        if (!param_list) return;
+        if (!param_list) {
+            --layer;
+            return;
+        }
         insert(param_list->name, param_list->type, layer);
         param_list = param_list->tail;
     }
-    --layer;
+}
+
+void RemoveFormalParameterFromSymbolTable(ParamList param_list) {
+    ++layer;
+    while (1) {
+        if (!param_list) {
+            --layer;
+            return;
+        }
+        RemoveVariable(param_list->name, layer);
+        param_list = param_list->tail;
+    }
 }
 
 void ProcessFunDef(TreeNode* fun_def, Type type_ret) {
@@ -440,11 +458,10 @@ void ProcessFunDef(TreeNode* fun_def, Type type_ret) {
 
     //  add formal parameter to symbol table
     AddFormalParameterToSymbolTable(type->u.function.param_list);
-
     TreeNode* comp_st = fun_def->bro;
     ProcessCompSt(comp_st, type_ret);
-    //  TODO: remove
-    // RemoveFormalParameterFromSymbolTable(type->u.function.param_list);
+    //  remove formal parameter from symbol table
+    RemoveFormalParameterFromSymbolTable(type->u.function.param_list);
 }
 
 void AddFuncToFunctionList(const char* name, int lineno) {
@@ -545,9 +562,7 @@ Type AnalyzeVarDec(TreeNode* var_dec, char** name, Type type_base) {
     *type_comp = *type_base;
     while (1) {
         if (var_dec->son->type == kID) {
-            *name = (char*)malloc(sizeof(var_dec->son->val.ValString) + 1);
-        
-            strcpy(*name, var_dec->son->val.ValString);
+            *name = var_dec->son->val.ValString;
             return type_comp;
         }
         type_base = type_comp;
@@ -565,7 +580,7 @@ FieldList FillDecIntoField(TreeNode* dec, Type type) {
     Type type_comp = AnalyzeVarDec(dec->son, &name, type);
 
     //  Error 15: redefinition in struct field
-    if (LookupVariable(name, &type_comp, layer) == 1) {
+    if (LookupVariable(name, NULL, layer, kVariableDefine) == 1) {
         char* error_msg = (char*)malloc(kErrorMsgLen);
         sprintf(error_msg, "Redefined field \"%s\"", name);
         OutputSemanticErrorMsg(15, dec->son->lineno, error_msg);
@@ -717,6 +732,7 @@ void OutputParamList(ParamList param_list, int indent) {
 }
 
 void OutputType(Type type, int indent) {
+    if (!type) return;
     for (int i = 0; i < indent; ++i) printf(" ");
     switch (type->kind) {
         case kBASIC:

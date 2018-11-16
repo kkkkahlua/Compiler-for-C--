@@ -8,13 +8,13 @@ typedef struct SymbolTableNode SymbolTableNode;
 
 typedef struct SymbolTableNode {
     const char* name;
-    Type type;
     LayerNode* layer_node;
     SymbolTableNode* next;
 } SymbolTableNode;
 
 typedef struct LayerNode {
     int layer;
+    Type type;
     LayerNode* up;
 } LayerNode;
 
@@ -30,11 +30,16 @@ typedef enum StructOpType {
     kStructDeclare
 } StructOpType;
 
+typedef enum VariableOpType {
+    kVariableDefine,
+    kVariableUse
+} VariableOpType;
+
 SymbolTableNode* symbol_table[16384];
 
 unsigned int hash_pjw(const char* name);
 
-int LookupVariable(const char* name, Type* type, int layer);
+int LookupVariable(const char* name, Type* type, int layer, VariableOpType variable_op);
 
 int LookupStruct(const char* name, Type* type, int layer, StructOpType struct_op);
 

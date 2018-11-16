@@ -94,4 +94,6 @@ void ProcessStmt(TreeNode* stmt, Type type);
 
 void ProcessCompSt(TreeNode* comp_st, Type type);
 
+void OutputParamList(ParamList param_list, int indent);
+
 #endif
