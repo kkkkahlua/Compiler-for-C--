@@ -219,20 +219,20 @@ Type ProcessExp(TreeNode* exp) {
         }
         if (CheckSymbolName(exp_1->bro, "LB")) {
             Type type_base = ProcessExp(exp_1),
-                type_idx = ProcessExp(exp_1->bro->bro);
+                type_idx = ProcessExp(exp_1->bro->bro),
+                type_ret = NULL;
             if (type_base->kind != kARRAY) {
                 //  Error 10: [ ] applied to a non-array variable
                 OutputSemanticErrorMsg(10, exp_1->son->lineno, "[] applied to non-array variable");
-                return NULL;
             } else {
                 //  TODO: test a[2][3][4]
-                return type_base->u.array.elem;
+                type_ret = type_base->u.array.elem;
             }
             if (!(type_idx->kind == kBASIC && type_idx->u.basic == 0)) {
                 //  Error 12: array index not an integer
                 OutputSemanticErrorMsg(12, exp_1->bro->bro->lineno, "Array index not an integer");
-                return NULL;
             }
+            return type_ret;
         }
         if (CheckSymbolName(exp_1->bro, "DOT")) {
             Type type_base = ProcessExp(exp_1);
@@ -276,14 +276,14 @@ Type AnalyzeDec(TreeNode* dec, char** name, Type type) {
     ProcessExp(dec->son->bro->bro);
 }
 
-void AddCompStDefToCompStDefList(const char* name, CompStDefList comp_st_def_list) {
+void AddCompStDefToCompStDefList(const char* name, CompStDefList* comp_st_def_list) {
     CompStDefList comp_st_def = (CompStDefList)malloc(sizeof(CompStDefList_));
     comp_st_def->name = name;
-    comp_st_def->tail = comp_st_def_list;
-    comp_st_def_list = comp_st_def;
+    comp_st_def->tail = *comp_st_def_list;
+    *comp_st_def_list = comp_st_def;
 }
 
-void ProcessDecList(TreeNode* dec_list, Type type, CompStDefList comp_st_def_list) {
+void ProcessDecList(TreeNode* dec_list, Type type, CompStDefList* comp_st_def_list) {
     while (1) {
         char* name;
         Type type_comp = AnalyzeDec(dec_list->son, &name, type);
@@ -305,12 +305,12 @@ void ProcessDecList(TreeNode* dec_list, Type type, CompStDefList comp_st_def_lis
     }
 }
 
-void ProcessDef(TreeNode* def, CompStDefList comp_st_def_list) {
+void ProcessDef(TreeNode* def, CompStDefList* comp_st_def_list) {
     Type type = GetType(def->son);
     return ProcessDecList(def->son->bro, type, comp_st_def_list);    
 }
 
-void ProcessDefList(TreeNode* def_list, CompStDefList comp_st_def_list) {
+void ProcessDefList(TreeNode* def_list, CompStDefList* comp_st_def_list) {
     if (!def_list) return;
 
     while (1) {
@@ -388,7 +388,7 @@ void ProcessCompSt(TreeNode* comp_st, Type type_ret) {
     }
 
     CompStDefList comp_st_def_list = NULL;
-    ProcessDefList(def_list, comp_st_def_list);
+    ProcessDefList(def_list, &comp_st_def_list);
     // puts("def_list");
     ProcessStmtList(stmt_list, type_ret);
     // puts("stmt_list");
@@ -662,13 +662,18 @@ Type GetTypeStructure(TreeNode* struct_specifier) {
         type->u.structure.field_list = FillDefListIntoFieldList(def_list);
         RemoveStructElement(type);
         --layer;
-        if (LookupStruct(type->u.structure.name, NULL, layer, kStructDefine)) {  /*  redefinition of struct  */
-            char* error_msg = (char*)malloc(kErrorMsgLen);
-            sprintf(error_msg, "Duplicated name \"%s\"", type->u.structure.name);
-            OutputSemanticErrorMsg(16, tag->lineno, error_msg);
-            free(error_msg);
-        } else {
-            insert(type->u.structure.name, type, layer);
+        switch (LookupStruct(type->u.structure.name, NULL, layer, kStructDefine)) {
+            case 1: {
+                char* error_msg = (char*)malloc(kErrorMsgLen);
+                sprintf(error_msg, "Duplicated name \"%s\"", type->u.structure.name);
+                OutputSemanticErrorMsg(16, tag->lineno, error_msg);
+                free(error_msg);
+                break;
+            }
+            case 0:
+            case 2:
+                insert(type->u.function.name, type, layer);
+                break;
         }
     } else {    //  declaration
         switch (LookupStruct(type->u.structure.name, &type, layer, kStructDeclare)) {

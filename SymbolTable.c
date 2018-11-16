@@ -158,7 +158,12 @@ int LookupStructAt(const char* name, SymbolTableNode* symbol_table_node,
         assert(symbol_table_node->layer_node->layer <= layer);
 
         switch (struct_op) {
-            case kStructDefine: return 1;
+            case kStructDefine:
+                if (symbol_table_node->layer_node->layer == layer) {
+                    return 1;       /*  defined in current scope    */
+                } else {
+                    return 2;       /*  defined in outer scope  */
+                }
             case kStructDeclare:
                 if (symbol_table_node->layer_node->type->kind == kSTRUCTURE) {
                     //  type consistent
@@ -186,6 +191,9 @@ int LookupFieldInStruct(const char* name, Type type_struct, Type* type_field) {
         if (!field_list) return 0;
         if (strcmp(field_list->name, name) == 0) {
             *type_field = field_list->type;
+            // puts(name);
+            // OutputType(*type_field, 0);
+            // puts("");
             return 1;
         }
         field_list = field_list->tail;
