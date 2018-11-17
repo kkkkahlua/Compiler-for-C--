@@ -52,7 +52,7 @@ int TypeConsistent(Type type_ori, Type type_now) {
             return TypeConsistent(type_ori->u.array.elem, type_now->u.array.elem)
                         && type_ori->u.array.size == type_now->u.array.size;
         case kSTRUCTURE: 
-            return TypeConsistentFieldList(type_ori->u.structure.field_list, 
+            return TypeConsistentDefList(type_ori->u.structure.field_list, 
                                             type_now->u.structure.field_list);
     }
 }
@@ -63,39 +63,29 @@ int TypeConsistentBasic(Type type_1, Type type_2) {
             && type_1->u.basic == type_2->u.basic;
 }
 
-int TypeConsistentFieldList(FieldList field_list_1, FieldList field_list_2) {
+int TypeConsistentDefList(DefList field_list_1, DefList field_list_2) {
     if (!field_list_1 && !field_list_2) return 1;
     if (!field_list_1 || !field_list_2
          || !TypeConsistent(field_list_1->type, field_list_2->type)) return 0;
-    return TypeConsistentFieldList(field_list_1->tail, field_list_2->tail);
-}
-
-int TypeConsistentParamList(ParamList param_list_ori, ParamList param_list_now) {
-    if (param_list_ori == NULL && param_list_now == NULL) return 1;
-    if (param_list_ori == NULL
-         || param_list_now == NULL
-         || !TypeConsistent(param_list_ori->type, param_list_now->type)) {
-        return 0;
-    }
-    return TypeConsistentParamList(param_list_ori->tail, param_list_now->tail);
+    return TypeConsistentDefList(field_list_1->tail, field_list_2->tail);
 }
 
 int TypeConsistentFunction(
     Type type_ori, Type type_now, 
-    ParamList param_list_ori, ParamList param_list_now) {
+    DefList param_list_ori, DefList param_list_now) {
     return TypeConsistent(type_ori, type_now) 
-        && TypeConsistentParamList(param_list_ori, param_list_now);
+        && TypeConsistentDefList(param_list_ori, param_list_now);
 }
 
 int LookupFunctionAt(
     const char* name, SymbolTableNode* symbol_table_node, 
-    Type* type, ParamList param_list, FunctionOpType function_op) {
+    Type* type, DefList param_list, FunctionOpType function_op) {
     if (symbol_table_node == NULL) return 0;    //  neither defined nor declared yet
     if (strcmp(symbol_table_node->name, name) == 0) {
         if (symbol_table_node->layer_node->type->kind != kFUNCTION) return -1;   //  not a function
         switch (function_op) {
             case kCALL: {
-                if (!TypeConsistentParamList(
+                if (!TypeConsistentDefList(
                     param_list, 
                     symbol_table_node->layer_node->type->u.function.param_list)) {
                     return 1;   /*  Type inconsistent   */
@@ -146,7 +136,7 @@ void UpdateFunctionStatus(const char* name) {
     UpdateFunctionStatusAt(name, symbol_table[val]);
 }
 
-int LookupFunction(const char* name, Type* type, ParamList param_list, FunctionOpType function_op) {
+int LookupFunction(const char* name, Type* type, DefList param_list, FunctionOpType function_op) {
     unsigned int val = hash_pjw(name);
     return LookupFunctionAt(name, symbol_table[val], type, param_list, function_op);
 }
@@ -186,7 +176,7 @@ int LookupStruct(const char* name, Type* type, int layer, StructOpType struct_op
 //  TODO: think about whether exists a better structure so that 
 //  filed in struct can also be positioned in a hash table
 int LookupFieldInStruct(const char* name, Type type_struct, Type* type_field) {
-    FieldList field_list = type_struct->u.structure.field_list;
+    DefList field_list = type_struct->u.structure.field_list;
     while (1) {
         if (!field_list) return 0;
         if (strcmp(field_list->name, name) == 0) {
@@ -288,10 +278,17 @@ void RemoveVariable(const char* name, int layer) {
     RemoveAt(name, val, layer);
 }
 
+void Remove(DefList def_list, int layer) {
+    if (def_list->type->kind == kSTRUCTURE) {
+        RemoveVariable(def_list->type->u.structure.name, layer);
+    }
+    RemoveVariable(def_list->name, layer);
+}
+
 void OutputLayerNode(const char* name, LayerNode* layer_node) {
     printf("%s: \n", name);
     while (1) {
-        printf("%d ", layer_node);
+        printf("%d ", layer_node->layer);
         layer_node = layer_node->up;
         if (!layer_node) return;
     }

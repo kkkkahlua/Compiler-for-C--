@@ -43,13 +43,13 @@ int LookupVariable(const char* name, Type* type, int layer, VariableOpType varia
 
 int LookupStruct(const char* name, Type* type, int layer, StructOpType struct_op);
 
-int LookupFunction(const char* name, Type* type_ret, ParamList param_list, FunctionOpType function_op);
+int LookupFunction(const char* name, Type* type_ret, DefList param_list, FunctionOpType function_op);
 
 int LookupFieldInStruct(const char* name, Type type_struct, Type* type_field);
 
 void insert(const char* name, Type type, int layer);
 
-void RemoveVariable(const char* name, int layer);
+void Remove(DefList def_list, int layer);
 
 void OutputLayerNode(const char* name, LayerNode* layer_node);
 
@@ -59,9 +59,7 @@ int TypeConsistent(Type type_ori, Type type_now);
 
 int TypeConsistentBasic(Type type_1, Type type_2);
 
-int TypeConsistentFieldList(FieldList field_list_1, FieldList field_list_2);
-
-int TypeConsistentParamList(ParamList param_list_ori, ParamList param_list_now);
+int TypeConsistentDefList(DefList field_list_1, DefList field_list_2);
 
 
 

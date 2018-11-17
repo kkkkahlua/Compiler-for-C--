@@ -4,44 +4,30 @@
 #include "tree.h"
 
 typedef struct Type_* Type;
-typedef struct FieldList_* FieldList;
-typedef struct ParamList_* ParamList;
+typedef struct DefList_* DefList;
 typedef struct FunctionList_* FunctionList;
-typedef struct CompStDefList_* CompStDefList;
 
 typedef struct Type_ {
     enum { kBASIC, kARRAY, kSTRUCTURE, kFUNCTION } kind;
     union {
         int basic;      //  0: int; 1: float;
         struct { Type elem; int size; } array;
-        struct { char* name; FieldList field_list; } structure;
-        struct { char* name; Type type_ret; ParamList param_list; int defined; } function;
+        struct { char* name; DefList field_list; } structure;
+        struct { char* name; Type type_ret; DefList param_list; int defined; } function;
     } u;
 } Type_;
 
-typedef struct ParamList_ {
+typedef struct DefList_ {
     const char* name;
     Type type;
-    ParamList tail;
-} ParamList_;
-
-typedef struct FieldList_ {
-    char* name;
-    Type type;
-    FieldList tail;
-} FieldList_;
+    DefList tail;
+} DefList_;
 
 typedef struct FunctionList_ {
     const char* name;
     int lineno;
     FunctionList tail;
 } FunctionList_;
-
-typedef struct CompStDefList_ {
-    const char* name;
-    Type type;
-    CompStDefList tail;
-} CompStDefList_;
 
 void CheckFunctionDefinition();
 
@@ -55,9 +41,9 @@ void AnalyzeExtDefList(TreeNode* root);
 
 void ProcessExtDecList(TreeNode* ext_dec_list, Type type);
 
-ParamList ProcessParamDec(TreeNode* param_dec);
+DefList ProcessParamDec(TreeNode* param_dec);
 
-ParamList GetVarList(TreeNode* var_list);
+DefList GetVarList(TreeNode* var_list);
 
 Type GetTypeFunction(TreeNode* fun_def, Type type_ret);
 
@@ -73,13 +59,13 @@ char* GetTagName(TreeNode* root);
 
 Type AnalyzeVarDec(TreeNode* var_dec, char** name, Type type_base);
 
-FieldList FillDecIntoField(TreeNode* dec, Type type);
+DefList FillDecIntoField(TreeNode* dec, Type type);
 
-FieldList FillDecListIntoFieldList(TreeNode* dec_list, Type type);
+DefList FillDecListIntoDefList(TreeNode* dec_list, Type type);
 
-FieldList FillDefIntoFieldList(TreeNode* def);
+DefList FillDefIntoDefList(TreeNode* def);
 
-FieldList FillDefListIntoFieldList(TreeNode* def_list);
+DefList FillDefListIntoDefList(TreeNode* def_list);
 
 Type GetTypeStructure(TreeNode* root);
 
@@ -95,6 +81,6 @@ void ProcessStmt(TreeNode* stmt, Type type);
 
 void ProcessCompSt(TreeNode* comp_st, Type type);
 
-void OutputParamList(ParamList param_list, int indent);
+void OutputDefList(DefList param_list, int indent);
 
 #endif

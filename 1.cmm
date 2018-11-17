@@ -14,8 +14,8 @@ struct node {
     struct happy hp;
 };
 struct xx x;
-int main(struct node ndd) {
+int main(struct node nd) {
     struct node nd;
-    nd.b[0][0] = nd.c[0];
+    nd.b[0][0] = nd.c;
     nd.inner_node.nd1 = fushimi;
 }

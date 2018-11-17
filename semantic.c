@@ -73,7 +73,7 @@ void ProcessExtDecList(TreeNode* ext_dec_list, Type type) {
     }
 }
 
-ParamList ProcessParamDec(TreeNode* param_dec) {
+DefList ProcessParamDec(TreeNode* param_dec) {
     TreeNode* specifier = param_dec->son;
     assert(CheckSymbolName(specifier, "Specifier"));
     TreeNode* var_dec = specifier->bro;
@@ -83,21 +83,21 @@ ParamList ProcessParamDec(TreeNode* param_dec) {
     char* name = NULL;
     Type type_comp = AnalyzeVarDec(var_dec, &name, type);
    
-    ParamList param = (ParamList)malloc(sizeof(ParamList_));
+    DefList param = (DefList)malloc(sizeof(DefList_));
     param->name = name;
     param->type = type_comp;
     param->tail = NULL;
     return param;
 }
 
-ParamList GetVarList(TreeNode* var_list) {
-    ParamList param_list = ProcessParamDec(var_list->son),
+DefList GetVarList(TreeNode* var_list) {
+    DefList param_list = ProcessParamDec(var_list->son),
             pre_param = param_list;
     while (1) {
         if (!var_list->son->bro) return param_list;
         var_list = var_list->son->bro->bro;
 
-        ParamList cur_param = ProcessParamDec(var_list->son);
+        DefList cur_param = ProcessParamDec(var_list->son);
         pre_param->tail = cur_param;
         pre_param = cur_param;
     };
@@ -118,21 +118,21 @@ Type GetTypeFunction(TreeNode* fun_def, Type type_ret) {
     return type;
 }
 
-ParamList FillArgIntoParam(TreeNode* exp) {
-    ParamList param_list = (ParamList)malloc(sizeof(ParamList_));
+DefList FillArgIntoParam(TreeNode* exp) {
+    DefList param_list = (DefList)malloc(sizeof(DefList_));
     param_list->type = ProcessExp(exp);
     param_list->tail = NULL;
     return param_list;
 }
 
-ParamList FillArgsIntoParamList(TreeNode* args) {
-    ParamList param_list = FillArgIntoParam(args->son),
+DefList FillArgsIntoDefList(TreeNode* args) {
+    DefList param_list = FillArgIntoParam(args->son),
             pre_param = param_list;
     while (1) {
         if (!args->son->bro) return param_list;
         args = args->son->bro->bro;
 
-        ParamList cur_param = FillArgIntoParam(args->son);
+        DefList cur_param = FillArgIntoParam(args->son);
         pre_param->tail = cur_param;
         pre_param = cur_param;
     };
@@ -158,9 +158,9 @@ Type ProcessExp(TreeNode* exp) {
             }
             return type;
         } else {        /*  function call   */
-            ParamList param_list = NULL;
+            DefList param_list = NULL;
             if (CheckSymbolName(id->bro->bro, "Args")) {
-                param_list = FillArgsIntoParamList(id->bro->bro);
+                param_list = FillArgsIntoDefList(id->bro->bro);
             }
             Type type_ret = NULL;
             switch (LookupFunction(id->val.ValString, &type_ret, param_list, kCALL)) {
@@ -276,15 +276,15 @@ Type AnalyzeDec(TreeNode* dec, char** name, Type type) {
     ProcessExp(dec->son->bro->bro);
 }
 
-void AddCompStDefToCompStDefList(const char* name, Type type, CompStDefList* comp_st_def_list) {
-    CompStDefList comp_st_def = (CompStDefList)malloc(sizeof(CompStDefList_));
+void AddCompStDefToDefList(const char* name, Type type, DefList* comp_st_def_list) {
+    DefList comp_st_def = (DefList)malloc(sizeof(DefList_));
     comp_st_def->name = name;
     comp_st_def->type = type;
     comp_st_def->tail = *comp_st_def_list;
     *comp_st_def_list = comp_st_def;
 }
 
-void ProcessDecList(TreeNode* dec_list, Type type, CompStDefList* comp_st_def_list) {
+void ProcessDecList(TreeNode* dec_list, Type type, DefList* comp_st_def_list) {
     while (1) {
         char* name;
         Type type_comp = AnalyzeDec(dec_list->son, &name, type);
@@ -297,7 +297,7 @@ void ProcessDecList(TreeNode* dec_list, Type type, CompStDefList* comp_st_def_li
         } else {
             //  add to symbol table
             insert(name, type_comp, layer);
-            AddCompStDefToCompStDefList(name, type_comp, comp_st_def_list);
+            AddCompStDefToDefList(name, type_comp, comp_st_def_list);
         }
 
         if (!dec_list->son->bro) return;
@@ -305,12 +305,12 @@ void ProcessDecList(TreeNode* dec_list, Type type, CompStDefList* comp_st_def_li
     }
 }
 
-void ProcessDef(TreeNode* def, CompStDefList* comp_st_def_list) {
+void ProcessDef(TreeNode* def, DefList* comp_st_def_list) {
     Type type = GetType(def->son);
     return ProcessDecList(def->son->bro, type, comp_st_def_list);    
 }
 
-void ProcessDefList(TreeNode* def_list, CompStDefList* comp_st_def_list) {
+void ProcessDefList(TreeNode* def_list, DefList* comp_st_def_list) {
     if (!def_list) return;
 
     while (1) {
@@ -364,14 +364,11 @@ void ProcessStmtList(TreeNode* stmt_list, Type type_ret) {
     }
 }
 
-void RemoveCompStDef(CompStDefList comp_st_def_list) {
+void RemoveCompStDef(DefList comp_st_def_list) {
     while (1) {
         if (!comp_st_def_list) return;
-        if (comp_st_def_list->type->kind == kSTRUCTURE) {
-            RemoveVariable(comp_st_def_list->type->u.structure.name, layer);
-        }
-        RemoveVariable(comp_st_def_list->name, layer);
-        CompStDefList pre_comp_st_def = comp_st_def_list;
+        Remove(comp_st_def_list, layer);
+        DefList pre_comp_st_def = comp_st_def_list;
         comp_st_def_list = comp_st_def_list->tail;
         free(pre_comp_st_def);
     }
@@ -390,7 +387,7 @@ void ProcessCompSt(TreeNode* comp_st, Type type_ret) {
         stmt_list = comp_st->son->bro;
     }
 
-    CompStDefList comp_st_def_list = NULL;
+    DefList comp_st_def_list = NULL;
     ProcessDefList(def_list, &comp_st_def_list);
     // puts("def_list");
     ProcessStmtList(stmt_list, type_ret);
@@ -400,7 +397,7 @@ void ProcessCompSt(TreeNode* comp_st, Type type_ret) {
     --layer;
 }
 
-void AddFormalParameterToSymbolTable(ParamList param_list) {
+void AddFormalParameterToSymbolTable(DefList param_list) {
     ++layer;
     while (1) {
         if (!param_list) {
@@ -412,17 +409,14 @@ void AddFormalParameterToSymbolTable(ParamList param_list) {
     }
 }
 
-void RemoveFormalParameterFromSymbolTable(ParamList param_list) {
+void RemoveFormalParameterFromSymbolTable(DefList param_list) {
     ++layer;
     while (1) {
         if (!param_list) {
             --layer;
             return;
         }
-        if (param_list->type->kind == kSTRUCTURE) {
-            RemoveVariable(param_list->type->u.structure.name, layer);
-        }
-        RemoveVariable(param_list->name, layer);
+        Remove(param_list, layer);
         param_list = param_list->tail;
     }
 }
@@ -581,7 +575,7 @@ Type AnalyzeVarDec(TreeNode* var_dec, char** name, Type type_base) {
     }
 }
 
-FieldList FillDecIntoField(TreeNode* dec, Type type) {
+DefList FillDecIntoField(TreeNode* dec, Type type) {
     char* name;
     Type type_comp = AnalyzeVarDec(dec->son, &name, type);
 
@@ -595,7 +589,7 @@ FieldList FillDecIntoField(TreeNode* dec, Type type) {
         insert(name, type_comp, layer);
     }
 
-    FieldList field_list = (FieldList)malloc(sizeof(FieldList_));
+    DefList field_list = (DefList)malloc(sizeof(DefList_));
     field_list->name = name;
     field_list->type = type_comp;
     field_list->tail = NULL;
@@ -607,44 +601,44 @@ FieldList FillDecIntoField(TreeNode* dec, Type type) {
     return field_list;
 }
 
-FieldList FillDecListIntoFieldList(TreeNode* dec_list, Type type) {
-    FieldList field_list = FillDecIntoField(dec_list->son, type),
+DefList FillDecListIntoDefList(TreeNode* dec_list, Type type) {
+    DefList field_list = FillDecIntoField(dec_list->son, type),
             pre_field = field_list;
     while (1) {
         if (!dec_list->son->bro) return field_list;
         dec_list = dec_list->son->bro->bro;
 
-        FieldList cur_field = FillDecIntoField(dec_list->son, type);
+        DefList cur_field = FillDecIntoField(dec_list->son, type);
         pre_field->tail = cur_field;
         pre_field = cur_field;
     };
 }
 
-FieldList FillDefIntoFieldList(TreeNode* def) {
+DefList FillDefIntoDefList(TreeNode* def) {
     Type type = GetType(def->son);
-    return FillDecListIntoFieldList(def->son->bro, type);
+    return FillDecListIntoDefList(def->son->bro, type);
 }
 
-FieldList LastField(FieldList field_list) {
-    FieldList field = field_list;
+DefList LastField(DefList field_list) {
+    DefList field = field_list;
     while (1) {
-        FieldList nxt_field = field->tail;
+        DefList nxt_field = field->tail;
         if (!nxt_field) return field;
         field = nxt_field;
     }
 }
 
 int def_list_cnt = 0;
-FieldList FillDefListIntoFieldList(TreeNode* def_list) {
+DefList FillDefListIntoDefList(TreeNode* def_list) {
     if (!def_list) return NULL;
 
-    FieldList field_list = FillDefIntoFieldList(def_list->son),
+    DefList field_list = FillDefIntoDefList(def_list->son),
             pre_field = LastField(field_list);
     while (1) {
         def_list = def_list->son->bro;
         if (!def_list) return field_list;
 
-        FieldList cur_field = FillDefIntoFieldList(def_list->son);
+        DefList cur_field = FillDefIntoDefList(def_list->son);
         pre_field->tail = cur_field;
         pre_field = LastField(cur_field);
     }
@@ -665,7 +659,7 @@ Type GetTypeStructure(TreeNode* struct_specifier) {
         TreeNode* def_list = lc->bro;
 
         ++layer;
-        type->u.structure.field_list = FillDefListIntoFieldList(def_list);
+        type->u.structure.field_list = FillDefListIntoDefList(def_list);
         RemoveStructElement(type);
         --layer;
         switch (LookupStruct(type->u.structure.name, NULL, layer, kStructDefine)) {
@@ -707,13 +701,10 @@ Type GetTypeStructure(TreeNode* struct_specifier) {
 
 void RemoveStructElement(Type type) {
     assert(type->kind == kSTRUCTURE);
-    FieldList field_list = type->u.structure.field_list;
+    DefList field_list = type->u.structure.field_list;
     while (1) {
         if (!field_list) return;
-        if (field_list->type->kind == kSTRUCTURE) {
-            RemoveVariable(field_list->type->u.structure.name, layer);
-        }
-        RemoveVariable(field_list->name, layer);
+        Remove(field_list, layer);
         field_list = field_list->tail;
     }
 }
@@ -730,19 +721,12 @@ Type GetType(TreeNode* root) {
     return type;
 }
 
-void OutputFieldList(FieldList field_list, int indent) {
-    if (!field_list) return;
+void OutputDefList(DefList def_list, int indent) {
+    if (!def_list) return;
     for (int i = 0; i < indent; ++i) printf(" ");
-    printf("%s\n", field_list->name);
-    OutputType(field_list->type, indent);
-    OutputFieldList(field_list->tail, indent);
-}
-
-void OutputParamList(ParamList param_list, int indent) {
-    if (!param_list) return;
-    for (int i = 0; i < indent; ++i) printf(" ");
-    OutputType(param_list->type, indent);
-    OutputParamList(param_list->tail, indent);
+    printf("%s\n", def_list->name);
+    OutputType(def_list->type, indent);
+    OutputDefList(def_list->tail, indent);
 }
 
 void OutputType(Type type, int indent) {
@@ -758,14 +742,14 @@ void OutputType(Type type, int indent) {
             break;
         case kSTRUCTURE:
             printf("structure: %s\n", type->u.structure.name);
-            OutputFieldList(type->u.structure.field_list, indent+2);
+            OutputDefList(type->u.structure.field_list, indent+2);
             break;
         case kFUNCTION:
             printf("function: %d\n", type->u.function.defined);
             puts("  ret_type:");
             OutputType(type->u.function.type_ret, indent+4);
             puts("  param_list:");
-            OutputParamList(type->u.function.param_list, indent+4);
+            OutputDefList(type->u.function.param_list, indent+4);
     }
 }
 
