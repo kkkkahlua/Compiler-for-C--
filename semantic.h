@@ -35,9 +35,9 @@ void OutputType(Type type, int indent);
 
 void OutputSemanticErrorMsg(int error_type, int lineno, const char* error_msg);
 
-void AnalyzeProgram(TreeNode* root);
+void ProcessProgram(TreeNode* root);
 
-void AnalyzeExtDefList(TreeNode* root);
+void ProcessExtDefList(TreeNode* root);
 
 void ProcessExtDecList(TreeNode* ext_dec_list, Type type);
 
@@ -51,13 +51,13 @@ void ProcessFunDef(TreeNode* fun_def, Type type_ret);
 
 void ProcessFunDec(TreeNode* fun_def, Type type_ret);
 
-void AnalyzeExtDef(TreeNode* root);
+void ProcessExtDef(TreeNode* root);
 
 Type GetTypeBasic(TreeNode* root);
 
 char* GetTagName(TreeNode* root);
 
-Type AnalyzeVarDec(TreeNode* var_dec, char** name, Type type_base);
+Type ProcessVarDec(TreeNode* var_dec, char** name, Type type_base);
 
 DefList FillDecIntoField(TreeNode* dec, Type type);
 

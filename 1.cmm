@@ -17,5 +17,5 @@ struct xx x;
 int main(struct node nd) {
     struct node nd;
     nd.b[0][0] = nd.c;
-    nd.inner_node.nd1 = fushimi;
+    nd.inner_node.nd1 = nd.b[0][0][0];
 }

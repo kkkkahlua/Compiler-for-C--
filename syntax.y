@@ -163,7 +163,7 @@ int main(int argc, char** argv) {
 
 	// OutputTree(root, 0);
 
-	AnalyzeProgram(root);
+	ProcessProgram(root);
 
 	return 0;
 }

@@ -181,9 +181,6 @@ int LookupFieldInStruct(const char* name, Type type_struct, Type* type_field) {
         if (!field_list) return 0;
         if (strcmp(field_list->name, name) == 0) {
             *type_field = field_list->type;
-            // puts(name);
-            // OutputType(*type_field, 0);
-            // puts("");
             return 1;
         }
         field_list = field_list->tail;

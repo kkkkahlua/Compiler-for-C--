@@ -61,6 +61,4 @@ int TypeConsistentBasic(Type type_1, Type type_2);
 
 int TypeConsistentDefList(DefList field_list_1, DefList field_list_2);
 
-
-
 #endif
