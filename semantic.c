@@ -214,6 +214,7 @@ Type ProcessExp(TreeNode* exp) {
             if (!TypeConsistent(type_r, type_l)) {
                 //  Error 5: type mismatch
                 OutputSemanticErrorMsg(5, exp_1->lineno, "Type mismatched for assignment");
+                return NULL;
             }
             return type_l;
         }
@@ -225,7 +226,6 @@ Type ProcessExp(TreeNode* exp) {
                 //  Error 10: [ ] applied to a non-array variable
                 OutputSemanticErrorMsg(10, exp_1->son->lineno, "[] applied to non-array variable");
             } else {
-                //  TODO: test a[2][3][4]
                 type_ret = type_base->u.array.elem;
             }
             if (!(type_idx->kind == kBASIC && type_idx->u.basic == 0)) {
@@ -276,9 +276,10 @@ Type AnalyzeDec(TreeNode* dec, char** name, Type type) {
     ProcessExp(dec->son->bro->bro);
 }
 
-void AddCompStDefToCompStDefList(const char* name, CompStDefList* comp_st_def_list) {
+void AddCompStDefToCompStDefList(const char* name, Type type, CompStDefList* comp_st_def_list) {
     CompStDefList comp_st_def = (CompStDefList)malloc(sizeof(CompStDefList_));
     comp_st_def->name = name;
+    comp_st_def->type = type;
     comp_st_def->tail = *comp_st_def_list;
     *comp_st_def_list = comp_st_def;
 }
@@ -296,9 +297,8 @@ void ProcessDecList(TreeNode* dec_list, Type type, CompStDefList* comp_st_def_li
         } else {
             //  add to symbol table
             insert(name, type_comp, layer);
+            AddCompStDefToCompStDefList(name, type_comp, comp_st_def_list);
         }
-
-        AddCompStDefToCompStDefList(name, comp_st_def_list);
 
         if (!dec_list->son->bro) return;
         dec_list = dec_list->son->bro->bro;
@@ -367,6 +367,9 @@ void ProcessStmtList(TreeNode* stmt_list, Type type_ret) {
 void RemoveCompStDef(CompStDefList comp_st_def_list) {
     while (1) {
         if (!comp_st_def_list) return;
+        if (comp_st_def_list->type->kind == kSTRUCTURE) {
+            RemoveVariable(comp_st_def_list->type->u.structure.name, layer);
+        }
         RemoveVariable(comp_st_def_list->name, layer);
         CompStDefList pre_comp_st_def = comp_st_def_list;
         comp_st_def_list = comp_st_def_list->tail;
@@ -416,6 +419,9 @@ void RemoveFormalParameterFromSymbolTable(ParamList param_list) {
             --layer;
             return;
         }
+        if (param_list->type->kind == kSTRUCTURE) {
+            RemoveVariable(param_list->type->u.structure.name, layer);
+        }
         RemoveVariable(param_list->name, layer);
         param_list = param_list->tail;
     }
@@ -437,14 +443,14 @@ void ProcessFunDef(TreeNode* fun_def, Type type_ret) {
             type->u.function.defined = 1;
             insert(type->u.function.name, type, layer);
             break;
-        case 1: {//  Error 19, multiple definition
+        case 1: {//  Error 19: multiple definition
             char* error_msg = (char*)malloc(kErrorMsgLen);
             sprintf(error_msg, "multiple definition of function \"%s\"", type->u.function.name);
             OutputSemanticErrorMsg(19, fun_def->lineno, error_msg);
             free(error_msg);
             break;
         }
-        case 2: {//  Error 19, type conflict
+        case 2: {//  Error 19: type conflict
             char* error_msg = (char*)malloc(kErrorMsgLen);
             sprintf(error_msg, "Inconsistent declaration/definition of function \"%s\"", type->u.function.name);
             OutputSemanticErrorMsg(19, fun_def->lineno, error_msg);
@@ -704,6 +710,9 @@ void RemoveStructElement(Type type) {
     FieldList field_list = type->u.structure.field_list;
     while (1) {
         if (!field_list) return;
+        if (field_list->type->kind == kSTRUCTURE) {
+            RemoveVariable(field_list->type->u.structure.name, layer);
+        }
         RemoveVariable(field_list->name, layer);
         field_list = field_list->tail;
     }

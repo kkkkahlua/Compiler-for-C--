@@ -39,6 +39,7 @@ typedef struct FunctionList_ {
 
 typedef struct CompStDefList_ {
     const char* name;
+    Type type;
     CompStDefList tail;
 } CompStDefList_;
 

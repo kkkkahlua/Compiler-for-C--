@@ -258,8 +258,12 @@ void RemoveAt(const char* name, int idx, int layer) {
 
         if (strcmp(symbol_table_node->name, name) == 0) {
             LayerNode* layer_node = symbol_table_node->layer_node;
-            //  Always eliminate the innnerst layer
-            assert(layer_node->layer == layer);
+
+            assert(layer_node->layer <= layer);
+            if (layer_node->layer < layer) {    /*  defined in outer scope  */
+                return;
+            }
+
             symbol_table_node->layer_node = layer_node->up;
             free(layer_node);
 
