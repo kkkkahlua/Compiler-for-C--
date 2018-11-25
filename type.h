@@ -15,6 +15,7 @@ typedef struct Type_ {
         struct { char* name; DefList field_list; } structure;
         struct { char* name; Type type_ret; DefList param_list; int defined; } function;
     } u;
+    int var_no;
 } Type_;
 
 typedef struct DefList_ {

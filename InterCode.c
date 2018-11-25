@@ -1,13 +1,34 @@
 #include "InterCode.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
-void OutputInterCode(InterCode* code);
+Operand NewOperandVariable(int var_no) {
+    Operand operand = (Operand)malloc(sizeof(Operand_));
+    operand->kind = kVARIABLE;
+    operand->u.var_no = var_no;
+    return operand;
+}
+
+void AddCodeToCodes(InterCode code, InterCodes codes, InterCodeIterator* iter) {
+    InterCodes cur_code = (InterCodes)malloc(sizeof(InterCodes_));
+    cur_code->code = code;
+    cur_code->next = NULL;
+    cur_code->prev = codes;
+    if (!codes) {
+        iter->begin = iter->end = codes;
+    } else {
+        iter->end->next = cur_code;
+        iter->end = cur_code;
+    }
+}
+
+void OutputInterCode(InterCode code);
 
 void OutputInterCodes(InterCodes codes) {
     while (1) {
         if (!codes) return;
-        OutputInterCode(&codes->code);
+        OutputInterCode(codes->code);
         codes = codes->next;
     }
 }
@@ -20,7 +41,7 @@ void OutputOperand(Operand op) {
     }
 }
 
-void OutputInterCode(InterCode* code) {
+void OutputInterCode(InterCode code) {
     switch (code->kind) {
         case kLabel: printf("LABLE label_%d :", code->u.label.label_no); break;
         case kFunction: printf("FUNCTION %s :", code->u.function.func_name); break;
@@ -35,10 +56,10 @@ void OutputInterCode(InterCode* code) {
             printf(" := ");
             OutputOperand(code->u.arithmetic.op_1);
             switch (code->u.arithmetic.type) {
-                case kAdd: printf(" + "); break;
-                case kSub: printf(" - "); break;
-                case kMul: printf(" * "); break;
-                case kDiv: printf(" / "); break;
+                case kADD: printf(" + "); break;
+                case kSUB: printf(" - "); break;
+                case kMUL: printf(" * "); break;
+                case kDIV: printf(" / "); break;
             }
             OutputOperand(code->u.arithmetic.op_2);
             break;

@@ -261,9 +261,15 @@ Type ProcessExp(TreeNode* exp) {
 }
 
 Type ProcessDec(TreeNode* dec, char** name, Type type) {
-    Type type_comp = ProcessVarDec(dec->son, name, type);
-    if (!dec->son->bro) return type_comp;
-    ProcessExp(dec->son->bro->bro);
+    Type type_l = ProcessVarDec(dec->son, name, type);
+    if (!dec->son->bro) return type_l;
+    Type type_r = ProcessExp(dec->son->bro->bro);
+    if (!TypeConsistent(type_r, type_l)) {
+        //  Error 5: type mismatch
+        OutputSemanticErrorMsg(5, dec->lineno, "Type mismatched for assignment");
+        return NULL;
+    }
+    return type_l;
 }
 
 void AddCompStDefToDefList(const char* name, Type type, DefList* comp_st_def_list) {
@@ -278,16 +284,18 @@ void ProcessDecList(TreeNode* dec_list, Type type, DefList* comp_st_def_list) {
     while (1) {
         char* name;
         Type type_comp = ProcessDec(dec_list->son, &name, type);
-        if (LookupVariable(name, NULL, layer, kVariableDefine) == 1) {
-            //  Error 3: redefinition in variable
-            char* error_msg = (char*)malloc(kErrorMsgLen);
-            sprintf(error_msg, "Redefined variable \"%s\"", name);
-            OutputSemanticErrorMsg(3, dec_list->son->lineno, error_msg);
-            free(error_msg);
-        } else {
-            //  add to symbol table
-            insert(name, type_comp, layer);
-            AddCompStDefToDefList(name, type_comp, comp_st_def_list);
+        if (type_comp) {
+            if (LookupVariable(name, NULL, layer, kVariableDefine) == 1) {
+                //  Error 3: redefinition in variable
+                char* error_msg = (char*)malloc(kErrorMsgLen);
+                sprintf(error_msg, "Redefined variable \"%s\"", name);
+                OutputSemanticErrorMsg(3, dec_list->son->lineno, error_msg);
+                free(error_msg);
+            } else {
+                //  add to symbol table
+                insert(name, type_comp, layer);
+                AddCompStDefToDefList(name, type_comp, comp_st_def_list);
+            }
         }
 
         if (!dec_list->son->bro) return;
