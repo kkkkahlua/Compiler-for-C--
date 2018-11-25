@@ -36,7 +36,7 @@ DefList FillDefListIntoDefList(TreeNode* def_list);
 
 void RemoveStructElement(Type type);
 
-Type ProcessExp(TreeNode* exp);
+Type ProcessExp(TreeNode* exp, Operand dst_op);
 
 void ProcessStmtList(TreeNode* stmt_list, Type type);
 

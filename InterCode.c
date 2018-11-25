@@ -3,20 +3,45 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-Operand NewOperandVariable(int var_no) {
+extern InterCodeIterator iter;
+int var_no = 0;
+int temp_no = 0;
+
+Operand NewOperandVariable() {
     Operand operand = (Operand)malloc(sizeof(Operand_));
-    operand->kind = kVARIABLE;
+    operand->kind = kVariable;
     operand->u.var_no = var_no;
     return operand;
 }
 
-void AddCodeToCodes(InterCode code, InterCodes codes, InterCodeIterator* iter) {
+Operand NewOperandTemporary() {
+    Operand operand = (Operand)malloc(sizeof(Operand_));
+    operand->kind = kTemporary;
+    operand->u.temp_no = temp_no;
+    return operand;
+}
+
+Operand NewOperandConstantInt(int val) {
+    Operand operand = (Operand)malloc(sizeof(Operand_));
+    operand->kind = kConstantInt;
+    operand->u.int_value = val;
+    return operand;
+}
+
+Operand NewOperandConstantFloat(float val) {
+    Operand operand = (Operand)malloc(sizeof(Operand_));
+    operand->kind = kConstantFloat;
+    operand->u.float_value = val;
+    return operand;
+}
+
+void AddCodeToCodes(InterCode code) {
     InterCodes cur_code = (InterCodes)malloc(sizeof(InterCodes_));
     cur_code->code = code;
     cur_code->next = NULL;
-    cur_code->prev = codes;
-    if (!codes) {
-        iter->begin = iter->end = codes;
+    cur_code->prev = iter->end;
+    if (!iter->begin) {
+        iter->begin = iter->end = cur_code;
     } else {
         iter->end->next = cur_code;
         iter->end = cur_code;
@@ -35,9 +60,10 @@ void OutputInterCodes(InterCodes codes) {
 
 void OutputOperand(Operand op) {
     switch (op->kind) {
-        kVARIABLE: printf("v_%d", op->u.var_no); break;
-        kTEMPORARY: printf("t_%d", op->u.temp_no); break;
-        kCONSTANT: printf("#%d", op->u.value); break;
+        kVariable: printf("v_%d", op->u.var_no); break;
+        kTemporary: printf("t_%d", op->u.temp_no); break;
+        kConstantInt: printf("#%d", op->u.int_value); break;
+        kConstantFloat: printf("#%f", op->u.float_value); break;
     }
 }
 
@@ -51,17 +77,25 @@ void OutputInterCode(InterCode code) {
             OutputOperand(code->u.assign.op_right);
             break;
         }
-        case kArithmetic: {
-            OutputOperand(code->u.arithmetic.op_result);
+        case kBinOp: {
+            OutputOperand(code->u.bin_op.op_result);
             printf(" := ");
-            OutputOperand(code->u.arithmetic.op_1);
-            switch (code->u.arithmetic.type) {
-                case kADD: printf(" + "); break;
-                case kSUB: printf(" - "); break;
-                case kMUL: printf(" * "); break;
-                case kDIV: printf(" / "); break;
+            OutputOperand(code->u.bin_op.op_1);
+            switch (code->u.bin_op.type) {
+                case kArithAdd: printf(" + "); break;
+                case kArithSub: printf(" - "); break;
+                case kArithMul: printf(" * "); break;
+                case kArithDiv: printf(" / "); break;
+                case kLogicAnd: printf(" && "); break;
+                case kLogicOr: printf(" || "); break;
+                case kRelopLT: printf(" < "); break;
+                case kRelopLE: printf(" <= "); break;
+                case kRelopGT: printf(" > "); break;
+                case kRelopGE: printf(" >= "); break;
+                case kRelopEQ: printf(" == "); break;
+                case kRelopNE: printf(" != "); break;
             }
-            OutputOperand(code->u.arithmetic.op_2);
+            OutputOperand(code->u.bin_op.op_2);
             break;
         }
         case kAddressOf: {

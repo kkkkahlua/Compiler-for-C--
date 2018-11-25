@@ -14,6 +14,7 @@ typedef struct SymbolTableNode {
 
 typedef struct LayerNode {
     int layer;
+    Operand op;
     Type type;
     LayerNode* up;
 } LayerNode;
@@ -32,14 +33,15 @@ typedef enum StructOpType {
 
 typedef enum VariableOpType {
     kVariableDefine,
-    kVariableUse
+    kVariableUse,
+    kVariableDeclare
 } VariableOpType;
 
 SymbolTableNode* symbol_table[16384];
 
 unsigned int hash_pjw(const char* name);
 
-int LookupVariable(const char* name, Type* type, int layer, VariableOpType variable_op);
+int LookupVariable(const char* name, Type* type, int layer, VariableOpType variable_op, Operand* var_op);
 
 int LookupStruct(const char* name, Type* type, int layer, StructOpType struct_op);
 
@@ -47,7 +49,7 @@ int LookupFunction(const char* name, Type* type_ret, DefList param_list, Functio
 
 int LookupFieldInStruct(const char* name, Type type_struct, Type* type_field);
 
-void insert(const char* name, Type type, int layer);
+int insert(const char* name, Type type);
 
 void Remove(DefList def_list, int layer);
 

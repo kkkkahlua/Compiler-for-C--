@@ -4,27 +4,16 @@
 #include "InterCode.h"
 
 #include "semantic.h"
+#include "SymbolTable.h"
 
-//  TODO: whether to use DAG in processing
+void TranslateFunDef(const char* name, DefList param_list);
 
-InterCodeIterator TranslateFunDef(const char* name, DefList param_list) {
-    InterCodes codes = NULL;
-    InterCodeIterator iter;
+void TranslateExp(TreeNode* exp, int dec_var_no, Type* type);
 
-    InterCode code;
-    code->kind = kFunction;
-    code->u.function.func_name = NewString(name);
-    AddCodeToCodes(code, codes, &iterator);
+void TranslateAssign(Operand dst_op, Operand src_op);
 
-    while (1) {
-        if (!param_list) return iter;
-        InterCode code;
-        code->kind = kParam;
-        code->u.param.op = NewOperandVariable(param_list->type->var_no);
-        AddCodeToCodes(code, codes, &iterator);
-        
-        param_list = param_list->tail;
-    }
-}
+void TranslateFunCall(Operand dst_op, const char* name);
+
+void TranslateBinOp(TreeNode* bin_op, Operand op_result, Operand op_l, Operand op_r);
 
 #endif

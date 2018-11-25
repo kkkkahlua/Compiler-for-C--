@@ -11,8 +11,6 @@
 extern int layer;
 extern const int kErrorMsgLen;
 
-int var_no = 0;
-
 Type GetTypeBasic(TreeNode* root);
 
 Type GetTypeStructure(TreeNode* root);
@@ -69,12 +67,10 @@ Type GetTypeStructure(TreeNode* struct_specifier) {
             }
             case 0:
             case 2:
-                insert(type->u.function.name, type, layer);
+                insert(type->u.function.name, type);
                 break;
         }
     } else {    //  declaration
-        type->var_no = var_no++;
-        
         switch (LookupStruct(type->u.structure.name, &type, layer, kStructDeclare)) {
             case 0: {    /* Error 17: struct type not defined  */
                 char* error_msg = (char*)malloc(kErrorMsgLen);
@@ -144,7 +140,6 @@ Type NewTypeBasic(int basic) {
     Type type = (Type)malloc(sizeof(Type_));
     type->kind = kBASIC;
     type->u.basic = basic;
-    type->var_no = var_no++;
     return type;
 }
 

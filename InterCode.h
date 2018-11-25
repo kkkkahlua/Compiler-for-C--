@@ -6,13 +6,15 @@
 typedef struct Operand_* Operand;
 typedef struct InterCodes_* InterCodes;
 typedef struct InterCode_* InterCode;
+typedef struct InterCodeIterator_* InterCodeIterator;
 
 typedef struct Operand_ {
-    enum { kVARIABLE, kTEMPORARY, kCONSTANT } kind;
+    enum { kVariable, kTemporary, kConstantInt, kConstantFloat } kind;
     union {
         int var_no;
         int temp_no;
-        int value;
+        int int_value;
+        float float_value;
     } u;
 } Operand_;
 
@@ -21,7 +23,7 @@ typedef struct InterCode_ {
         kLabel,
         kFunction,
         kAssign,
-        kArithmetic,
+        kBinOp,
         kAddressOf,
         kDereference,
         kGoto,
@@ -39,8 +41,8 @@ typedef struct InterCode_ {
         struct { Operand op_right, op_left; } assign;
         struct { 
             Operand op_result, op_1, op_2;
-            enum { kADD, kSUB, kMUL, kDIV } type;
-        } arithmetic;
+            enum { kArithAdd, kArithSub, kArithMul, kArithDiv, kLogicAnd, kLogicOr, kRelopLT, kRelopLE, kRelopGT, kRelopGE, kRelopEQ, kRelopNE } type;
+        } bin_op;
         struct { Operand op_right, op_left; } address_of;
         struct {
             Operand op_right, op_left; 
@@ -69,13 +71,17 @@ typedef struct InterCodes_ {
     InterCodes prev, next;
 } InterCodes_;
 
-typedef struct InterCodeIterator {
+typedef struct InterCodeIterator_ {
     InterCodes begin;
     InterCodes end;
-} InterCodeIterator;
+} InterCodeIterator_;
 
-Operand NewOperandVariable(int var_no);
+Operand NewOperandVariable();
 
-void AddCodeToCodes(InterCode code, InterCodes codes, InterCodeIterator* iter);
+Operand NewOperandTemporary();
+
+Operand NewOperandConstantInt(int val);
+
+Operand NewOperandConstantFloat(float val);
 
 #endif

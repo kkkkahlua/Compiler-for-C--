@@ -1,10 +1,14 @@
 #include "SymbolTable.h"
+
+#include "InterCode.h"
 #include "semantic.h"
 
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+
+extern int layer;
 
 unsigned int hash_pjw(const char* name) {
     unsigned int val = 0, i;
@@ -16,7 +20,7 @@ unsigned int hash_pjw(const char* name) {
 }
 
 int LookupVariableAt(const char* name, SymbolTableNode* symbol_table_node, 
-                    Type* type, int layer, VariableOpType variable_op) {
+                    Type* type, int layer, VariableOpType variable_op, Operand* var_op) {
     if (symbol_table_node == NULL) return 0;    //  not defined
     if (strcmp(symbol_table_node->name, name) == 0) {
         assert(symbol_table_node->layer_node->layer <= layer);
@@ -32,14 +36,18 @@ int LookupVariableAt(const char* name, SymbolTableNode* symbol_table_node,
                     /*  defined in outer scope  */
                     return 2;
                 }
+            case kVariableDeclare:
+                *var_op = symbol_table_node->layer_node->op;
+                return 1;
         }
     }
-    return LookupVariableAt(name, symbol_table_node->next, type, layer, variable_op);
+    return LookupVariableAt(name, symbol_table_node->next, type, layer, variable_op, var_op);
 }
 
-int LookupVariable(const char* name, Type* type, int layer, VariableOpType variable_op) {
+int LookupVariable(const char* name, Type* type, int layer, 
+                    VariableOpType variable_op, Operand* var_op) {
     unsigned int val = hash_pjw(name);
-    return LookupVariableAt(name, symbol_table[val], type, layer, variable_op);
+    return LookupVariableAt(name, symbol_table[val], type, layer, variable_op, var_op);
 }
 
 int TypeConsistent(Type type_ori, Type type_now) {
@@ -187,42 +195,44 @@ int LookupFieldInStruct(const char* name, Type type_struct, Type* type_field) {
     }
 }
 
-SymbolTableNode* CreateSymbolTableNode(const char* name, Type type, int layer) {
-    SymbolTableNode* symbol_table_node = (SymbolTableNode*)malloc(sizeof(SymbolTableNode));
-    symbol_table_node->name = name;
-
-    LayerNode* layer_node = (LayerNode*)malloc(sizeof(LayerNode));
+LayerNode* NewLayerNode(Type type) {
+    LayerNode* layer_node = (LayerNode*)malloc(sizeof(LayerNode_));
     layer_node->layer = layer;
+    layer_node->op = NewOperandVariable();
     layer_node->type = type;
     layer_node->up = NULL;
-    symbol_table_node->layer_node = layer_node;
+    return layer_node;
+}
+
+SymbolTableNode* NewSymbolTableNode(const char* name, Type type, int layer) {
+    SymbolTableNode* symbol_table_node = (SymbolTableNode*)malloc(sizeof(SymbolTableNode));
+    symbol_table_node->name = name;
+    symbol_table_node->layer_node = NewLayerNode(type);
     symbol_table_node->next = NULL;
     return symbol_table_node;
 }
 
-void InsertAt(const char* name, int idx, Type type, int layer) {
+Operand InsertAt(const char* name, int idx, Type type, int layer) {
     if (!symbol_table[idx]) {
-        symbol_table[idx] = CreateSymbolTableNode(name, type, layer);
-        return;
+        symbol_table[idx] = NewSymbolTableNode(name, type, layer);
+        return symbol_table[idx]->layer_node->op;
     }
     SymbolTableNode* symbol_table_node = symbol_table[idx],
                     * pre_symbol_table_node = NULL;
     while (1) {
         if (!symbol_table_node) {
-            symbol_table_node = CreateSymbolTableNode(name, type, layer);
+            symbol_table_node = NewSymbolTableNode(name, type, layer);
             pre_symbol_table_node->next = symbol_table_node;
-            return;
+            return symbol_table_node->layer_node->op;
         }
 
         if (strcmp(symbol_table_node->name, name) == 0) {
-            LayerNode* layer_node = (LayerNode*)malloc(sizeof(LayerNode));
+            LayerNode* layer_node = NewLayerNode(type);
 
-            layer_node->layer = layer;
-            layer_node->type = type;
             layer_node->up = symbol_table_node->layer_node;
             symbol_table_node->layer_node = layer_node;
 
-            return;
+            return layer_node->op;
         }
 
         pre_symbol_table_node = symbol_table_node;
@@ -230,9 +240,9 @@ void InsertAt(const char* name, int idx, Type type, int layer) {
     }
 }
 
-void insert(const char* name, Type type, int layer) {
+Operand insert(const char* name, Type type) {
     unsigned int val = hash_pjw(name);
-    InsertAt(name, val, type, layer);
+    return InsertAt(name, val, type);
 }
 
 void RemoveAt(const char* name, int idx, int layer) {
