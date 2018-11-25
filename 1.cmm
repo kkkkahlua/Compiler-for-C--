@@ -19,3 +19,9 @@ int main(struct node nd) {
     nd.b[0][0] = nd.c;
     nd.inner_node.nd1 = nd.b[0][0][0];
 }
+int func(int a, int b) {
+    return a + b;
+}
+int func(int a, int b, int c) {
+    return a + b;
+}

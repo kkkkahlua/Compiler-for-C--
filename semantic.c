@@ -1,5 +1,6 @@
 #include "semantic.h"
 
+#include "InterCode.h"
 #include "SymbolTable.h"
 
 #include <assert.h>
@@ -13,11 +14,17 @@ const int kErrorMsgLen = 100;
 
 FunctionList function_list = NULL;
 
+InterCodes inter_codes_head = NULL, inter_codes_tail = NULL;
+
 int CheckSymbolName(TreeNode* node, const char* name) {
     return node->type != kRELOP && strcmp(node->val.ValString, name) == 0;
 }
 
+void AddIOToSymbolTable();
+void CheckFunctionDefinition();
+
 void ProcessProgram(TreeNode* root) {
+    AddIOToSymbolTable();
     ProcessExtDefList(root->son);
     CheckFunctionDefinition();
 }
@@ -103,19 +110,7 @@ DefList GetVarList(TreeNode* var_list) {
     };
 }
 
-Type GetTypeFunction(TreeNode* fun_def, Type type_ret) {
-    Type type = (Type)malloc(sizeof(Type_));
-    type->kind = kFUNCTION;
-    type->u.function.name = fun_def->son->val.ValString;
-    type->u.function.type_ret = type_ret;
-    type->u.function.param_list = NULL;
-    TreeNode* var_list = fun_def->son->bro->bro;
-    if (CheckSymbolName(var_list, "VarList")) {
-        type->u.function.param_list = GetVarList(var_list);
-    }
-    type->u.function.defined = 0;
-    return type;
-}
+
 
 DefList FillArgIntoParam(TreeNode* exp) {
     DefList param_list = (DefList)malloc(sizeof(DefList_));
@@ -412,8 +407,25 @@ void RemoveFormalParameterFromSymbolTable(DefList param_list) {
     }
 }
 
+void AddIOToSymbolTable() {
+    Type type_int = NewTypeBasic(0);
+
+    insert("read",
+            NewTypeFunction("read", type_int, NULL, 1),
+            0);
+
+    DefList param_list = (DefList)malloc(sizeof(DefList_));
+    param_list->name = NewString("x");
+    param_list->type = type_int;
+    param_list->tail = NULL;
+    insert("write",
+            NewTypeFunction("write", type_int, param_list, 1),
+            0);
+}
+
 void ProcessFunDef(TreeNode* fun_def, Type type_ret) {
     Type type = GetTypeFunction(fun_def, type_ret);
+    // InterCodeIterator iter = TranslateFunDef(type->u.function.name, type->u.function.param_list);
     switch (LookupFunction(type->u.function.name, &type_ret, type->u.function.param_list, kDEFINE)) {
         case -1: {
             //  Error 4: function name conflict with variable name
@@ -496,7 +508,6 @@ void ProcessExtDef(TreeNode* ext_def) {
     TreeNode* next = specifier->bro;
 
     if (CheckSymbolName(next, "SEMI")) {
-        //  3. check type consistent in semantic or symbol table (function)?
         return;
     }
 
@@ -520,30 +531,6 @@ void ProcessExtDef(TreeNode* ext_def) {
     //  Function Definition
     assert(CheckSymbolName(fun_dec->bro, "CompSt"));
     ProcessFunDef(fun_dec, type);
-}
-
-Type GetTypeBasic(TreeNode* root) {
-    Type type = (Type)malloc(sizeof(Type_));
-    type->kind = kBASIC;
-    if (strcmp(root->val.ValString, "int") == 0) {
-        type->u.basic = 0;
-    } else {    //  float
-        type->u.basic = 1;
-    }
-    return type;
-}
-
-char* GetTagName(TreeNode* root) {
-    char* name;
-    if (root->son == NULL) {
-        return NULL;
-    } else {
-        TreeNode* id = root->son;
-        assert(id->type == kID);
-        name = (char*)malloc(sizeof(id->val.ValString) + 1);
-        strcpy(name, id->val.ValString);
-    }
-    return name;
 }
 
 Type ProcessVarDec(TreeNode* var_dec, char** name, Type type_base) {
@@ -633,60 +620,6 @@ DefList FillDefListIntoDefList(TreeNode* def_list) {
     }
 }
 
-Type GetTypeStructure(TreeNode* struct_specifier) {
-    Type type = (Type)malloc(sizeof(Type_));
-
-    type->kind = kSTRUCTURE;
-
-    TreeNode* tag = struct_specifier->son->bro;
-
-    type->u.structure.name = GetTagName(tag);
-
-    if (strcmp(tag->val.ValString, "OptTag") == 0) {    //  definition
-        TreeNode* lc = tag->bro;
-        assert(lc->type == kSYMBOL && strcmp(lc->val.ValString, "LC") == 0);
-        TreeNode* def_list = lc->bro;
-
-        ++layer;
-        type->u.structure.field_list = FillDefListIntoDefList(def_list);
-        RemoveStructElement(type);
-        --layer;
-        switch (LookupStruct(type->u.structure.name, NULL, layer, kStructDefine)) {
-            case 1: {
-                char* error_msg = (char*)malloc(kErrorMsgLen);
-                sprintf(error_msg, "Duplicated name \"%s\"", type->u.structure.name);
-                OutputSemanticErrorMsg(16, tag->lineno, error_msg);
-                free(error_msg);
-                break;
-            }
-            case 0:
-            case 2:
-                insert(type->u.function.name, type, layer);
-                break;
-        }
-    } else {    //  declaration
-        switch (LookupStruct(type->u.structure.name, &type, layer, kStructDeclare)) {
-            case 0: {    /* Error 17: struct type not defined  */
-                char* error_msg = (char*)malloc(kErrorMsgLen);
-                sprintf(error_msg, "Undefined structure \"%s\"", type->u.structure.name);
-                OutputSemanticErrorMsg(17, tag->lineno, error_msg);
-                free(error_msg);
-                break;
-            }
-            case 1: {   /*  consistent, legal */
-                break;
-            }
-            case 2: {   /*  Error 16: struct type duplicated    */
-                char* error_msg = (char*)malloc(kErrorMsgLen);
-                sprintf(error_msg, "Duplicated name \"%s\"", type->u.structure.name);
-                OutputSemanticErrorMsg(16, tag->lineno, error_msg);
-                free(error_msg);
-                break;
-            }
-        }
-    }
-    return type;
-}
 
 void RemoveStructElement(Type type) {
     assert(type->kind == kSTRUCTURE);
@@ -698,47 +631,12 @@ void RemoveStructElement(Type type) {
     }
 }
 
-Type GetType(TreeNode* root) {
-    Type type;
-    TreeNode* specifier = root->son;
-    if (specifier->type == kTYPE) {
-        type = GetTypeBasic(specifier);
-    } else {
-        type = GetTypeStructure(specifier);
-    }
-    return type;
-}
-
 void OutputDefList(DefList def_list, int indent) {
     if (!def_list) return;
     for (int i = 0; i < indent; ++i) printf(" ");
     printf("%s\n", def_list->name);
     OutputType(def_list->type, indent);
     OutputDefList(def_list->tail, indent);
-}
-
-void OutputType(Type type, int indent) {
-    if (!type) return;
-    for (int i = 0; i < indent; ++i) printf(" ");
-    switch (type->kind) {
-        case kBASIC:
-            printf("basic: %s\n", type->u.basic ? "float" : "int");
-            break;
-        case kARRAY:
-            printf("array: %d\n", type->u.array.size);
-            OutputType(type->u.array.elem, indent+2);
-            break;
-        case kSTRUCTURE:
-            printf("structure: %s\n", type->u.structure.name);
-            OutputDefList(type->u.structure.field_list, indent+2);
-            break;
-        case kFUNCTION:
-            printf("function: %d\n", type->u.function.defined);
-            puts("  ret_type:");
-            OutputType(type->u.function.type_ret, indent+4);
-            puts("  param_list:");
-            OutputDefList(type->u.function.param_list, indent+4);
-    }
 }
 
 void OutputSemanticErrorMsg(int error_type, int lineno, const char* error_msg) {
