@@ -17,6 +17,8 @@ FunctionList function_list = NULL;
 
 InterCodeIterator iter = NULL;
 
+DefList FillDefIntoDefList(TreeNode* def, int offset);
+
 int CheckSymbolName(TreeNode* node, const char* name) {
     return node->type != kRELOP && strcmp(node->val.ValString, name) == 0;
 }
@@ -153,7 +155,11 @@ Type ProcessExp(TreeNode* exp, Operand dst_op) {
                 free(error_msg);
             } else {
                 //  translate id
-                TranslateAssign(dst_op, id_op);
+                if (type->kind == kARRAY) {
+                    TranslateAddressOf(dst_op, id_op);
+                } else {
+                    TranslateAssign(dst_op, id_op);
+                }
             }
             return type;
         } else {        /*  function call   */
@@ -187,7 +193,6 @@ Type ProcessExp(TreeNode* exp, Operand dst_op) {
                 case 2: {
                     TranslateFunCall(dst_op, id->val.ValString);
                 }
-                    break;
             }
             return type_ret;
         }
@@ -233,10 +238,16 @@ Type ProcessExp(TreeNode* exp, Operand dst_op) {
         }
         if (CheckSymbolName(exp_1->bro, "LB")) {
             //  EXP -> EXP LB EXP RB
-            //  TODO: array translation
-            Type type_base = ProcessExp(exp_1),
-                type_idx = ProcessExp(exp_1->bro->bro),
-                type_ret = NULL;
+            Operand op_base = NewOperandTemporary();
+            Type type_base = ProcessExp(exp_1, op_base);
+
+            Operand op_idx = NewOperandTemporary();
+            Type type_idx = ProcessExp(exp_1->bro->bro, op_idx);
+
+            Operand op_inter = NewOperandTemporary();
+
+            Type type_ret = NULL;
+
             if (type_base->kind != kARRAY) {
                 //  Error 10: [ ] applied to a non-array variable
                 OutputSemanticErrorMsg(10, exp_1->son->lineno, "[] applied to non-array variable");
@@ -246,13 +257,17 @@ Type ProcessExp(TreeNode* exp, Operand dst_op) {
             if (!(type_idx->kind == kBASIC && type_idx->u.basic == 0)) {
                 //  Error 12: array index not an integer
                 OutputSemanticErrorMsg(12, exp_1->bro->bro->lineno, "Array index not an integer");
+            } else if (type_ret) {
+                TranslateBinOpType(kArithMul, op_inter, op_idx, NewOperandConstantInt(type_ret->u.array.space));
+                TranslateBinOpType(kArithAdd, dst_op, op_base, op_inter);
             }
+            
             return type_ret;
         }
         if (CheckSymbolName(exp_1->bro, "DOT")) {
             //  EXP -> EXP DOT ID
-            Operand op = NewOperandTemporary();
-            Type type_base = ProcessExp(exp_1, op);
+            Operand op_base = NewOperandTemporary();
+            Type type_base = ProcessExp(exp_1, op_base);
             if (!type_base || type_base->kind != kSTRUCTURE) {
                 //  Error 13: "." applied to a non-struct variable
                 OutputSemanticErrorMsg(13, exp_1->lineno, "\".\" applied to a non-struct variable");
@@ -262,7 +277,9 @@ Type ProcessExp(TreeNode* exp, Operand dst_op) {
             assert(id->type == kID);
 
             Type type = NULL;
-            if (!LookupFieldInStruct(id->val.ValString, type_base, &type)) {
+            int offset;
+            if (!LookupFieldInStruct(
+                    id->val.ValString, type_base, &type, &offset)) {
                 //  Error 14: non-existent filed
                 char* error_msg = (char*)malloc(kErrorMsgLen);
                 sprintf(error_msg, "Non-existent field \"%s\"", id->val.ValString);
@@ -270,12 +287,26 @@ Type ProcessExp(TreeNode* exp, Operand dst_op) {
                 free(error_msg);
                 return NULL;
             } else {
-                //  TODO: determine the offset of each field
+                TranslateBinOpType(kArithAdd, dst_op, op_base, 
+                                    NewOperandConstantInt(offset));
             }
             return type;
         }
         //  EXP -> EXP BINOP EXP
-
+        //  TODO: logic operation & RELOP
+        if (exp_1->bro->type == kRELOP
+            || CheckSymbolName(exp_1->bro, "AND")
+            || CheckSymbolName(exp_1->bro, "OR")) {
+            //  EXP -> EXP AND EXP
+            //      |  EXP OR EXP
+            //      |  EXP RELOP EXP
+            Operand label_false = NewOperandLabel();
+            TranslateAssign(dst_op, NewOperandConstantInt(0));
+            TranslateCond(exp_1, dst_op, NULL, label_false);
+            TranslateAssign(dst_op, NewOperandConstantInt(1));
+            TranslateLabel(label_false);
+        }
+    
         Operand op_l = NewOperandTemporary();
         Type type_l = ProcessExp(exp_1, op_l);
         Operand op_r = NewOperandTemporary();
@@ -290,12 +321,25 @@ Type ProcessExp(TreeNode* exp, Operand dst_op) {
         return type_l;
     } 
     
+    if (CheckSymbolName(exp->son, "LP")) {
+        //  EXP -> LP EXP RP
+        return ProcessExp(exp->son->bro, dst_op);
+    }
+
+    if (CheckSymbolName(exp->son, "MINUS")) {
+        //  EXP -> MINUS EXP
+        Operand op = NewOperandTemporary();
+        Type type = ProcessExp(exp->son->bro, op);
+        TranslateBinOpType(kArithSub, dst_op, NewOperandConstantInt(0), op);
+        return type;
+    }
+
     //  TODO:
-    //  EXP -> LP EXP RP
-    //      |   MINUS EXP
-    //      |   NOT EXP
-    Operand op = NewOperandTemporary();
-    ProcessExp(exp->son->bro, op);
+    //  EXP -> NOT EXP
+
+    // Operand op = NewOperandTemporary();
+    // Type type = ProcessExp(exp->son->bro, op);
+    // return ProcessExp(exp->son->bro, op);
 }
 
 Type ProcessDec(TreeNode* dec, char** name, Type type) {
@@ -331,7 +375,7 @@ void ProcessDecList(TreeNode* dec_list, Type type, DefList* comp_st_def_list) {
             if (dec->son->bro) {
                 Type type_r = ProcessExp(dec->son->bro->bro, dec_op);
 
-                if (!TypeConsistent(type_r, type_l)) {
+                if (!TypeConsistent(type_r, type_comp)) {
                     //  Error 5: type mismatch for assignment
                     OutputSemanticErrorMsg(5, dec->lineno, "Type mismatched for assignment");
                 }
@@ -360,7 +404,9 @@ void ProcessDefList(TreeNode* def_list, DefList* comp_st_def_list) {
 
 void ProcessStmt(TreeNode* stmt, Type type_ret_func) {
     if (CheckSymbolName(stmt->son, "Exp")) {
-        ProcessExp(stmt->son);
+        //  TODO: consider how to omit this step in optimization
+        Operand op = NewOperandTemporary();
+        ProcessExp(stmt->son, op);
         return;
     }
     if (CheckSymbolName(stmt->son, "CompSt")) {
@@ -593,13 +639,16 @@ Type ProcessVarDec(TreeNode* var_dec, char** name, Type type_base) {
         type_comp = (Type)malloc(sizeof(Type_));
         type_comp->kind = kARRAY;
         type_comp->u.array.size = var_dec->son->bro->bro->val.ValInt;
+        type_comp->u.array.space = type_base->kind == kARRAY
+                                    ? type_base->u.array.size * type_base->u.array.space
+                                    : 1;
         type_comp->u.array.elem = type_base;
 
         var_dec = var_dec->son;
     }
 }
 
-DefList FillDecIntoField(TreeNode* dec, Type type) {
+DefList FillDecIntoField(TreeNode* dec, Type type, int offset) {
     char* name;
     Type type_comp = ProcessVarDec(dec->son, &name, type);
 
@@ -616,6 +665,7 @@ DefList FillDecIntoField(TreeNode* dec, Type type) {
     DefList field_list = (DefList)malloc(sizeof(DefList_));
     field_list->name = name;
     field_list->type = type_comp;
+    field_list->offset = offset;
     field_list->tail = NULL;
 
     //  Error 15: assignment in sturct definition
@@ -625,22 +675,24 @@ DefList FillDecIntoField(TreeNode* dec, Type type) {
     return field_list;
 }
 
-DefList FillDecListIntoDefList(TreeNode* dec_list, Type type) {
-    DefList field_list = FillDecIntoField(dec_list->son, type),
+DefList FillDecListIntoDefList(TreeNode* dec_list, Type type, int offset) {
+    DefList field_list = FillDecIntoField(dec_list->son, type, offset),
             pre_field = field_list;
+    offset += SizeOfType(field_list->type);
     while (1) {
         if (!dec_list->son->bro) return field_list;
         dec_list = dec_list->son->bro->bro;
 
-        DefList cur_field = FillDecIntoField(dec_list->son, type);
+        DefList cur_field = FillDecIntoField(dec_list->son, type, offset);
+        offset += SizeOfType(cur_field->type);
         pre_field->tail = cur_field;
         pre_field = cur_field;
     };
 }
 
-DefList FillDefIntoDefList(TreeNode* def) {
+DefList FillDefIntoDefList(TreeNode* def, int offset) {
     Type type = GetType(def->son);
-    return FillDecListIntoDefList(def->son->bro, type);
+    return FillDecListIntoDefList(def->son->bro, type, offset);
 }
 
 DefList LastField(DefList field_list) {
@@ -652,17 +704,22 @@ DefList LastField(DefList field_list) {
     }
 }
 
-int def_list_cnt = 0;
-DefList FillDefListIntoDefList(TreeNode* def_list) {
+DefList FillDefListIntoDefList(TreeNode* def_list, int* space) {
     if (!def_list) return NULL;
 
-    DefList field_list = FillDefIntoDefList(def_list->son),
+    DefList field_list = FillDefIntoDefList(def_list->son, 0),
             pre_field = LastField(field_list);
     while (1) {
         def_list = def_list->son->bro;
-        if (!def_list) return field_list;
+        if (!def_list) {
+            *space = pre_field->offset + SizeOfType(pre_field->type);
+            return field_list;
+        }
 
-        DefList cur_field = FillDefIntoDefList(def_list->son);
+        DefList cur_field = FillDefIntoDefList(
+                                def_list->son, 
+                                pre_field->offset + SizeOfType(pre_field->type)
+                            );
         pre_field->tail = cur_field;
         pre_field = LastField(cur_field);
     }

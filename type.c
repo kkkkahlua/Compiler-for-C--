@@ -15,6 +15,15 @@ Type GetTypeBasic(TreeNode* root);
 
 Type GetTypeStructure(TreeNode* root);
 
+int SizeOfType(Type type) {
+    switch (type->kind) {
+        case kBASIC: return 4;
+        case kARRAY: return type->u.array.space * type->u.array.size;
+        case kSTRUCTURE: return type->u.structure.space;
+        case default: assert(0);
+    }
+}
+
 Type GetType(TreeNode* root) {
     Type type;
     TreeNode* specifier = root->son;
@@ -54,7 +63,9 @@ Type GetTypeStructure(TreeNode* struct_specifier) {
         TreeNode* def_list = lc->bro;
 
         ++layer;
-        type->u.structure.field_list = FillDefListIntoDefList(def_list);
+        int space;
+        type->u.structure.field_list = FillDefListIntoDefList(def_list, &spcae);
+        type->u.structure.space = space;
         RemoveStructElement(type);
         --layer;
         switch (LookupStruct(type->u.structure.name, NULL, layer, kStructDefine)) {

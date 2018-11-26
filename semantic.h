@@ -26,13 +26,7 @@ char* GetTagName(TreeNode* root);
 
 Type ProcessVarDec(TreeNode* var_dec, char** name, Type type_base);
 
-DefList FillDecIntoField(TreeNode* dec, Type type);
-
-DefList FillDecListIntoDefList(TreeNode* dec_list, Type type);
-
-DefList FillDefIntoDefList(TreeNode* def);
-
-DefList FillDefListIntoDefList(TreeNode* def_list);
+DefList FillDefListIntoDefList(TreeNode* def_list, int* space);
 
 void RemoveStructElement(Type type);
 

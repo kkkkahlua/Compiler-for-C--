@@ -47,9 +47,10 @@ int LookupStruct(const char* name, Type* type, int layer, StructOpType struct_op
 
 int LookupFunction(const char* name, Type* type_ret, DefList param_list, FunctionOpType function_op);
 
-int LookupFieldInStruct(const char* name, Type type_struct, Type* type_field);
+int LookupFieldInStruct(const char* name, Type type_struct, 
+                        Type* type_field, int* offset);
 
-int insert(const char* name, Type type);
+Operand insert(const char* name, Type type);
 
 void Remove(DefList def_list, int layer);
 

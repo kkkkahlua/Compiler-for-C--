@@ -9,14 +9,21 @@ typedef struct InterCode_* InterCode;
 typedef struct InterCodeIterator_* InterCodeIterator;
 
 typedef struct Operand_ {
-    enum { kVariable, kTemporary, kConstantInt, kConstantFloat } kind;
+    enum { kVariable, kTemporary, kPointer, kConstantInt, kConstantFloat, kLabel } kind;
     union {
         int var_no;
         int temp_no;
         int int_value;
         float float_value;
+        int label_no;
     } u;
 } Operand_;
+
+typedef enum BinOpType {
+    kArithAdd, kArithSub, kArithMul, kArithDiv, 
+    kLogicAnd, kLogicOr, 
+    kRelopLT, kRelopLE, kRelopGT, kRelopGE, kRelopEQ, kRelopNE
+} BinOpType;
 
 typedef struct InterCode_ {
     enum { 
@@ -24,6 +31,7 @@ typedef struct InterCode_ {
         kFunction,
         kAssign,
         kBinOp,
+        kUnaOp,
         kAddressOf,
         kDereference,
         kGoto,
@@ -36,22 +44,21 @@ typedef struct InterCode_ {
         kIO  
     } kind;
     union {
-        struct { int label_no; } label;
+        struct { Operand op; } label;
         struct { const char* func_name; } function;
         struct { Operand op_right, op_left; } assign;
         struct { 
             Operand op_result, op_1, op_2;
-            enum { kArithAdd, kArithSub, kArithMul, kArithDiv, kLogicAnd, kLogicOr, kRelopLT, kRelopLE, kRelopGT, kRelopGE, kRelopEQ, kRelopNE } type;
+            BinOpType type;
         } bin_op;
         struct { Operand op_right, op_left; } address_of;
         struct {
             Operand op_right, op_left; 
             enum { kLeftDereference, kRightDereference } type;
         } dereference;
-        struct { int label_no; } go_to;
+        struct { Operand op; } go_to;
         struct {
-            Operand op_1, op_2;
-            int label_no;
+            Operand op_1, op_2, op_label;
             RelopType relop_type;
         } conditional_jump;
         struct { Operand op; } ret;
@@ -76,12 +83,14 @@ typedef struct InterCodeIterator_ {
     InterCodes end;
 } InterCodeIterator_;
 
-Operand NewOperandVariable();
-
-Operand NewOperandTemporary();
-
 Operand NewOperandConstantInt(int val);
 
 Operand NewOperandConstantFloat(float val);
+
+Operand NewOperandLabel();
+
+Operand NewOperandVariable();
+
+Operand NewOperandTemporary();
 
 #endif

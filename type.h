@@ -12,8 +12,8 @@ typedef struct Type_ {
     enum { kBASIC, kARRAY, kSTRUCTURE, kFUNCTION } kind;
     union {
         int basic;      //  0: int; 1: float;
-        struct { Type elem; int size; } array;
-        struct { char* name; DefList field_list; } structure;
+        struct { Type elem; int size; int space; } array;
+        struct { char* name; DefList field_list; int space; } structure;
         struct { char* name; Type type_ret; DefList param_list; int defined; } function;
     } u;
 } Type_;
@@ -21,6 +21,7 @@ typedef struct Type_ {
 typedef struct DefList_ {
     const char* name;
     Type type;
+    int offset;
     DefList tail;
 } DefList_;
 
@@ -29,6 +30,8 @@ typedef struct FunctionList_ {
     int lineno;
     FunctionList tail;
 } FunctionList_;
+
+int SizeOfType(Type type);
 
 void OutputType(Type type, int indent);
 

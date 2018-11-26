@@ -183,12 +183,14 @@ int LookupStruct(const char* name, Type* type, int layer, StructOpType struct_op
 
 //  TODO: think about whether exists a better structure so that 
 //  filed in struct can also be positioned in a hash table
-int LookupFieldInStruct(const char* name, Type type_struct, Type* type_field) {
+int LookupFieldInStruct(const char* name, Type type_struct, 
+                        Type* type_field, int* offset) {
     DefList field_list = type_struct->u.structure.field_list;
     while (1) {
         if (!field_list) return 0;
         if (strcmp(field_list->name, name) == 0) {
             *type_field = field_list->type;
+            *offset = field_list->offset;
             return 1;
         }
         field_list = field_list->tail;
@@ -198,7 +200,9 @@ int LookupFieldInStruct(const char* name, Type type_struct, Type* type_field) {
 LayerNode* NewLayerNode(Type type) {
     LayerNode* layer_node = (LayerNode*)malloc(sizeof(LayerNode_));
     layer_node->layer = layer;
-    layer_node->op = NewOperandVariable();
+    layer_node->op = type->kind != kBASIC 
+                    ?   NewOperandVariable()
+                    :   NewOperandPointer();
     layer_node->type = type;
     layer_node->up = NULL;
     return layer_node;
