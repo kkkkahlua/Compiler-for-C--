@@ -292,21 +292,23 @@ Type ProcessExp(TreeNode* exp, Operand dst_op) {
             }
             return type;
         }
-        //  EXP -> EXP BINOP EXP
-        //  TODO: logic operation & RELOP
         if (exp_1->bro->type == kRELOP
             || CheckSymbolName(exp_1->bro, "AND")
             || CheckSymbolName(exp_1->bro, "OR")) {
             //  EXP -> EXP AND EXP
             //      |  EXP OR EXP
             //      |  EXP RELOP EXP
-            Operand label_false = NewOperandLabel();
+            Operand label_true = NewOperandLabel(),
+                    label_false = NewOperandLabel();
             TranslateAssign(dst_op, NewOperandConstantInt(0));
-            TranslateCond(exp_1, dst_op, NULL, label_false);
+            TranslateCond(exp, label_true, label_false);
+            TranslateLabel(label_true);
             TranslateAssign(dst_op, NewOperandConstantInt(1));
             TranslateLabel(label_false);
+            //  TODO: return type?
         }
-    
+
+        //  TODO: EXP -> EXP BINOP EXP
         Operand op_l = NewOperandTemporary();
         Type type_l = ProcessExp(exp_1, op_l);
         Operand op_r = NewOperandTemporary();

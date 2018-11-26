@@ -31,7 +31,7 @@ Operand NewOperandTemporary() {
 
 Operand NewOperandLabel() {
     Operand operand = (Operand)malloc(sizeof(Operand_));
-    operand->kind = kLabel;
+    operand->kind = kLABEL;
     operand->u.label_no = label_no++;
     return operand;
 }
@@ -77,7 +77,7 @@ void OutputOperand(Operand op) {
     switch (op->kind) {
         kVariable: printf("v_%d", op->u.var_no); break;
         kTemporary: printf("t_%d", op->u.temp_no); break;
-        kLabel: printf("label_%d", op->u.label_no); break;
+        kLABEL: printf("label_%d", op->u.label_no); break;
         kConstantInt: printf("#%d", op->u.int_value); break;
         kConstantFloat: printf("#%f", op->u.float_value); break;
     }

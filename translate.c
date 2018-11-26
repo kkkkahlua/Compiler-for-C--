@@ -1,5 +1,6 @@
 #include "translate.h"
 
+#include "tree.h"
 #include "type.h"
 #include "SymbolTable.h"
 
@@ -107,24 +108,70 @@ void TranslateBinOp(TreeNode* bin_op, Operand op_result, Operand op_l, Operand o
     TranslateBinOpType(bin_op_type, op_result, op_l, op_r);
 }
 
-void TranslateCond
-
-void TranslateCond(TreeNode* exp_1, Operand op_dst, Operand op_true, Operand op_false) {
-    TreeNode* exp_2 = exp_1->bro->bro,
-            * op = exp_1->bro;
+void TranslateCond(TreeNode* exp, Operand label_true, Operand label_false) {
+    TreeNode* exp_1 = exp->son;
+    if (exp_1->type == kSYMBOL && strcmp(exp_1->val.ValString, "NOT") == 0) {
+        TranslateCond(exp_1->bro, label_false, label_true);
+        return;
+    }
+    if (!exp_1->bro 
+        || (exp_1->bro->type != kRELOP 
+            && !CheckSymbolName(exp_1->bro, "AND")
+            && !CheckSymbolName(exp_1->bro, "OR"))) {
+        Operand op = NewOperandTemporary();
+        ProcessExp(exp_1, op);
+        TranslateConditionalJump(op, NewOperandConstantInt(0), label_true, kNE);
+        TranslateGoto(label_false);
+        return;
+    }
+    TreeNode* op = exp_1->bro,
+            * exp_2 = op->bro;
     if (op->type == kRELOP) {
         Operand op_1 = NewOperandTemporary();
         Type type_1 = ProcessExp(exp_1, op_1);
         Operand op_2 = NewOperandTemporary();
         Type type_2 = ProcessExp(exp_2, op_2);
-        TranslateRelop(op_1, op_2, op_true);
-        TranslateGoto(op_false);
+        TranslateConditionalJump(op_1, op_2, label_true, op->val.ValRelop);
+        TranslateGoto(label_false);
+        return;
     }
+    if (CheckSymbolName(op, "AND")) {
+        Operand label_1 = NewOperandLabel();
+        TranslateCond(exp_1, label_1, label_false);
+        TranslateLabel(label_1);
+        TranslateCond(exp_2, label_true, label_false);
+        return;
+    }
+    if (CheckSymbolName(op, "OR")) {
+        Operand label_1 = NewOperandLabel();
+        TranslateCond(exp_1, label_true, label_1);
+        TranslateLabel(label_1);
+        TranslateCond(exp_2, label_true, label_false);
+        return;
+    }
+    assert(0);
 }
 
 void TranslateLabel(Operand label) {
     InterCode code;
     code->kind = kLabel;
     code->u.label = label;
+    AddCodeToCodes(code);
+}
+
+void TranslateConditionalJump(Operand op_1, Operand op_2, Operand op_label, RelopType relop_type) {
+    InterCode code;
+    code->kind = kConditionalJump;
+    code->u.conditional_jump.op_1 = op_1;
+    code->u.conditional_jump.op_2 = op_2;
+    code->u.conditional_jump.op_label = op_label;
+    code->u.conditional_jump.relop_type = relop_type;
+    AddCodeToCodes(code);
+}
+
+void TranslateGoto(Operand op_label) {
+    InterCode code;
+    code->kind = kGoto;
+    code->u.go_to.op = op_label;
     AddCodeToCodes(code);
 }

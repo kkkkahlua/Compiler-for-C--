@@ -9,7 +9,7 @@ typedef struct InterCode_* InterCode;
 typedef struct InterCodeIterator_* InterCodeIterator;
 
 typedef struct Operand_ {
-    enum { kVariable, kTemporary, kPointer, kConstantInt, kConstantFloat, kLabel } kind;
+    enum { kVariable, kTemporary, kPointer, kConstantInt, kConstantFloat, kLABEL } kind;
     union {
         int var_no;
         int temp_no;
