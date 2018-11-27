@@ -31,7 +31,7 @@ void ProcessProgram(TreeNode* root) {
     iter = (InterCodeIterator)malloc(sizeof(InterCodeIterator_));
     ProcessExtDefList(root->son);
     CheckFunctionDefinition();
-    // OutputInterCodes(iter->begin);
+    OutputInterCodes(iter->begin);
 }
 
 void ProcessExtDefList(TreeNode* ext_def_list) {
@@ -167,7 +167,7 @@ Type ProcessExp(TreeNode* exp, Operand* op_dst) {
                 free(error_msg);
             } else {
                 //  translate id
-                TranslateID(op_dst, id_op);
+                TranslateTemporary(op_dst, id_op);
             }
             return type;
         } else {        /*  function call   */
@@ -199,7 +199,13 @@ Type ProcessExp(TreeNode* exp, Operand* op_dst) {
                     break;
                 }
                 case 2: {
-                    TranslateFunCall(op_dst, id->val.ValString);
+                    if (strcmp(id->val.ValString, "read") == 0) {
+                        TranslateRead(op_dst);
+                    } else if (strcmp(id->val.ValString, "write") == 0) {
+                        TranslateWrite();
+                    } else {
+                        TranslateFunCall(op_dst, id->val.ValString);
+                    }
                 }
             }
             return type_ret;
@@ -211,11 +217,18 @@ Type ProcessExp(TreeNode* exp, Operand* op_dst) {
         type->kind = kBASIC;
 
         type->u.basic = exp->son->type == kINT ? 0 : 1;
-        TranslateAssign(op_dst,
-                        exp->son->type == kINT
-                        ? NewOperandConstantInt(exp->son->val.ValInt)
-                        : NewOperandConstantFloat(exp->son->val.ValFloat));
 
+        Operand op = exp->son->type == kINT
+                    ? NewOperandConstantInt(exp->son->val.ValInt)
+                    : NewOperandConstantFloat(exp->son->val.ValFloat);
+
+        if ((*op_dst)->kind == kVariable) {
+            //  assign
+            TranslateAssign(op_dst, op);
+        } else {    /*  == kTemporary   */
+            //  change 
+            TranslateTemporary(op_dst, op);
+        }
         return type;
     }
 
@@ -320,7 +333,20 @@ Type ProcessExp(TreeNode* exp, Operand* op_dst) {
             OutputSemanticErrorMsg(7, exp_1->lineno, "Type mismatched for operands");
             return NULL;
         }
-        TranslateBinOp(exp_1->bro, op_dst, op_l, op_r);
+        if ((op_l->kind == kConstantInt && op_r->kind == kConstantInt)
+            ||
+            (op_l->kind == kConstantFloat && op_r->kind == kConstantFloat)) {
+            Operand op_res = ArithCalc(exp_1->bro->val.ValString, op_l, op_r);
+            if ((*op_dst)->kind == kVariable) {
+                //  assign
+                TranslateAssign(op_dst, op_res);
+            } else {    /*  == kTemporary   */
+                //  change 
+                TranslateTemporary(op_dst, op_res);
+            }
+        } else {
+            TranslateBinOp(exp_1->bro, op_dst, op_l, op_r);
+        }
         return type_l;
     } 
     
@@ -333,7 +359,19 @@ Type ProcessExp(TreeNode* exp, Operand* op_dst) {
         //  EXP -> MINUS EXP
         Operand op = NewOperandTemporary();
         Type type = ProcessExp(exp->son->bro, &op);
-        TranslateBinOpType(kArithSub, op_dst, NewOperandConstantInt(0), op);
+        if (op->kind == kConstantInt || op->kind == kConstantFloat) {
+            if (op->kind == kConstantInt) op->u.int_value = -op->u.int_value;
+            else op->u.float_value = -op->u.float_value;
+            if ((*op_dst)->kind == kVariable) {
+                //  assign
+                TranslateAssign(op_dst, op);
+            } else {    /*  == kTemporary   */
+                //  change 
+                TranslateTemporary(op_dst, op);
+            }
+        } else {
+            TranslateBinOpType(kArithSub, op_dst, NewOperandConstantInt(0), op);
+        }
         return type;
     }
 

@@ -6,6 +6,8 @@
 #include "semantic.h"
 #include "SymbolTable.h"
 
+Operand ArithCalc(const char* op_arith, Operand op_1, Operand op_2);
+
 void TranslateAddressOf(Operand dst_op, Operand src_op);
 
 void TranslateArg(Operand op);
@@ -28,10 +30,14 @@ void TranslateFunDef(const char* name, DefList param_list);
 
 void TranslateGoto(Operand op_label);
 
-void TranslateID(Operand* op_dst, Operand op_src);
+void TranslateTemporary(Operand* op_dst, Operand op_src);
 
 void TranslateLabel(Operand label);
 
+void TranslateRead(Operand* op_dst);
+
 void TranslateReturn(Operand op);
+
+void TranslateWrite();
 
 #endif

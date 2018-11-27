@@ -66,7 +66,7 @@ typedef struct InterCode_ {
         struct { Operand op; } param;
         struct { 
             Operand op;
-            enum { kRead, kWrite } type;
+            enum IOType { kRead, kWrite } type;
         } io;
     } u;
 } InterCode_;

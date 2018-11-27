@@ -184,8 +184,6 @@ int LookupStruct(const char* name, Type* type, int layer, StructOpType struct_op
     return LookupStructAt(name, symbol_table[val], type, layer, struct_op);
 }
 
-//  TODO: think about whether exists a better structure so that 
-//  filed in struct can also be positioned in a hash table
 int LookupFieldInStruct(const char* name, Type type_struct, 
                         Type* type_field, int* offset) {
     DefList field_list = type_struct->u.structure.field_list;

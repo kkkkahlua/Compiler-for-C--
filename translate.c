@@ -10,8 +10,10 @@
 #include <string.h>
 
 extern int layer;
+extern InterCodeIterator iter;
+extern int temp_no;
 
-//  TODO: special attention to READ and WRITE
+//  TODO: calculate expression when calculating
 
 void TranslateParam(const char* name) {
     InterCode code = (InterCode)malloc(sizeof(InterCode_));
@@ -68,12 +70,25 @@ void TranslateArg(Operand op) {
 }
 
 void TranslateFunCall(Operand* dst_op, const char* name) {
-    if (!dst_op) return;
     InterCode code = (InterCode)malloc(sizeof(InterCode_));
     code->kind = kCall;
     code->u.call.func_name = name;
-    code->u.call.op_result = *dst_op;
+    code->u.call.op_result = dst_op ? *dst_op : NULL;
     AddCodeToCodes(code);
+}
+
+void TranslateRead(Operand* op_dst) {
+    InterCode code = (InterCode)malloc(sizeof(InterCode_));
+    code->kind = kIO;
+    code->u.io.type = kRead;
+    code->u.io.op = *op_dst;
+    AddCodeToCodes(code);
+}
+
+void TranslateWrite(Operand* op_dst) {
+    InterCode code = iter->end->code;
+    code->kind = kIO;
+    code->u.io.type = kWrite;
 }
 
 void TranslateBinOpType(BinOpType bin_op_type, Operand* op_result, Operand op_l, Operand op_r) {
@@ -199,8 +214,35 @@ void TranslateReturn(Operand op) {
     AddCodeToCodes(code);
 }
 
-void TranslateID(Operand* op_dst, Operand op_src) {
+void TranslateTemporary(Operand* op_dst, Operand op_src) {
     // TODO: consider the problem of pointer
+    --temp_no;
     if (!op_dst) return;
     *op_dst = op_src;
+}
+
+Operand ArithCalc(const char* op_arith, Operand op_1, Operand op_2) {
+    Operand op_res = (Operand)malloc(sizeof(Operand_));
+    op_res->kind = op_1->kind;
+    if (op_res->kind == kConstantInt) {
+        if (strcmp(op_arith, "PLUS") == 0) {
+            op_res->u.int_value = op_1->u.int_value + op_2->u.int_value;
+        } else if (strcmp(op_arith, "MINUS") == 0) {
+            op_res->u.int_value = op_1->u.int_value - op_2->u.int_value;
+        } else if (strcmp(op_arith, "STAR") == 0) {
+            op_res->u.int_value = op_1->u.int_value * op_2->u.int_value;
+        } else if (strcmp(op_arith, "DIV") == 0) {
+            op_res->u.int_value = op_1->u.int_value / op_2->u.int_value;
+        }
+    } else {
+        if (strcmp(op_arith, "PLUS") == 0) {
+            op_res->u.float_value = op_1->u.float_value + op_2->u.float_value;
+        } else if (strcmp(op_arith, "MINUS") == 0) {
+            op_res->u.float_value = op_1->u.float_value - op_2->u.float_value;
+        } else if (strcmp(op_arith, "STAR") == 0) {
+            op_res->u.float_value = op_1->u.float_value * op_2->u.float_value;
+        } else if (strcmp(op_arith, "DIV") == 0) {
+            op_res->u.float_value = op_1->u.float_value / op_2->u.float_value;
+        }
+    }
 }

@@ -11,28 +11,28 @@ int label_no = 0;
 Operand NewOperandVariable() {
     Operand operand = (Operand)malloc(sizeof(Operand_));
     operand->kind = kVariable;
-    operand->u.var_no = var_no++;
+    operand->u.var_no = ++var_no;
     return operand;
 }
 
 Operand NewOperandPointer() {
     Operand operand = (Operand)malloc(sizeof(Operand_));
     operand->kind = kPointer;
-    operand->u.var_no = var_no++;
+    operand->u.var_no = ++var_no;
     return operand;
 }
 
 Operand NewOperandTemporary() {
     Operand operand = (Operand)malloc(sizeof(Operand_));
     operand->kind = kTemporary;
-    operand->u.temp_no = temp_no++;
+    operand->u.temp_no = ++temp_no;
     return operand;
 }
 
 Operand NewOperandLabel() {
     Operand operand = (Operand)malloc(sizeof(Operand_));
     operand->kind = kLABEL;
-    operand->u.label_no = label_no++;
+    operand->u.label_no = ++label_no;
     return operand;
 }
 
@@ -51,7 +51,7 @@ Operand NewOperandConstantFloat(float val) {
 }
 
 void AddCodeToCodes(InterCode code) {
-    OutputInterCode(code);
+    // OutputInterCode(code);
     InterCodes cur_code = (InterCodes)malloc(sizeof(InterCodes_));
     cur_code->code = code;
     cur_code->next = NULL;
@@ -157,8 +157,12 @@ void OutputInterCode(InterCode code) {
             OutputOperand(code->u.arg.op);
             break;
         case kCall:
-            OutputOperand(code->u.call.op_result);
-            printf(" := CALL %s", code->u.call.func_name);
+            if (code->u.call.op_result) {
+                OutputOperand(code->u.call.op_result);
+                printf(" := CALL %s", code->u.call.func_name);
+            } else {
+                printf("CALL %s", code->u.call.func_name);
+            }
             break;
         case kParam:
             printf("PARAM: ");
@@ -166,8 +170,8 @@ void OutputInterCode(InterCode code) {
             break;
         case kIO:
             switch (code->u.io.type) {
-                case kRead: printf("READ ");
-                case kWrite: printf("WRITE: ");
+                case kRead: printf("READ "); break;
+                case kWrite: printf("WRITE ");
             }
             OutputOperand(code->u.io.op);
             break;
