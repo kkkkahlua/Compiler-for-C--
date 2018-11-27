@@ -31,7 +31,7 @@ void ProcessProgram(TreeNode* root) {
     iter = (InterCodeIterator)malloc(sizeof(InterCodeIterator_));
     ProcessExtDefList(root->son);
     CheckFunctionDefinition();
-    OutputInterCodes(iter->begin);
+    // OutputInterCodes(iter->begin);
 }
 
 void ProcessExtDefList(TreeNode* ext_def_list) {
@@ -118,7 +118,7 @@ DefList GetVarList(TreeNode* var_list) {
 DefList FillArgIntoParam(TreeNode* exp) {
     DefList param = (DefList)malloc(sizeof(DefList_));
     Operand op = NewOperandTemporary();
-    param->type = ProcessExp(exp, op);
+    param->type = ProcessExp(exp, &op);
     TranslateArg(op);
     param->tail = NULL;
     return param;
@@ -140,7 +140,7 @@ int CheckLvalue(TreeNode* exp) {
                         || CheckSymbolName(exp->son->bro, "DOT")));
 }
 
-Type ProcessCond(TreeNode* exp, Operand op_dst) {
+Type ProcessCond(TreeNode* exp, Operand* op_dst) {
     Operand label_true = NewOperandLabel(),
             label_false = NewOperandLabel();
     TranslateAssign(op_dst, NewOperandConstantInt(0));
@@ -151,7 +151,7 @@ Type ProcessCond(TreeNode* exp, Operand op_dst) {
     return type;    
 }
 
-Type ProcessExp(TreeNode* exp, Operand op_dst) {
+Type ProcessExp(TreeNode* exp, Operand* op_dst) {
     if (exp->son->type == kID) {
         TreeNode* id = exp->son;
         if (!id->bro) {   /*  Exp -> ID   */
@@ -167,15 +167,7 @@ Type ProcessExp(TreeNode* exp, Operand op_dst) {
                 free(error_msg);
             } else {
                 //  translate id
-                if (type->kind == kARRAY) {
-                    //  TODO: left dereference?
-                    //  pay attention when printing?
-                    op_dst = id_op;
-                    // TranslateAddressOf(op_dst, id_op);
-                } else {
-                    //  TODO: change op_dst to influence outer scope
-                    op_dst = id_op;
-                }
+                TranslateID(op_dst, id_op);
             }
             return type;
         } else {        /*  function call   */
@@ -236,10 +228,10 @@ Type ProcessExp(TreeNode* exp, Operand op_dst) {
                 OutputSemanticErrorMsg(6, exp_1->lineno, "The left-hand side of an assignment must be a variable");
             }
             Operand op_r = NewOperandTemporary();
-            Type type_r = ProcessExp(exp_1->bro->bro, op_r);
+            Type type_r = ProcessExp(exp_1->bro->bro, &op_r);
 
             Operand op_l = NewOperandTemporary();
-            Type type_l = ProcessExp(exp_1, op_l);
+            Type type_l = ProcessExp(exp_1, &op_l);
 
             if (!TypeConsistent(type_r, type_l)) {
                 //  Error 5: type mismatch
@@ -247,7 +239,7 @@ Type ProcessExp(TreeNode* exp, Operand op_dst) {
                 return NULL;
             }
 
-            TranslateAssign(op_l, op_r);
+            TranslateAssign(&op_l, op_r);
             TranslateAssign(op_dst, op_l);
 
             return type_l;
@@ -255,10 +247,10 @@ Type ProcessExp(TreeNode* exp, Operand op_dst) {
         if (CheckSymbolName(exp_1->bro, "LB")) {
             //  EXP -> EXP LB EXP RB
             Operand op_base = NewOperandTemporary();
-            Type type_base = ProcessExp(exp_1, op_base);
+            Type type_base = ProcessExp(exp_1, &op_base);
 
             Operand op_idx = NewOperandTemporary();
-            Type type_idx = ProcessExp(exp_1->bro->bro, op_idx);
+            Type type_idx = ProcessExp(exp_1->bro->bro, &op_idx);
 
             Operand op_inter = NewOperandTemporary();
 
@@ -274,7 +266,7 @@ Type ProcessExp(TreeNode* exp, Operand op_dst) {
                 //  Error 12: array index not an integer
                 OutputSemanticErrorMsg(12, exp_1->bro->bro->lineno, "Array index not an integer");
             } else if (type_ret) {
-                TranslateBinOpType(kArithMul, op_inter, op_idx, NewOperandConstantInt(type_ret->u.array.space));
+                TranslateBinOpType(kArithMul, &op_inter, op_idx, NewOperandConstantInt(type_ret->u.array.space));
                 TranslateBinOpType(kArithAdd, op_dst, op_base, op_inter);
             }
             
@@ -283,7 +275,7 @@ Type ProcessExp(TreeNode* exp, Operand op_dst) {
         if (CheckSymbolName(exp_1->bro, "DOT")) {
             //  EXP -> EXP DOT ID
             Operand op_base = NewOperandTemporary();
-            Type type_base = ProcessExp(exp_1, op_base);
+            Type type_base = ProcessExp(exp_1, &op_base);
             if (!type_base || type_base->kind != kSTRUCTURE) {
                 //  Error 13: "." applied to a non-struct variable
                 OutputSemanticErrorMsg(13, exp_1->lineno, "\".\" applied to a non-struct variable");
@@ -319,9 +311,9 @@ Type ProcessExp(TreeNode* exp, Operand op_dst) {
 
         //  EXP -> EXP BINOP EXP
         Operand op_l = NewOperandTemporary();
-        Type type_l = ProcessExp(exp_1, op_l);
+        Type type_l = ProcessExp(exp_1, &op_l);
         Operand op_r = NewOperandTemporary();
-        Type type_r = ProcessExp(exp_1->bro->bro, op_r);
+        Type type_r = ProcessExp(exp_1->bro->bro, &op_r);
 
         if (!TypeConsistentBasic(type_l, type_r)) {
             //  Error 7: type mismatch
@@ -340,7 +332,7 @@ Type ProcessExp(TreeNode* exp, Operand op_dst) {
     if (CheckSymbolName(exp->son, "MINUS")) {
         //  EXP -> MINUS EXP
         Operand op = NewOperandTemporary();
-        Type type = ProcessExp(exp->son->bro, op);
+        Type type = ProcessExp(exp->son->bro, &op);
         TranslateBinOpType(kArithSub, op_dst, NewOperandConstantInt(0), op);
         return type;
     }
@@ -380,7 +372,7 @@ void ProcessDecList(TreeNode* dec_list, Type type, DefList* comp_st_def_list) {
             AddCompStDefToDefList(name, type_comp, comp_st_def_list);
 
             if (dec->son->bro) {
-                Type type_r = ProcessExp(dec->son->bro->bro, dec_op);
+                Type type_r = ProcessExp(dec->son->bro->bro, &dec_op);
 
                 if (!TypeConsistent(type_r, type_comp)) {
                     //  Error 5: type mismatch for assignment
@@ -442,7 +434,7 @@ void ProcessStmt(TreeNode* stmt, Type type_ret_func) {
     }
     if (CheckSymbolName(stmt->son, "RETURN")) {
         Operand op_temp = NewOperandTemporary();
-        Type type_ret_stmt = ProcessExp(stmt->son->bro, op_temp);
+        Type type_ret_stmt = ProcessExp(stmt->son->bro, &op_temp);
         if (!TypeConsistent(type_ret_func, type_ret_stmt)) {
             //  Error 8: return type misamtch
             OutputSemanticErrorMsg(8, stmt->son->bro->lineno, "Type mismatched for return");

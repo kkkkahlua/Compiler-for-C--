@@ -78,6 +78,7 @@ void OutputOperand(Operand op) {
     switch (op->kind) {
         case kVariable: printf("v%d", op->u.var_no); break;
         case kTemporary: printf("t%d", op->u.temp_no); break;
+        case kPointer: printf("*v%d", op->u.var_no); break;
         case kLABEL: printf("label%d", op->u.label_no); break;
         case kConstantInt: printf("#%d", op->u.int_value); break;
         case kConstantFloat: printf("#%f", op->u.float_value); break;

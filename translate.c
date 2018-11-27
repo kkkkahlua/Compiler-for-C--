@@ -42,11 +42,11 @@ void TranslateFunDef(const char* name, DefList param_list) {
     }
 }
 
-void TranslateAssign(Operand dst_op, Operand src_op) {
+void TranslateAssign(Operand* dst_op, Operand src_op) {
     if (!dst_op) return;
     InterCode code = (InterCode)malloc(sizeof(InterCode_));
     code->kind = kAssign;
-    code->u.assign.op_left = dst_op;
+    code->u.assign.op_left = *dst_op;
     code->u.assign.op_right = src_op;
     AddCodeToCodes(code);
 }
@@ -67,27 +67,27 @@ void TranslateArg(Operand op) {
     AddCodeToCodes(code);
 }
 
-void TranslateFunCall(Operand dst_op, const char* name) {
+void TranslateFunCall(Operand* dst_op, const char* name) {
     if (!dst_op) return;
     InterCode code = (InterCode)malloc(sizeof(InterCode_));
     code->kind = kCall;
     code->u.call.func_name = name;
-    code->u.call.op_result = dst_op;
+    code->u.call.op_result = *dst_op;
     AddCodeToCodes(code);
 }
 
-void TranslateBinOpType(BinOpType bin_op_type, Operand op_result, Operand op_l, Operand op_r) {
+void TranslateBinOpType(BinOpType bin_op_type, Operand* op_result, Operand op_l, Operand op_r) {
     if (!op_result) return;
     InterCode code = (InterCode)malloc(sizeof(InterCode_));
     code->kind = kBinOp;
     code->u.bin_op.type = bin_op_type;
-    code->u.bin_op.op_result = op_result;
+    code->u.bin_op.op_result = *op_result;
     code->u.bin_op.op_1 = op_l;
     code->u.bin_op.op_2 = op_r;
     AddCodeToCodes(code);
 }
 
-void TranslateBinOp(TreeNode* bin_op, Operand op_result, Operand op_l, Operand op_r) {
+void TranslateBinOp(TreeNode* bin_op, Operand* op_result, Operand op_l, Operand op_r) {
     if (!op_result) return;
     BinOpType bin_op_type;
     if (bin_op->type = kSYMBOL) {
@@ -114,7 +114,7 @@ Type TranslateCond(TreeNode* exp, Operand label_true, Operand label_false) {
             && !CheckSymbolName(exp_1->bro, "AND")
             && !CheckSymbolName(exp_1->bro, "OR"))) {
         Operand op = NewOperandTemporary();
-        Type type = ProcessExp(exp_1, op);
+        Type type = ProcessExp(exp_1, &op);
         TranslateConditionalJump(op, NewOperandConstantInt(0), label_true, kNE);
         TranslateGoto(label_false);
         return type;
@@ -123,9 +123,9 @@ Type TranslateCond(TreeNode* exp, Operand label_true, Operand label_false) {
             * exp_2 = op->bro;
     if (op->type == kRELOP) {
         Operand op_1 = NewOperandTemporary();
-        Type type_1 = ProcessExp(exp_1, op_1);
+        Type type_1 = ProcessExp(exp_1, &op_1);
         Operand op_2 = NewOperandTemporary();
-        Type type_2 = ProcessExp(exp_2, op_2);
+        Type type_2 = ProcessExp(exp_2, &op_2);
 
         if (!TypeConsistentBasic(type_1, type_2)) {
             //  Error 7: type mismatch
@@ -197,4 +197,10 @@ void TranslateReturn(Operand op) {
     code->kind = kReturn;
     code->u.ret.op = op;
     AddCodeToCodes(code);
+}
+
+void TranslateID(Operand* op_dst, Operand op_src) {
+    // TODO: consider the problem of pointer
+    if (!op_dst) return;
+    *op_dst = op_src;
 }
