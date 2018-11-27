@@ -51,6 +51,7 @@ Operand NewOperandConstantFloat(float val) {
 }
 
 void AddCodeToCodes(InterCode code) {
+    OutputInterCode(code);
     InterCodes cur_code = (InterCodes)malloc(sizeof(InterCodes_));
     cur_code->code = code;
     cur_code->next = NULL;
@@ -75,11 +76,11 @@ void OutputInterCodes(InterCodes codes) {
 
 void OutputOperand(Operand op) {
     switch (op->kind) {
-        kVariable: printf("v_%d", op->u.var_no); break;
-        kTemporary: printf("t_%d", op->u.temp_no); break;
-        kLABEL: printf("label_%d", op->u.label_no); break;
-        kConstantInt: printf("#%d", op->u.int_value); break;
-        kConstantFloat: printf("#%f", op->u.float_value); break;
+        case kVariable: printf("v%d", op->u.var_no); break;
+        case kTemporary: printf("t%d", op->u.temp_no); break;
+        case kLABEL: printf("label%d", op->u.label_no); break;
+        case kConstantInt: printf("#%d", op->u.int_value); break;
+        case kConstantFloat: printf("#%f", op->u.float_value); break;
     }
 }
 
@@ -90,7 +91,9 @@ void OutputInterCode(InterCode code) {
             OutputOperand(code->u.label.op);
             printf(" :");
             break;
-        case kFunction: printf("FUNCTION %s :", code->u.function.func_name); break;
+        case kFunction: 
+            printf("FUNCTION %s :", code->u.function.func_name); 
+            break;
         case kAssign:
             OutputOperand(code->u.assign.op_left);
             printf(" := ");

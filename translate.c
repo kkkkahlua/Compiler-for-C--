@@ -6,39 +6,45 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 extern int layer;
 
+//  TODO: special attention to READ and WRITE
+
+void TranslateParam(const char* name) {
+    InterCode code = (InterCode)malloc(sizeof(InterCode_));
+    code->kind = kParam;
+    Operand op_param;
+    int lookup_status = LookupVariable(name, NULL, layer, 
+                                    kVariableDeclare, &op_param);
+    assert(lookup_status == 1);                                    
+    code->u.param.op = op_param;
+    AddCodeToCodes(code);
+}
+
 void TranslateFunDef(const char* name, DefList param_list) {
     ++layer;
 
-    InterCode code;
+    InterCode code = (InterCode)malloc(sizeof(InterCode_));
     code->kind = kFunction;
     code->u.function.func_name = NewString(name);
     AddCodeToCodes(code);
 
     while (1) {
-        if (!param_list) break;
-        InterCode code;
-        code->kind = kParam;
-
-        Operand param_op;
-        int lookup_status = LookupVariable(param_list->name, NULL, layer, kVariableDeclare, &param_op);
-        assert(lookup_status == 1);
-
-        code->u.param.op = param_op;
-
-        AddCodeToCodes(code);
-        
+        if (!param_list) {
+            --layer;
+            return;
+        }
+        TranslateParam(param_list->name);
         param_list = param_list->tail;
     }
-    --layer;
 }
 
 void TranslateAssign(Operand dst_op, Operand src_op) {
     if (!dst_op) return;
-    InterCode code;
+    InterCode code = (InterCode)malloc(sizeof(InterCode_));
     code->kind = kAssign;
     code->u.assign.op_left = dst_op;
     code->u.assign.op_right = src_op;
@@ -47,7 +53,7 @@ void TranslateAssign(Operand dst_op, Operand src_op) {
 
 void TranslateAddressOf(Operand dst_op, Operand src_op) {
     if (!dst_op) return;
-    InterCode code;
+    InterCode code = (InterCode)malloc(sizeof(InterCode_));
     code->kind = kAddressOf;
     code->u.address_of.op_left = dst_op;
     code->u.address_of.op_right = src_op;
@@ -55,7 +61,7 @@ void TranslateAddressOf(Operand dst_op, Operand src_op) {
 }
 
 void TranslateArg(Operand op) {
-    InterCode code;
+    InterCode code = (InterCode)malloc(sizeof(InterCode_));
     code->kind = kArg;
     code->u.arg.op = op;
     AddCodeToCodes(code);
@@ -63,7 +69,7 @@ void TranslateArg(Operand op) {
 
 void TranslateFunCall(Operand dst_op, const char* name) {
     if (!dst_op) return;
-    InterCode code;
+    InterCode code = (InterCode)malloc(sizeof(InterCode_));
     code->kind = kCall;
     code->u.call.func_name = name;
     code->u.call.op_result = dst_op;
@@ -72,7 +78,7 @@ void TranslateFunCall(Operand dst_op, const char* name) {
 
 void TranslateBinOpType(BinOpType bin_op_type, Operand op_result, Operand op_l, Operand op_r) {
     if (!op_result) return;
-    InterCode code;
+    InterCode code = (InterCode)malloc(sizeof(InterCode_));
     code->kind = kBinOp;
     code->u.bin_op.type = bin_op_type;
     code->u.bin_op.op_result = op_result;
@@ -163,14 +169,14 @@ Type TranslateCond(TreeNode* exp, Operand label_true, Operand label_false) {
 }
 
 void TranslateLabel(Operand label) {
-    InterCode code;
+    InterCode code = (InterCode)malloc(sizeof(InterCode_));
     code->kind = kLabel;
     code->u.label.op = label;
     AddCodeToCodes(code);
 }
 
 void TranslateConditionalJump(Operand op_1, Operand op_2, Operand op_label, RelopType relop_type) {
-    InterCode code;
+    InterCode code = (InterCode)malloc(sizeof(InterCode_));
     code->kind = kConditionalJump;
     code->u.conditional_jump.op_1 = op_1;
     code->u.conditional_jump.op_2 = op_2;
@@ -180,14 +186,14 @@ void TranslateConditionalJump(Operand op_1, Operand op_2, Operand op_label, Relo
 }
 
 void TranslateGoto(Operand op_label) {
-    InterCode code;
+    InterCode code = (InterCode)malloc(sizeof(InterCode_));
     code->kind = kGoto;
     code->u.go_to.op = op_label;
     AddCodeToCodes(code);
 }
 
 void TranslateReturn(Operand op) {
-    InterCode code;
+    InterCode code = (InterCode)malloc(sizeof(InterCode_));
     code->kind = kReturn;
     code->u.ret.op = op;
     AddCodeToCodes(code);

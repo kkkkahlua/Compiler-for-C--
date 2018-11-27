@@ -31,6 +31,7 @@ void ProcessProgram(TreeNode* root) {
     iter = (InterCodeIterator)malloc(sizeof(InterCodeIterator_));
     ProcessExtDefList(root->son);
     CheckFunctionDefinition();
+    OutputInterCodes(iter->begin);
 }
 
 void ProcessExtDefList(TreeNode* ext_def_list) {
@@ -167,9 +168,13 @@ Type ProcessExp(TreeNode* exp, Operand op_dst) {
             } else {
                 //  translate id
                 if (type->kind == kARRAY) {
-                    TranslateAddressOf(op_dst, id_op);
+                    //  TODO: left dereference?
+                    //  pay attention when printing?
+                    op_dst = id_op;
+                    // TranslateAddressOf(op_dst, id_op);
                 } else {
-                    TranslateAssign(op_dst, id_op);
+                    //  TODO: change op_dst to influence outer scope
+                    op_dst = id_op;
                 }
             }
             return type;

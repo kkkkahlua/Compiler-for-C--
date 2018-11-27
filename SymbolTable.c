@@ -20,13 +20,16 @@ unsigned int hash_pjw(const char* name) {
 }
 
 int LookupVariableAt(const char* name, SymbolTableNode* symbol_table_node, 
-                    Type* type, int layer, VariableOpType variable_op, Operand* var_op) {
+                    Type* type, int layer, 
+                    VariableOpType variable_op, Operand* var_op) {
     if (symbol_table_node == NULL) return 0;    //  not defined
     if (strcmp(symbol_table_node->name, name) == 0) {
         assert(symbol_table_node->layer_node->layer <= layer);
         switch (variable_op) {
             case kVariableUse:
                 *type = symbol_table_node->layer_node->type;
+                *var_op = symbol_table_node->layer_node->op;
+                
                 return 1;
             case kVariableDefine:
                 if (symbol_table_node->layer_node->layer == layer) {
@@ -200,9 +203,17 @@ int LookupFieldInStruct(const char* name, Type type_struct,
 LayerNode* NewLayerNode(Type type) {
     LayerNode* layer_node = (LayerNode*)malloc(sizeof(LayerNode));
     layer_node->layer = layer;
-    layer_node->op = type->kind != kBASIC 
-                    ?   NewOperandVariable()
-                    :   NewOperandPointer();
+    switch (type->kind) {
+        case kBASIC: 
+            layer_node->op = NewOperandVariable(); 
+            break;
+        case kARRAY:
+        case kSTRUCTURE:
+            layer_node->op = NewOperandPointer();
+            break;
+        case kFUNCTION:
+            break;
+    }
     layer_node->type = type;
     layer_node->up = NULL;
     return layer_node;

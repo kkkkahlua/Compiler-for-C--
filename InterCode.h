@@ -95,4 +95,10 @@ Operand NewOperandTemporary();
 
 Operand NewOperandVariable();
 
+void OutputInterCode(InterCode code);
+
+void OutputInterCodes(InterCodes codes);
+
+void OutputOperand(Operand op);
+
 #endif
