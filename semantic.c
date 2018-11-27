@@ -139,7 +139,18 @@ int CheckLvalue(TreeNode* exp) {
                         || CheckSymbolName(exp->son->bro, "DOT")));
 }
 
-Type ProcessExp(TreeNode* exp, Operand dst_op) {
+Type ProcessCond(TreeNode* exp, Operand op_dst) {
+    Operand label_true = NewOperandLabel(),
+            label_false = NewOperandLabel();
+    TranslateAssign(op_dst, NewOperandConstantInt(0));
+    Type type = TranslateCond(exp, label_true, label_false);
+    TranslateLabel(label_true);
+    TranslateAssign(op_dst, NewOperandConstantInt(1));
+    TranslateLabel(label_false);
+    return type;    
+}
+
+Type ProcessExp(TreeNode* exp, Operand op_dst) {
     if (exp->son->type == kID) {
         TreeNode* id = exp->son;
         if (!id->bro) {   /*  Exp -> ID   */
@@ -156,9 +167,9 @@ Type ProcessExp(TreeNode* exp, Operand dst_op) {
             } else {
                 //  translate id
                 if (type->kind == kARRAY) {
-                    TranslateAddressOf(dst_op, id_op);
+                    TranslateAddressOf(op_dst, id_op);
                 } else {
-                    TranslateAssign(dst_op, id_op);
+                    TranslateAssign(op_dst, id_op);
                 }
             }
             return type;
@@ -191,7 +202,7 @@ Type ProcessExp(TreeNode* exp, Operand dst_op) {
                     break;
                 }
                 case 2: {
-                    TranslateFunCall(dst_op, id->val.ValString);
+                    TranslateFunCall(op_dst, id->val.ValString);
                 }
             }
             return type_ret;
@@ -203,7 +214,7 @@ Type ProcessExp(TreeNode* exp, Operand dst_op) {
         type->kind = kBASIC;
 
         type->u.basic = exp->son->type == kINT ? 0 : 1;
-        TranslateAssign(dst_op,
+        TranslateAssign(op_dst,
                         exp->son->type == kINT
                         ? NewOperandConstantInt(exp->son->val.ValInt)
                         : NewOperandConstantFloat(exp->son->val.ValFloat));
@@ -232,7 +243,7 @@ Type ProcessExp(TreeNode* exp, Operand dst_op) {
             }
 
             TranslateAssign(op_l, op_r);
-            TranslateAssign(dst_op, op_l);
+            TranslateAssign(op_dst, op_l);
 
             return type_l;
         }
@@ -259,7 +270,7 @@ Type ProcessExp(TreeNode* exp, Operand dst_op) {
                 OutputSemanticErrorMsg(12, exp_1->bro->bro->lineno, "Array index not an integer");
             } else if (type_ret) {
                 TranslateBinOpType(kArithMul, op_inter, op_idx, NewOperandConstantInt(type_ret->u.array.space));
-                TranslateBinOpType(kArithAdd, dst_op, op_base, op_inter);
+                TranslateBinOpType(kArithAdd, op_dst, op_base, op_inter);
             }
             
             return type_ret;
@@ -287,7 +298,7 @@ Type ProcessExp(TreeNode* exp, Operand dst_op) {
                 free(error_msg);
                 return NULL;
             } else {
-                TranslateBinOpType(kArithAdd, dst_op, op_base, 
+                TranslateBinOpType(kArithAdd, op_dst, op_base, 
                                     NewOperandConstantInt(offset));
             }
             return type;
@@ -298,17 +309,10 @@ Type ProcessExp(TreeNode* exp, Operand dst_op) {
             //  EXP -> EXP AND EXP
             //      |  EXP OR EXP
             //      |  EXP RELOP EXP
-            Operand label_true = NewOperandLabel(),
-                    label_false = NewOperandLabel();
-            TranslateAssign(dst_op, NewOperandConstantInt(0));
-            TranslateCond(exp, label_true, label_false);
-            TranslateLabel(label_true);
-            TranslateAssign(dst_op, NewOperandConstantInt(1));
-            TranslateLabel(label_false);
-            //  TODO: return type?
+            return ProcessCond(exp, op_dst);
         }
 
-        //  TODO: EXP -> EXP BINOP EXP
+        //  EXP -> EXP BINOP EXP
         Operand op_l = NewOperandTemporary();
         Type type_l = ProcessExp(exp_1, op_l);
         Operand op_r = NewOperandTemporary();
@@ -319,29 +323,25 @@ Type ProcessExp(TreeNode* exp, Operand dst_op) {
             OutputSemanticErrorMsg(7, exp_1->lineno, "Type mismatched for operands");
             return NULL;
         }
-        TranslateBinOp(exp_1->bro, dst_op, op_l, op_r);
+        TranslateBinOp(exp_1->bro, op_dst, op_l, op_r);
         return type_l;
     } 
     
     if (CheckSymbolName(exp->son, "LP")) {
         //  EXP -> LP EXP RP
-        return ProcessExp(exp->son->bro, dst_op);
+        return ProcessExp(exp->son->bro, op_dst);
     }
 
     if (CheckSymbolName(exp->son, "MINUS")) {
         //  EXP -> MINUS EXP
         Operand op = NewOperandTemporary();
         Type type = ProcessExp(exp->son->bro, op);
-        TranslateBinOpType(kArithSub, dst_op, NewOperandConstantInt(0), op);
+        TranslateBinOpType(kArithSub, op_dst, NewOperandConstantInt(0), op);
         return type;
     }
 
-    //  TODO:
     //  EXP -> NOT EXP
-
-    // Operand op = NewOperandTemporary();
-    // Type type = ProcessExp(exp->son->bro, op);
-    // return ProcessExp(exp->son->bro, op);
+    return ProcessCond(exp, op_dst);
 }
 
 Type ProcessDec(TreeNode* dec, char** name, Type type) {
@@ -406,9 +406,8 @@ void ProcessDefList(TreeNode* def_list, DefList* comp_st_def_list) {
 
 void ProcessStmt(TreeNode* stmt, Type type_ret_func) {
     if (CheckSymbolName(stmt->son, "Exp")) {
-        //  TODO: consider how to omit this step in optimization
-        Operand op = NewOperandTemporary();
-        ProcessExp(stmt->son, op);
+        //  omit the assignment
+        ProcessExp(stmt->son, NULL);
         return;
     }
     if (CheckSymbolName(stmt->son, "CompSt")) {
@@ -418,27 +417,49 @@ void ProcessStmt(TreeNode* stmt, Type type_ret_func) {
     if (CheckSymbolName(stmt->son, "IF")) {
         TreeNode* exp = stmt->son->bro->bro,
                 * stmt_1 = exp->bro->bro;
-        ProcessExp(exp);
+        Operand label_true = NewOperandLabel();
+        Operand label_false = NewOperandLabel();
+        TranslateCond(exp, label_true, label_false);
+        TranslateLabel(label_true);
         ProcessStmt(stmt_1, type_ret_func);
-        if (stmt_1->bro) {
+        if (!stmt_1->bro) {
+            TranslateLabel(label_false);
+        } else {
+            Operand label_end = NewOperandLabel();
+            TranslateGoto(label_end);
+            TranslateLabel(label_false);
+
             TreeNode* stmt_2 = stmt_1->bro->bro;
             ProcessStmt(stmt_2, type_ret_func);
+            TranslateLabel(label_end);
         }
         return;
     }
     if (CheckSymbolName(stmt->son, "RETURN")) {
-        Type type_ret_stmt = ProcessExp(stmt->son->bro);
+        Operand op_temp = NewOperandTemporary();
+        Type type_ret_stmt = ProcessExp(stmt->son->bro, op_temp);
         if (!TypeConsistent(type_ret_func, type_ret_stmt)) {
             //  Error 8: return type misamtch
             OutputSemanticErrorMsg(8, stmt->son->bro->lineno, "Type mismatched for return");
+        } else {
+            TranslateReturn(op_temp);
         }
         return;
     }
+
     assert(CheckSymbolName(stmt->son, "WHILE"));
+    Operand label_begin = NewOperandLabel();
+    TranslateLabel(label_begin);
     TreeNode* exp = stmt->son->bro->bro,
             * stmt_1 = exp->bro->bro;
-    ProcessExp(exp);
+    ProcessExp(exp, NULL);
+    Operand label_true = NewOperandLabel(),
+            label_false = NewOperandLabel();
+    TranslateCond(exp, label_true, label_false);
+    TranslateLabel(label_true);
     ProcessStmt(stmt_1, type_ret_func);
+    TranslateGoto(label_begin);
+    TranslateLabel(label_false);
 }
 
 void ProcessStmtList(TreeNode* stmt_list, Type type_ret) {

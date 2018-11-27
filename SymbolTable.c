@@ -198,7 +198,7 @@ int LookupFieldInStruct(const char* name, Type type_struct,
 }
 
 LayerNode* NewLayerNode(Type type) {
-    LayerNode* layer_node = (LayerNode*)malloc(sizeof(LayerNode_));
+    LayerNode* layer_node = (LayerNode*)malloc(sizeof(LayerNode));
     layer_node->layer = layer;
     layer_node->op = type->kind != kBASIC 
                     ?   NewOperandVariable()
@@ -216,7 +216,7 @@ SymbolTableNode* NewSymbolTableNode(const char* name, Type type, int layer) {
     return symbol_table_node;
 }
 
-Operand InsertAt(const char* name, int idx, Type type, int layer) {
+Operand InsertAt(const char* name, int idx, Type type) {
     if (!symbol_table[idx]) {
         symbol_table[idx] = NewSymbolTableNode(name, type, layer);
         return symbol_table[idx]->layer_node->op;

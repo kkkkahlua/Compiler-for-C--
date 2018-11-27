@@ -4,6 +4,10 @@
 #include "type.h"
 #include "SymbolTable.h"
 
+#include <assert.h>
+#include <stdlib.h>
+#include <string.h>
+
 extern int layer;
 
 void TranslateFunDef(const char* name, DefList param_list) {
@@ -15,7 +19,7 @@ void TranslateFunDef(const char* name, DefList param_list) {
     AddCodeToCodes(code);
 
     while (1) {
-        if (!param_list) return iter;
+        if (!param_list) break;
         InterCode code;
         code->kind = kParam;
 
@@ -81,48 +85,33 @@ void TranslateBinOp(TreeNode* bin_op, Operand op_result, Operand op_l, Operand o
     if (!op_result) return;
     BinOpType bin_op_type;
     if (bin_op->type = kSYMBOL) {
-        if (strcmp(bin_op->val.valstring, "PLUS") == 0) {
+        if (strcmp(bin_op->val.ValString, "PLUS") == 0) {
             bin_op_type = kArithAdd;
-        } else if (strcmp(bin_op->val.valstring, "MINUS") == 0) {
+        } else if (strcmp(bin_op->val.ValString, "MINUS") == 0) {
             bin_op_type = kArithSub;
-        } else if (strcmp(bin_op->val.valstring, "STAR") == 0) {
+        } else if (strcmp(bin_op->val.ValString, "STAR") == 0) {
             bin_op_type = kArithMul;
-        } else if (strcmp(bin_op->val.valstring, "DIV") == 0) {
+        } else if (strcmp(bin_op->val.ValString, "DIV") == 0) {
             bin_op_type = kArithDiv;
-        } else if (strcmp(bin_op->val.valstring, "AND") == 0) {
-            bin_op_type = kLogicAnd;
-        } else if (strcmp(bin_op->val.valstring, "OR") == 0) {
-            bin_op_type = kLogicOr;
-        }
-    } else {
-        assert(bin_op->type == kRELOP);
-        switch (bin_op->val.ValRelop) {
-            case kLT: bin_op_type = kRelopLT; break;
-            case kLE: bin_op_type = kRelopLE; break;
-            case kGT: bin_op_type = kRelopGT; break;
-            case kGE: bin_op_type = kRelopGE; break;
-            case kEQ: bin_op_type = kRelopEQ; break;
-            case kNE: bin_op_type = kRelopNE; break;
         }
     }
     TranslateBinOpType(bin_op_type, op_result, op_l, op_r);
 }
 
-void TranslateCond(TreeNode* exp, Operand label_true, Operand label_false) {
+Type TranslateCond(TreeNode* exp, Operand label_true, Operand label_false) {
     TreeNode* exp_1 = exp->son;
     if (exp_1->type == kSYMBOL && strcmp(exp_1->val.ValString, "NOT") == 0) {
-        TranslateCond(exp_1->bro, label_false, label_true);
-        return;
+        return TranslateCond(exp_1->bro, label_false, label_true);
     }
     if (!exp_1->bro 
         || (exp_1->bro->type != kRELOP 
             && !CheckSymbolName(exp_1->bro, "AND")
             && !CheckSymbolName(exp_1->bro, "OR"))) {
         Operand op = NewOperandTemporary();
-        ProcessExp(exp_1, op);
+        Type type = ProcessExp(exp_1, op);
         TranslateConditionalJump(op, NewOperandConstantInt(0), label_true, kNE);
         TranslateGoto(label_false);
-        return;
+        return type;
     }
     TreeNode* op = exp_1->bro,
             * exp_2 = op->bro;
@@ -131,23 +120,44 @@ void TranslateCond(TreeNode* exp, Operand label_true, Operand label_false) {
         Type type_1 = ProcessExp(exp_1, op_1);
         Operand op_2 = NewOperandTemporary();
         Type type_2 = ProcessExp(exp_2, op_2);
-        TranslateConditionalJump(op_1, op_2, label_true, op->val.ValRelop);
-        TranslateGoto(label_false);
-        return;
+
+        if (!TypeConsistentBasic(type_1, type_2)) {
+            //  Error 7: type mismatch
+            OutputSemanticErrorMsg(7, exp_1->lineno, "Type mismatched for operands");
+            return NULL;
+        } else {
+            TranslateConditionalJump(op_1, op_2, label_true, op->val.ValRelop);
+            TranslateGoto(label_false);
+            return NewTypeBasic(0);
+        }
     }
     if (CheckSymbolName(op, "AND")) {
         Operand label_1 = NewOperandLabel();
-        TranslateCond(exp_1, label_1, label_false);
+        Type type_1 = TranslateCond(exp_1, label_1, label_false);
         TranslateLabel(label_1);
-        TranslateCond(exp_2, label_true, label_false);
-        return;
+        Type type_2 = TranslateCond(exp_2, label_true, label_false);
+
+        if (!TypeConsistentBasic(type_1, type_2)) {
+            //  Error 7: type mismatch
+            OutputSemanticErrorMsg(7, exp_1->lineno, "Type mismatched for operands");
+            return NULL;
+        } else {
+            return type_1;
+        }
     }
     if (CheckSymbolName(op, "OR")) {
         Operand label_1 = NewOperandLabel();
-        TranslateCond(exp_1, label_true, label_1);
+        Type type_1 = TranslateCond(exp_1, label_true, label_1);
         TranslateLabel(label_1);
-        TranslateCond(exp_2, label_true, label_false);
-        return;
+        Type type_2 = TranslateCond(exp_2, label_true, label_false);
+
+        if (!TypeConsistentBasic(type_1, type_2)) {
+            //  Error 7: type mismatch
+            OutputSemanticErrorMsg(7, exp_1->lineno, "Type mismatched for operands");
+            return NULL;
+        } else {
+            return type_1;
+        }
     }
     assert(0);
 }
@@ -155,7 +165,7 @@ void TranslateCond(TreeNode* exp, Operand label_true, Operand label_false) {
 void TranslateLabel(Operand label) {
     InterCode code;
     code->kind = kLabel;
-    code->u.label = label;
+    code->u.label.op = label;
     AddCodeToCodes(code);
 }
 
@@ -173,5 +183,12 @@ void TranslateGoto(Operand op_label) {
     InterCode code;
     code->kind = kGoto;
     code->u.go_to.op = op_label;
+    AddCodeToCodes(code);
+}
+
+void TranslateReturn(Operand op) {
+    InterCode code;
+    code->kind = kReturn;
+    code->u.ret.op = op;
     AddCodeToCodes(code);
 }

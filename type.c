@@ -20,7 +20,7 @@ int SizeOfType(Type type) {
         case kBASIC: return 4;
         case kARRAY: return type->u.array.space * type->u.array.size;
         case kSTRUCTURE: return type->u.structure.space;
-        case default: assert(0);
+        default: assert(0);
     }
 }
 
@@ -64,7 +64,7 @@ Type GetTypeStructure(TreeNode* struct_specifier) {
 
         ++layer;
         int space;
-        type->u.structure.field_list = FillDefListIntoDefList(def_list, &spcae);
+        type->u.structure.field_list = FillDefListIntoDefList(def_list, &space);
         type->u.structure.space = space;
         RemoveStructElement(type);
         --layer;

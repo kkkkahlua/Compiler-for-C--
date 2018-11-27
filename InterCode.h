@@ -21,8 +21,6 @@ typedef struct Operand_ {
 
 typedef enum BinOpType {
     kArithAdd, kArithSub, kArithMul, kArithDiv, 
-    kLogicAnd, kLogicOr, 
-    kRelopLT, kRelopLE, kRelopGT, kRelopGE, kRelopEQ, kRelopNE
 } BinOpType;
 
 typedef struct InterCode_ {
@@ -83,14 +81,18 @@ typedef struct InterCodeIterator_ {
     InterCodes end;
 } InterCodeIterator_;
 
+void AddCodeToCodes(InterCode code);
+
 Operand NewOperandConstantInt(int val);
 
 Operand NewOperandConstantFloat(float val);
 
 Operand NewOperandLabel();
 
-Operand NewOperandVariable();
+Operand NewOperandPointer();
 
 Operand NewOperandTemporary();
+
+Operand NewOperandVariable();
 
 #endif

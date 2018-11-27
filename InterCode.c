@@ -105,14 +105,6 @@ void OutputInterCode(InterCode code) {
                 case kArithSub: printf(" - "); break;
                 case kArithMul: printf(" * "); break;
                 case kArithDiv: printf(" / "); break;
-                case kLogicAnd: printf(" && "); break;
-                case kLogicOr: printf(" || "); break;
-                case kRelopLT: printf(" < "); break;
-                case kRelopLE: printf(" <= "); break;
-                case kRelopGT: printf(" > "); break;
-                case kRelopGE: printf(" >= "); break;
-                case kRelopEQ: printf(" == "); break;
-                case kRelopNE: printf(" != "); break;
             }
             OutputOperand(code->u.bin_op.op_2);
             break;
