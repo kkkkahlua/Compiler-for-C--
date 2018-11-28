@@ -9,6 +9,7 @@
 #include <assert.h>
 
 extern int layer;
+extern int in_fundef;
 
 unsigned int hash_pjw(const char* name) {
     unsigned int val = 0, i;
@@ -206,8 +207,12 @@ LayerNode* NewLayerNode(Type type) {
             layer_node->op = NewOperandVariable(); 
             break;
         case kARRAY:
+            layer_node->op = NewOperandVariablePointer();
+            break;
         case kSTRUCTURE:
-            layer_node->op = NewOperandPointer();
+            layer_node->op = in_fundef 
+                            ? NewOperandVariablePointer()
+                            : NewOperandVariable();
             break;
         case kFUNCTION:
             break;

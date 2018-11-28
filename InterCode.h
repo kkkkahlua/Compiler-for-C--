@@ -9,7 +9,13 @@ typedef struct InterCode_* InterCode;
 typedef struct InterCodeIterator_* InterCodeIterator;
 
 typedef struct Operand_ {
-    enum { kVariable, kTemporary, kVariablePointer, kTemporaryPointer, kConstantInt, kConstantFloat, kLABEL } kind;
+    enum { 
+        kVariable, kTemporary, 
+        kVariablePointer, kTemporaryPointer,
+        kVariableAddress,
+        kConstantInt, kConstantFloat, 
+        kLABEL 
+    } kind;
     union {
         int var_no;
         int temp_no;
@@ -90,11 +96,21 @@ Operand NewOperandConstantFloat(float val);
 
 Operand NewOperandLabel();
 
-Operand NewOperandPointer();
-
 Operand NewOperandTemporary();
 
 Operand NewOperandVariable();
+
+Operand NewOperandVariablePointer();
+
+Operand NewOperandTemporaryPointer();
+
+Operand ToOperandTemporary(Operand op);
+
+Operand ToOperandTemporaryPointer(Operand op_temp);
+
+Operand ToOperandVariableAddress(Operand operand);
+
+Operand ToOperandVariable(Operand operand_pointer);
 
 void OutputInterCode(InterCode code);
 

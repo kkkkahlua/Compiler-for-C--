@@ -8,6 +8,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+int in_struct = 0;
+
 extern int layer;
 extern const int kErrorMsgLen;
 
@@ -30,7 +32,9 @@ Type GetType(TreeNode* root) {
     if (specifier->type == kTYPE) {
         type = GetTypeBasic(specifier);
     } else {
+        in_struct = 1;
         type = GetTypeStructure(specifier);
+        in_struct = 0;
     }
     return type;
 }

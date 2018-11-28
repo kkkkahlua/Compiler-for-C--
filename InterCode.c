@@ -1,26 +1,45 @@
 #include "InterCode.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 extern InterCodeIterator iter;
 extern FILE* stream;
+extern int in_struct;
+
 int var_no = 0;
 int temp_no = 0;
 int label_no = 0;
 
 Operand NewOperandVariable() {
+    if (in_struct) return NULL;
     Operand operand = (Operand)malloc(sizeof(Operand_));
     operand->kind = kVariable;
     operand->u.var_no = ++var_no;
     return operand;
 }
 
-Operand NewOperandPointer() {
+Operand ToOperandVariableAddress(Operand operand) {
+    Operand operand_addr = (Operand)malloc(sizeof(Operand_));
+    operand_addr->kind = kVariableAddress;
+    operand_addr->u.var_no = operand->u.var_no;
+    return operand_addr;
+}
+
+Operand NewOperandVariablePointer() {
     Operand operand = (Operand)malloc(sizeof(Operand_));
     operand->kind = kVariablePointer;
     operand->u.var_no = ++var_no;
     return operand;
+}
+
+Operand ToOperandVariable(Operand operand_pointer) {
+    assert(operand_pointer->kind == kVariablePointer);
+    Operand operand_value = (Operand)malloc(sizeof(Operand_));
+    operand_value->kind = kVariable;
+    operand_value->u.var_no = operand_pointer->u.var_no;
+    return operand_value;
 }
 
 Operand NewOperandTemporary() {
@@ -28,6 +47,27 @@ Operand NewOperandTemporary() {
     operand->kind = kTemporary;
     operand->u.temp_no = ++temp_no;
     return operand;
+}
+
+Operand ToOperandTemporary(Operand op) {
+    Operand operand = (Operand)malloc(sizeof(Operand_));
+    operand->kind = kTemporary;
+    operand->u.temp_no = op->u.temp_no;
+    return operand;
+}
+
+Operand ToOperandTemporaryPointer(Operand op_temp) {
+    Operand op_temp_pointer = (Operand)malloc(sizeof(Operand_));
+    op_temp_pointer->kind = kTemporaryPointer;
+    op_temp_pointer->u.temp_no = op_temp->u.temp_no;
+    return op_temp_pointer;
+}
+
+Operand NewOperandTemporaryPointer() {
+    Operand operand_pointer = (Operand)malloc(sizeof(Operand_));
+    operand_pointer->kind = kTemporaryPointer;
+    operand_pointer->u.temp_no = ++temp_no;
+    return operand_pointer;
 }
 
 Operand NewOperandLabel() {
@@ -79,6 +119,7 @@ void OutputOperand(Operand op) {
     switch (op->kind) {
         case kVariable: fprintf(stream, "v%d", op->u.var_no); break;
         case kVariablePointer: fprintf(stream, "*v%d", op->u.var_no); break;
+        case kVariableAddress: fprintf(stream, "&v%d", op->u.var_no); break;
         case kTemporary: fprintf(stream, "t%d", op->u.temp_no); break;
         case kTemporaryPointer: fprintf(stream, "*t%d", op->u.temp_no); break;
         case kLABEL: fprintf(stream, "label%d", op->u.label_no); break;
@@ -151,7 +192,11 @@ void OutputInterCode(InterCode code) {
             break;
         case kDeclare:
             fprintf(stream, "DEC ");
-            OutputOperand(code->u.declare.op);
+            if (code->u.declare.op->kind == kVariable) {
+                OutputOperand(code->u.declare.op);
+            } else {
+                OutputOperand(ToOperandVariable(code->u.declare.op));
+            }
             fprintf(stream, " %d", code->u.declare.size);
             break;
         case kArg:
@@ -167,8 +212,13 @@ void OutputInterCode(InterCode code) {
             }
             break;
         case kParam:
-            fprintf(stream, "PARAM: ");
-            OutputOperand(code->u.param.op);
+            fprintf(stream, "PARAM ");
+            //  either variable or variable pointer
+            if (code->u.param.op->kind == kVariable) {
+                OutputOperand(code->u.param.op);
+            } else {
+                OutputOperand(ToOperandVariable(code->u.param.op));
+            }
             break;
         case kIO:
             switch (code->u.io.type) {

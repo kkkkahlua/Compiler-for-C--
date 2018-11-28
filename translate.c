@@ -12,6 +12,7 @@
 extern int layer;
 extern InterCodeIterator iter;
 extern int temp_no;
+extern int in_fundef;
 
 //  TODO: 
 //  OPTIMIZATION:   
@@ -75,8 +76,6 @@ void TranslateParam(const char* name) {
 }
 
 void TranslateFunDef(const char* name, DefList param_list) {
-    ++layer;
-
     InterCode code = (InterCode)malloc(sizeof(InterCode_));
     code->kind = kFunction;
     code->u.function.func_name = NewString(name);
@@ -85,6 +84,7 @@ void TranslateFunDef(const char* name, DefList param_list) {
     while (1) {
         if (!param_list) {
             --layer;
+            in_fundef = 0;
             return;
         }
         TranslateParam(param_list->name);
@@ -93,7 +93,6 @@ void TranslateFunDef(const char* name, DefList param_list) {
 }
 
 void TranslateAssign(Operand* dst_op, Operand src_op) {
-    if (!dst_op) return;
     InterCode code = (InterCode)malloc(sizeof(InterCode_));
     code->kind = kAssign;
     code->u.assign.op_left = *dst_op;
@@ -140,7 +139,9 @@ void TranslateWrite(Operand* op_dst) {
 }
 
 void TranslateAssignOrReplace(Operand* op_dst, Operand op_src) {
-    if ((*op_dst)->kind == kVariable) {
+    if (!op_dst) return;
+    if ((*op_dst)->kind == kVariable
+        || (*op_dst)->kind == kTemporaryPointer) {
         //  assign
         TranslateAssign(op_dst, op_src);
     } else {    /*  == kTemporary   */
@@ -290,18 +291,13 @@ void TranslateReturn(Operand op) {
 
 void TranslateReplace(Operand* op_dst, Operand op_src) {
     // TODO: consider the problem of pointer
-    --temp_no;
-    if (!op_dst) return;
     *op_dst = op_src;
 }
 
 void TranslateReplacePointer(Operand* op_dst, Operand op_src) {
     // TODO: consider the problem of pointer
-    --temp_no;
     if (!op_dst) return;
-    *op_dst = op_src;
-    if (op_src->kind == kVariable) (*op_dst)->kind = kVariablePointer;
-    else (*op_dst)->kind = kTemporaryPointer;
+    *op_dst = ToOperandTemporaryPointer(op_src);
 }
 
 void TranslateFunEnd() {
@@ -317,5 +313,13 @@ void TranslateDereference(enum DereferenceType dereference_type,
     code->u.dereference.type = dereference_type;
     code->u.dereference.op_left = *op_dst;
     code->u.dereference.op_right = op_src;
+    AddCodeToCodes(code);
+}
+
+void TranslateDeclare(Operand op, int size) {
+    InterCode code = (InterCode)malloc(sizeof(InterCode_));
+    code->kind = kDeclare;
+    code->u.declare.op = op;
+    code->u.declare.size = size;
     AddCodeToCodes(code);
 }
