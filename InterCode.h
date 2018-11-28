@@ -12,7 +12,7 @@ typedef struct Operand_ {
     enum { 
         kVariable, kTemporary, 
         kVariablePointer, kTemporaryPointer,
-        kVariableAddress,
+        kVariableAddress, kTemporaryAddress,
         kConstantInt, kConstantFloat, 
         kLABEL 
     } kind;
@@ -100,11 +100,17 @@ Operand NewOperandTemporary();
 
 Operand NewOperandVariable();
 
+Operand NewOperandVariableAddress();
+
 Operand NewOperandVariablePointer();
 
 Operand NewOperandTemporaryPointer();
 
+Operand ToOperandAddress(Operand operand);
+
 Operand ToOperandTemporary(Operand op);
+
+Operand ToOperandTemporaryAddress(Operand operand);
 
 Operand ToOperandTemporaryPointer(Operand op_temp);
 

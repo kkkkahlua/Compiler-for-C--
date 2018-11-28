@@ -1,0 +1,69 @@
+FUNCTION search :
+PARAM v1
+DEC v2 20
+v7 := #0
+LABEL label1 :
+IF v7 < #5 GOTO label2
+GOTO label3
+LABEL label2 :
+READ t4
+t8 := v7 * #4
+t5 := &v2 + t8
+*t5 := t4
+t9 := v7 + #1
+v7 := t9
+GOTO label1
+LABEL label3 :
+v3 := #0
+v4 := #4
+LABEL label4 :
+IF v3 <= v4 GOTO label5
+GOTO label6
+LABEL label5 :
+t20 := v3 + v4
+t19 := t20 / #2
+v5 := t19
+t28 := v5 * #4
+t25 := &v2 + t28
+v6 := *t25
+IF v6 == v1 GOTO label7
+GOTO label8
+LABEL label7 :
+RETURN v5
+LABEL label8 :
+t38 := v3 * #4
+t35 := &v2 + t38
+IF v6 > *t35 GOTO label14
+GOTO label12
+LABEL label14 :
+t43 := v3 * #4
+t40 := &v2 + t43
+IF v1 >= *t40 GOTO label13
+GOTO label12
+LABEL label13 :
+IF v1 < v6 GOTO label11
+GOTO label12
+LABEL label11 :
+LABEL label12 :
+IF #1 != #0 GOTO label9
+GOTO label10
+LABEL label9 :
+t46 := v5 - #1
+v4 := t46
+GOTO label15
+LABEL label10 :
+t50 := v5 + #1
+v3 := t50
+LABEL label15 :
+GOTO label4
+LABEL label6 :
+RETURN #-1
+
+FUNCTION main :
+READ t56
+v8 := t56
+ARG v8
+t58 := CALL search
+WRITE t58
+RETURN #0
+

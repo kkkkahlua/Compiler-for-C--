@@ -20,6 +20,33 @@ Operand NewOperandVariable() {
     return operand;
 }
 
+Operand NewOperandVariableAddress() {
+    if (in_struct) return NULL;
+    Operand operand = (Operand)malloc(sizeof(Operand_));
+    operand->kind = kVariableAddress;
+    operand->u.var_no = ++var_no;
+    return operand;
+}
+
+Operand ToOperandAddress(Operand operand) {
+    switch (operand->kind) {
+        case kVariable:
+        case kVariablePointer:
+            return ToOperandVariableAddress(operand);
+            break;
+        case kTemporary:
+        case kTemporaryPointer:
+            return ToOperandTemporaryAddress(operand);
+    }
+}
+
+Operand ToOperandTemporaryAddress(Operand operand) {
+    Operand operand_addr = (Operand)malloc(sizeof(Operand_));
+    operand_addr->kind = kTemporaryAddress;
+    operand_addr->u.temp_no = operand->u.temp_no;
+    return operand_addr;
+}
+
 Operand ToOperandVariableAddress(Operand operand) {
     Operand operand_addr = (Operand)malloc(sizeof(Operand_));
     operand_addr->kind = kVariableAddress;
@@ -35,7 +62,6 @@ Operand NewOperandVariablePointer() {
 }
 
 Operand ToOperandVariable(Operand operand_pointer) {
-    assert(operand_pointer->kind == kVariablePointer);
     Operand operand_value = (Operand)malloc(sizeof(Operand_));
     operand_value->kind = kVariable;
     operand_value->u.var_no = operand_pointer->u.var_no;
@@ -121,6 +147,7 @@ void OutputOperand(Operand op) {
         case kVariablePointer: fprintf(stream, "*v%d", op->u.var_no); break;
         case kVariableAddress: fprintf(stream, "&v%d", op->u.var_no); break;
         case kTemporary: fprintf(stream, "t%d", op->u.temp_no); break;
+        case kTemporaryAddress: fprintf(stream, "&t%d", op->u.temp_no); break;
         case kTemporaryPointer: fprintf(stream, "*t%d", op->u.temp_no); break;
         case kLABEL: fprintf(stream, "label%d", op->u.label_no); break;
         case kConstantInt: fprintf(stream, "#%d", op->u.int_value); break;
@@ -204,12 +231,8 @@ void OutputInterCode(InterCode code) {
             OutputOperand(code->u.arg.op);
             break;
         case kCall:
-            if (code->u.call.op_result) {
-                OutputOperand(code->u.call.op_result);
-                fprintf(stream, " := CALL %s", code->u.call.func_name);
-            } else {
-                fprintf(stream, "CALL %s", code->u.call.func_name);
-            }
+            OutputOperand(code->u.call.op_result);
+            fprintf(stream, " := CALL %s", code->u.call.func_name);
             break;
         case kParam:
             fprintf(stream, "PARAM ");

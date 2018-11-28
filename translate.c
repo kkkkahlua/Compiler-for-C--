@@ -120,7 +120,7 @@ void TranslateFunCall(Operand* dst_op, const char* name) {
     InterCode code = (InterCode)malloc(sizeof(InterCode_));
     code->kind = kCall;
     code->u.call.func_name = name;
-    code->u.call.op_result = dst_op ? *dst_op : NULL;
+    code->u.call.op_result = dst_op ? *dst_op : NewOperandTemporary();
     AddCodeToCodes(code);
 }
 
@@ -204,7 +204,7 @@ Type TranslateCond(TreeNode* exp, Operand label_true, Operand label_false) {
             && !CheckSymbolName(exp_1->bro, "AND")
             && !CheckSymbolName(exp_1->bro, "OR"))) {
         Operand op = NewOperandTemporary();
-        Type type = ProcessExp(exp_1, &op);
+        Type type = ProcessExp(exp, &op);
         TranslateConditionalJump(op, NewOperandConstantInt(0), label_true, kNE);
         TranslateGoto(label_false);
         return type;

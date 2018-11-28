@@ -1,0 +1,199 @@
+FUNCTION main :
+DEC v8 32
+DEC v9 32
+DEC v10 32
+DEC v11 32
+v1 := #0
+v2 := #0
+READ t5
+v7 := t5
+LABEL label1 :
+IF v2 < v7 GOTO label2
+GOTO label3
+LABEL label2 :
+t14 := v2 * #4
+t11 := &v8 + t14
+*t11 := #-1
+t15 := v2 + #1
+v2 := t15
+GOTO label1
+LABEL label3 :
+v2 := #0
+v6 := #1
+LABEL label4 :
+IF v6 == #1 GOTO label5
+GOTO label6
+LABEL label5 :
+IF v2 == v7 GOTO label7
+GOTO label8
+LABEL label7 :
+v3 := #1
+v4 := #0
+LABEL label9 :
+IF v4 < v7 GOTO label10
+GOTO label11
+LABEL label10 :
+t37 := v4 * #4
+t34 := &v9 + t37
+*t34 := #1
+t42 := v4 * #4
+t39 := &v10 + t42
+*t39 := #1
+t47 := v4 * #4
+t44 := &v11 + t47
+*t44 := #1
+t48 := v4 + #1
+v4 := t48
+GOTO label9
+LABEL label11 :
+v4 := #0
+LABEL label12 :
+IF v4 < v7 GOTO label13
+GOTO label14
+LABEL label13 :
+t61 := v4 * #4
+t58 := &v8 + t61
+t62 := *t58 * #4
+t56 := &v9 + t62
+IF *t56 != #1 GOTO label15
+GOTO label18
+LABEL label18 :
+t69 := v4 * #4
+t66 := &v8 + t69
+t70 := *t66 * #4
+t64 := &v10 + t70
+IF *t64 != #1 GOTO label15
+GOTO label17
+LABEL label17 :
+t77 := v4 * #4
+t74 := &v8 + t77
+t78 := *t74 * #4
+t72 := &v11 + t78
+IF *t72 != #1 GOTO label15
+GOTO label16
+LABEL label15 :
+v3 := #0
+v4 := v7
+GOTO label19
+LABEL label16 :
+t90 := v4 * #4
+t87 := &v8 + t90
+t91 := *t87 * #4
+t85 := &v9 + t91
+*t85 := #0
+v5 := #0
+LABEL label20 :
+t95 := v7 - #1
+IF v5 < t95 GOTO label21
+GOTO label22
+LABEL label21 :
+t100 := v5 + #1
+t103 := t100 * #4
+t98 := &v10 + t103
+t107 := v5 * #4
+t104 := &v10 + t107
+*t104 := *t98
+t108 := v5 + #1
+v5 := t108
+GOTO label20
+LABEL label22 :
+t115 := v7 - #1
+t118 := t115 * #4
+t113 := &v10 + t118
+*t113 := #1
+t122 := v4 * #4
+t119 := &v8 + t122
+IF *t119 != #0 GOTO label23
+GOTO label24
+LABEL label23 :
+t131 := v4 * #4
+t128 := &v8 + t131
+t127 := *t128 - #1
+t133 := t127 * #4
+t125 := &v10 + t133
+*t125 := #0
+LABEL label24 :
+t134 := v7 - #1
+v5 := t134
+LABEL label25 :
+IF v5 > #0 GOTO label26
+GOTO label27
+LABEL label26 :
+t142 := v5 - #1
+t145 := t142 * #4
+t140 := &v11 + t145
+t149 := v5 * #4
+t146 := &v11 + t149
+*t146 := *t140
+t150 := v5 - #1
+v5 := t150
+GOTO label25
+LABEL label27 :
+t155 := &v11 + #0
+*t155 := #1
+t162 := v4 * #4
+t159 := &v8 + t162
+t163 := v7 - #1
+IF *t159 != t163 GOTO label28
+GOTO label29
+LABEL label28 :
+t173 := v4 * #4
+t170 := &v8 + t173
+t169 := *t170 + #1
+t175 := t169 * #4
+t167 := &v11 + t175
+*t167 := #0
+LABEL label29 :
+t176 := v4 + #1
+v4 := t176
+LABEL label19 :
+GOTO label12
+LABEL label14 :
+IF v3 == #1 GOTO label30
+GOTO label31
+LABEL label30 :
+t182 := v1 + #1
+v1 := t182
+LABEL label31 :
+t186 := v2 - #1
+v2 := t186
+GOTO label32
+LABEL label8 :
+LABEL label33 :
+IF v2 >= #0 GOTO label36
+GOTO label35
+LABEL label36 :
+t195 := v2 * #4
+t192 := &v8 + t195
+t196 := v7 - #1
+IF *t192 >= t196 GOTO label34
+GOTO label35
+LABEL label34 :
+t204 := v2 * #4
+t201 := &v8 + t204
+*t201 := #-1
+t205 := v2 - #1
+v2 := t205
+GOTO label33
+LABEL label35 :
+IF v2 == #-1 GOTO label37
+GOTO label38
+LABEL label37 :
+v6 := #0
+GOTO label39
+LABEL label38 :
+t218 := v2 * #4
+t215 := &v8 + t218
+t214 := *t215 + #1
+t223 := v2 * #4
+t220 := &v8 + t223
+*t220 := t214
+t224 := v2 + #1
+v2 := t224
+LABEL label39 :
+LABEL label32 :
+GOTO label4
+LABEL label6 :
+WRITE v1
+RETURN #0
+

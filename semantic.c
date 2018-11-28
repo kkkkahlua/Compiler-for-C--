@@ -120,7 +120,7 @@ DefList FillArgIntoParam(TreeNode* exp) {
     switch (param->type->kind) {
         case kBASIC: TranslateArg(op); break;
         case kSTRUCTURE:
-        case kARRAY: TranslateArg(ToOperandVariableAddress(op)); break;
+        case kARRAY: TranslateArg(ToOperandAddress(op)); break;
     }
     param->tail = NULL;
     return param;
@@ -282,14 +282,26 @@ Type ProcessExp(TreeNode* exp, Operand* op_dst) {
                 );
 
                 Operand op_base;
-                if (op_base_ptr->kind == kTemporaryPointer) {
-                    // EXP -> EXP
-                    op_base = ToOperandTemporary(op_base_ptr);
-                } else {
-                    // EXP -> ID
-                    assert(op_base_ptr->kind == kVariablePointer);
-                    op_base = ToOperandVariableAddress(op_base_ptr);
+
+                switch (op_base_ptr->kind) {
+                    case kTemporaryPointer:
+                        op_base = ToOperandTemporary(op_base_ptr);
+                        break;
+                    case kVariablePointer:
+                        op_base = ToOperandVariableAddress(op_base_ptr);
+                        break;
+                    case kVariableAddress:
+                        op_base = ToOperandVariable(op_base_ptr);
+                        break;
                 }
+                // if (op_base_ptr->kind == kTemporaryPointer) {
+                //     // EXP -> EXP
+                //     op_base = ToOperandTemporary(op_base_ptr);
+                // } else {
+                //     // EXP -> ID
+                //     assert(op_base_ptr->kind == kVariablePointer);
+                //     op_base = ToOperandVariableAddress(op_base_ptr);
+                // }
 
                 Operand op_dst_temp = ToOperandTemporary(*op_dst);
                 TranslateBinOpType(kArithAdd, &op_dst_temp,
@@ -339,7 +351,21 @@ Type ProcessExp(TreeNode* exp, Operand* op_dst) {
                 //  type of op_base is either variable or variable_pointer
 
                 // take value
-                if (op_base->kind == kVariablePointer) {
+                switch (op_base->kind) {
+                    case kVariablePointer: 
+                        op_base = ToOperandVariable(op_base);
+                        break;
+                    case kVariable:
+                        op_base = ToOperandVariableAddress(op_base);
+                        break;
+                    default:
+                        op_base = ToOperandTemporary(op_base);
+                        break;
+                }
+                TranslateBinOpType(kArithAdd, &op_addr, op_base, 
+                                        NewOperandConstantInt(offset));
+
+                /*if (op_base->kind == kVariablePointer) {
                     TranslateBinOpType(kArithAdd, &op_addr,
                                         ToOperandVariable(op_base),
                                         NewOperandConstantInt(offset));
@@ -348,7 +374,7 @@ Type ProcessExp(TreeNode* exp, Operand* op_dst) {
                     TranslateBinOpType(kArithAdd, &op_addr, 
                                         ToOperandVariableAddress(op_base), 
                                         NewOperandConstantInt(offset));
-                }
+                }*/
                 TranslateRightDereferenceOrReplace(op_dst, op_addr);
             }
             return type;
@@ -427,26 +453,28 @@ void ProcessDecList(TreeNode* dec_list, Type type, DefList* comp_st_def_list) {
             free(error_msg);
         } else {
             //  add to symbol table
-            Operand dec_op = insert(name, type_comp);
+            Operand op_dec = insert(name, type_comp);
 
             if (type_comp->kind == kARRAY) {
                 TranslateDeclare(
-                    dec_op, 
+                    op_dec, 
                     type_comp->u.array.size * type_comp->u.array.space
                 );
             } else if (type_comp->kind == kSTRUCTURE) {
-                TranslateDeclare(dec_op, type_comp->u.structure.space);
+                TranslateDeclare(op_dec, type_comp->u.structure.space);
             }
 
             AddCompStDefToDefList(name, type_comp, comp_st_def_list);
 
             if (dec->son->bro) {
-                Type type_r = ProcessExp(dec->son->bro->bro, &dec_op);
+                Operand op_temp = NewOperandTemporary();
+                Type type_r = ProcessExp(dec->son->bro->bro, &op_temp);
 
                 if (!TypeConsistent(type_r, type_comp)) {
                     //  Error 5: type mismatch for assignment
                     OutputSemanticErrorMsg(5, dec->lineno, "Type mismatched for assignment");
                 }
+                TranslateAssignOrReplace(&op_dec, op_temp);
             }
         }
 
@@ -730,7 +758,7 @@ Type ProcessVarDec(TreeNode* var_dec, char** name, Type type_base) {
         type_comp->u.array.size = var_dec->son->bro->bro->val.ValInt;
         type_comp->u.array.space = type_base->kind == kARRAY
                                     ? type_base->u.array.size * type_base->u.array.space
-                                    : 4;
+                                    : SizeOfType(type_base);
         type_comp->u.array.elem = type_base;
 
         var_dec = var_dec->son;

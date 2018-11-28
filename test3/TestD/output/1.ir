@@ -1,0 +1,147 @@
+FUNCTION process :
+PARAM v1
+v2 := #3
+v2 := #36
+t19 := v1 * #321
+t18 := t19 * #2
+t23 := v1 * v2
+t17 := t18 + t23
+t16 := t17 - v1
+t27 := v2 * v1
+t15 := t16 + t27
+t30 := v2 * v2
+t14 := t15 + t30
+t13 := t14 + v1
+t12 := t13 + v1
+t11 := t12 - #23
+t10 := t11 + #45
+v2 := t10
+t44 := v2 / #3
+t43 := t44 + #336
+t51 := v1 * #12
+t50 := t51 / #4
+t42 := t43 - t50
+t41 := t42 - #60
+t59 := v2 / #12
+t58 := t59 * #24
+t40 := t41 + t58
+t39 := t40 + #36
+t38 := t39 + #1
+v2 := t38
+t71 := v1 + #24
+t70 := t71 + #1
+v2 := t70
+RETURN v2
+
+FUNCTION main :
+v3 := #13
+v4 := #20
+v5 := #15
+t105 := v3 + v4
+t104 := t105 + v5
+v6 := t104
+t110 := v3 * v4
+t113 := v5 / #2
+t109 := t110 + t113
+v7 := t109
+t117 := v3 - v4
+t116 := t117 - v5
+v8 := t116
+v9 := #42
+v10 := #0
+t126 := v3 + v4
+t125 := t126 + v5
+t124 := t125 + #2000
+t123 := t124 - v8
+v8 := t123
+LABEL label1 :
+t135 := v3 + v4
+IF t135 < v8 GOTO label2
+GOTO label3
+LABEL label2 :
+t144 := v10 * #12
+t142 := v9 + t144
+t141 := t142 + #4
+t140 := t141 + #5
+t139 := t140 + #2
+v9 := t139
+ARG v8
+t156 := CALL process
+t158 := #2 * v3
+t155 := t156 + t158
+t154 := t155 - v8
+t162 := v5 * v6
+t153 := t154 + t162
+v11 := t153
+t166 := v10 + v10
+v10 := t166
+t170 := v10 + v10
+v10 := t170
+t174 := v10 + v10
+v10 := t174
+t178 := v10 + v10
+v10 := t178
+t182 := v10 + v10
+v10 := t182
+t186 := v10 + #3
+v12 := t186
+t190 := v12 - #1
+v12 := t190
+t194 := v12 + #3
+v12 := t194
+t198 := v12 - #6
+v12 := t198
+ARG v3
+t204 := CALL process
+t209 := v3 + #3
+t208 := t209 - #2
+t207 := t208 - #1
+ARG t207
+t206 := CALL process
+IF t204 == t206 GOTO label4
+GOTO label5
+LABEL label4 :
+t215 := v8 - #2
+t214 := t215 + #1
+v8 := t214
+LABEL label5 :
+t221 := v3 + #2
+t220 := t221 + #1
+v3 := t220
+GOTO label1
+LABEL label3 :
+t226 := v9 - #12
+v12 := t226
+LABEL label6 :
+IF v12 < v9 GOTO label7
+GOTO label8
+LABEL label7 :
+t234 := #58 + v3
+v8 := t234
+t242 := v9 - #12
+v11 := t242
+t246 := v12 + #1
+v12 := t246
+v11 := v9
+t252 := v3 + v4
+v10 := t252
+t256 := v3 + v4
+v5 := t256
+GOTO label6
+LABEL label8 :
+WRITE v8
+t261 := v3 + v4
+v3 := t261
+t265 := v3 + v4
+v4 := t265
+t269 := v3 + v4
+v5 := t269
+t273 := v3 + v4
+v8 := t273
+t277 := v3 + v4
+v11 := t277
+t282 := v5 + v8
+t281 := t282 + v11
+WRITE t281
+RETURN #0
+

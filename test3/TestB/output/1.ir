@@ -1,0 +1,57 @@
+FUNCTION myPow :
+PARAM v1
+PARAM v2
+IF v2 == #0 GOTO label1
+GOTO label2
+LABEL label1 :
+RETURN #1
+LABEL label2 :
+IF v2 == #1 GOTO label3
+GOTO label4
+LABEL label3 :
+RETURN v1
+LABEL label4 :
+IF v2 == #2 GOTO label5
+GOTO label6
+LABEL label5 :
+t9 := v1 * v1
+RETURN t9
+LABEL label6 :
+t14 := v2 / #2
+t13 := t14 * #2
+IF v2 == t13 GOTO label7
+GOTO label8
+LABEL label7 :
+ARG #2
+t21 := v2 / #2
+ARG t21
+ARG v1
+t20 := CALL myPow
+ARG t20
+t18 := CALL myPow
+RETURN t18
+GOTO label9
+LABEL label8 :
+ARG #2
+t28 := v2 / #2
+ARG t28
+ARG v1
+t27 := CALL myPow
+ARG t27
+t25 := CALL myPow
+v3 := t25
+t33 := v1 * v3
+RETURN t33
+LABEL label9 :
+
+FUNCTION main :
+READ t36
+v4 := t36
+READ t38
+v5 := t38
+ARG v5
+ARG v4
+t40 := CALL myPow
+WRITE t40
+RETURN #0
+

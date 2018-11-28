@@ -1,0 +1,90 @@
+FUNCTION calculate :
+PARAM v4
+v5 := #0
+v6 := #0
+v7 := #5
+LABEL label1 :
+IF v6 < v7 GOTO label2
+GOTO label3
+LABEL label2 :
+t10 := v4 + #0
+t12 := v6 * #8
+t7 := t10 + t12
+t13 := t7 + #4
+WRITE *t13
+t20 := v4 + #0
+t22 := v6 * #8
+t17 := t20 + t22
+t23 := t17 + #4
+t14 := v5 + *t23
+v5 := t14
+t25 := v6 + #1
+v6 := t25
+GOTO label1
+LABEL label3 :
+WRITE v5
+WRITE #1000000000
+t31 := v5 / v7
+t36 := v4 + #400
+*t36 := t31
+t37 := v5 / v7
+RETURN t37
+
+FUNCTION main :
+DEC v8 4040
+v9 := #0
+v10 := #0
+v11 := #5
+v12 := #2
+LABEL label4 :
+IF v9 < v12 GOTO label5
+GOTO label6
+LABEL label5 :
+v10 := #0
+LABEL label7 :
+IF v10 < v11 GOTO label8
+GOTO label9
+LABEL label8 :
+t52 := v10 * #5
+t50 := v9 + t52
+t61 := v9 * #404
+t58 := &v8 + t61
+t62 := t58 + #0
+t64 := v10 * #8
+t56 := t62 + t64
+t65 := t56 + #4
+*t65 := t50
+t72 := v9 * #404
+t69 := &v8 + t72
+t73 := t69 + #0
+t75 := v10 * #8
+t67 := t73 + t75
+t76 := t67 + #4
+WRITE *t76
+t77 := v10 + #1
+v10 := t77
+GOTO label7
+LABEL label9 :
+t81 := v9 + #1
+v9 := t81
+GOTO label4
+LABEL label6 :
+v10 := #0
+v9 := #0
+LABEL label10 :
+IF v9 < v12 GOTO label11
+GOTO label12
+LABEL label11 :
+t97 := v9 * #404
+t94 := &v8 + t97
+ARG &t94
+t93 := CALL calculate
+t91 := v10 + t93
+v10 := t91
+t99 := v9 + #1
+v9 := t99
+GOTO label10
+LABEL label12 :
+WRITE v10
+RETURN #0
+
