@@ -15,6 +15,41 @@ extern int temp_no;
 
 //  TODO: calculate expression when calculating
 
+Operand ArithCalc(BinOpType bin_op_type, Operand op_1, Operand op_2) {
+    Operand op_res = (Operand)malloc(sizeof(Operand_));
+    op_res->kind = op_1->kind;
+    if (op_res->kind == kConstantInt) {
+        switch (bin_op_type) {
+            case kArithAdd:
+                op_res->u.int_value = op_1->u.int_value + op_2->u.int_value;
+                break;
+            case kArithSub:
+                op_res->u.int_value = op_1->u.int_value - op_2->u.int_value;
+                break;
+            case kArithMul:
+                op_res->u.int_value = op_1->u.int_value * op_2->u.int_value;
+                break;
+            case kArithDiv:
+                op_res->u.int_value = op_1->u.int_value / op_2->u.int_value;
+        }
+    } else {
+        switch (bin_op_type) {
+            case kArithAdd:
+                op_res->u.float_value = op_1->u.float_value + op_2->u.float_value;
+                break;
+            case kArithSub:
+                op_res->u.float_value = op_1->u.float_value - op_2->u.float_value;
+                break;
+            case kArithMul:
+                op_res->u.float_value = op_1->u.float_value * op_2->u.float_value;
+                break;
+            case kArithDiv:
+                op_res->u.float_value = op_1->u.float_value / op_2->u.float_value;
+        }
+    }
+    return op_res;
+}
+
 void TranslateParam(const char* name) {
     InterCode code = (InterCode)malloc(sizeof(InterCode_));
     code->kind = kParam;
@@ -91,15 +126,31 @@ void TranslateWrite(Operand* op_dst) {
     code->u.io.type = kWrite;
 }
 
+void TranslateAssignOrReplace(Operand* op_dst, Operand op_src) {
+    if ((*op_dst)->kind == kVariable) {
+        //  assign
+        TranslateAssign(op_dst, op_src);
+    } else {    /*  == kTemporary   */
+        //  change 
+        TranslateTemporary(op_dst, op_src);
+    }
+}
+
 void TranslateBinOpType(BinOpType bin_op_type, Operand* op_result, Operand op_l, Operand op_r) {
     if (!op_result) return;
-    InterCode code = (InterCode)malloc(sizeof(InterCode_));
-    code->kind = kBinOp;
-    code->u.bin_op.type = bin_op_type;
-    code->u.bin_op.op_result = *op_result;
-    code->u.bin_op.op_1 = op_l;
-    code->u.bin_op.op_2 = op_r;
-    AddCodeToCodes(code);
+    if ((op_l->kind == kConstantInt && op_r->kind == kConstantInt)
+        || (op_l->kind == kConstantFloat && op_r->kind == kConstantFloat)) {
+        Operand op_res = ArithCalc(bin_op_type, op_l, op_r);
+        TranslateAssignOrReplace(op_result, op_res);
+    } else {
+        InterCode code = (InterCode)malloc(sizeof(InterCode_));
+        code->kind = kBinOp;
+        code->u.bin_op.type = bin_op_type;
+        code->u.bin_op.op_result = *op_result;
+        code->u.bin_op.op_1 = op_l;
+        code->u.bin_op.op_2 = op_r;
+        AddCodeToCodes(code);
+    }
 }
 
 void TranslateBinOp(TreeNode* bin_op, Operand* op_result, Operand op_l, Operand op_r) {
@@ -221,28 +272,3 @@ void TranslateTemporary(Operand* op_dst, Operand op_src) {
     *op_dst = op_src;
 }
 
-Operand ArithCalc(const char* op_arith, Operand op_1, Operand op_2) {
-    Operand op_res = (Operand)malloc(sizeof(Operand_));
-    op_res->kind = op_1->kind;
-    if (op_res->kind == kConstantInt) {
-        if (strcmp(op_arith, "PLUS") == 0) {
-            op_res->u.int_value = op_1->u.int_value + op_2->u.int_value;
-        } else if (strcmp(op_arith, "MINUS") == 0) {
-            op_res->u.int_value = op_1->u.int_value - op_2->u.int_value;
-        } else if (strcmp(op_arith, "STAR") == 0) {
-            op_res->u.int_value = op_1->u.int_value * op_2->u.int_value;
-        } else if (strcmp(op_arith, "DIV") == 0) {
-            op_res->u.int_value = op_1->u.int_value / op_2->u.int_value;
-        }
-    } else {
-        if (strcmp(op_arith, "PLUS") == 0) {
-            op_res->u.float_value = op_1->u.float_value + op_2->u.float_value;
-        } else if (strcmp(op_arith, "MINUS") == 0) {
-            op_res->u.float_value = op_1->u.float_value - op_2->u.float_value;
-        } else if (strcmp(op_arith, "STAR") == 0) {
-            op_res->u.float_value = op_1->u.float_value * op_2->u.float_value;
-        } else if (strcmp(op_arith, "DIV") == 0) {
-            op_res->u.float_value = op_1->u.float_value / op_2->u.float_value;
-        }
-    }
-}

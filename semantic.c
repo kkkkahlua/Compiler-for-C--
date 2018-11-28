@@ -222,13 +222,7 @@ Type ProcessExp(TreeNode* exp, Operand* op_dst) {
                     ? NewOperandConstantInt(exp->son->val.ValInt)
                     : NewOperandConstantFloat(exp->son->val.ValFloat);
 
-        if ((*op_dst)->kind == kVariable) {
-            //  assign
-            TranslateAssign(op_dst, op);
-        } else {    /*  == kTemporary   */
-            //  change 
-            TranslateTemporary(op_dst, op);
-        }
+        TranslateAssignOrReplace(op_dst, op);
         return type;
     }
 
@@ -279,7 +273,7 @@ Type ProcessExp(TreeNode* exp, Operand* op_dst) {
                 //  Error 12: array index not an integer
                 OutputSemanticErrorMsg(12, exp_1->bro->bro->lineno, "Array index not an integer");
             } else if (type_ret) {
-                TranslateBinOpType(kArithMul, &op_inter, op_idx, NewOperandConstantInt(type_ret->u.array.space));
+                TranslateBinOpType(kArithMul, &op_inter, op_idx, NewOperandConstantInt(type_base->u.array.space));
                 TranslateBinOpType(kArithAdd, op_dst, op_base, op_inter);
             }
             
@@ -333,20 +327,7 @@ Type ProcessExp(TreeNode* exp, Operand* op_dst) {
             OutputSemanticErrorMsg(7, exp_1->lineno, "Type mismatched for operands");
             return NULL;
         }
-        if ((op_l->kind == kConstantInt && op_r->kind == kConstantInt)
-            ||
-            (op_l->kind == kConstantFloat && op_r->kind == kConstantFloat)) {
-            Operand op_res = ArithCalc(exp_1->bro->val.ValString, op_l, op_r);
-            if ((*op_dst)->kind == kVariable) {
-                //  assign
-                TranslateAssign(op_dst, op_res);
-            } else {    /*  == kTemporary   */
-                //  change 
-                TranslateTemporary(op_dst, op_res);
-            }
-        } else {
-            TranslateBinOp(exp_1->bro, op_dst, op_l, op_r);
-        }
+        TranslateBinOp(exp_1->bro, op_dst, op_l, op_r);
         return type_l;
     } 
     
@@ -362,13 +343,7 @@ Type ProcessExp(TreeNode* exp, Operand* op_dst) {
         if (op->kind == kConstantInt || op->kind == kConstantFloat) {
             if (op->kind == kConstantInt) op->u.int_value = -op->u.int_value;
             else op->u.float_value = -op->u.float_value;
-            if ((*op_dst)->kind == kVariable) {
-                //  assign
-                TranslateAssign(op_dst, op);
-            } else {    /*  == kTemporary   */
-                //  change 
-                TranslateTemporary(op_dst, op);
-            }
+            TranslateAssignOrReplace(op_dst, op);
         } else {
             TranslateBinOpType(kArithSub, op_dst, NewOperandConstantInt(0), op);
         }
@@ -699,7 +674,7 @@ Type ProcessVarDec(TreeNode* var_dec, char** name, Type type_base) {
         type_comp->u.array.size = var_dec->son->bro->bro->val.ValInt;
         type_comp->u.array.space = type_base->kind == kARRAY
                                     ? type_base->u.array.size * type_base->u.array.space
-                                    : 1;
+                                    : 4;
         type_comp->u.array.elem = type_base;
 
         var_dec = var_dec->son;

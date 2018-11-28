@@ -6,13 +6,13 @@
 #include "semantic.h"
 #include "SymbolTable.h"
 
-Operand ArithCalc(const char* op_arith, Operand op_1, Operand op_2);
-
 void TranslateAddressOf(Operand dst_op, Operand src_op);
 
 void TranslateArg(Operand op);
 
 void TranslateAssign(Operand* dst_op, Operand src_op);
+
+void TranslateAssignOrReplace(Operand* op_dst, Operand op_src);
 
 void TranslateBinOp(TreeNode* bin_op, Operand* op_result, Operand op_l, Operand op_r);
 
