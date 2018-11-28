@@ -13,7 +13,20 @@ extern int layer;
 extern InterCodeIterator iter;
 extern int temp_no;
 
-//  TODO: calculate expression when calculating
+//  TODO: 
+//  OPTIMIZATION:   
+//  1. calculation
+//  2. remove code between one RETURN and one LABEL, cause it will never be executed
+//  3. multiply 1, add 0
+//  REMAINING WORK:
+//  1. DEC
+//  2. better design, like tree structure?
+//  3. not print '*' when representing address
+
+void TranslateAssign(Operand* dst_op, Operand src_op);
+
+void TranslateDereference(enum DereferenceType dereference_type,
+                        Operand* op_dst, Operand op_src);
 
 Operand ArithCalc(BinOpType bin_op_type, Operand op_1, Operand op_2) {
     Operand op_res = (Operand)malloc(sizeof(Operand_));
@@ -132,7 +145,17 @@ void TranslateAssignOrReplace(Operand* op_dst, Operand op_src) {
         TranslateAssign(op_dst, op_src);
     } else {    /*  == kTemporary   */
         //  change 
-        TranslateTemporary(op_dst, op_src);
+        TranslateReplace(op_dst, op_src);
+    }
+}
+
+void TranslateRightDereferenceOrReplace(Operand* op_dst, Operand op_src) {
+    if ((*op_dst)->kind == kVariable) {
+        //  assign
+        TranslateDereference(kRightDereference, op_dst, op_src);
+    } else {    /*  == kTemporary   */
+        //  change 
+        TranslateReplacePointer(op_dst, op_src);
     }
 }
 
@@ -265,10 +288,34 @@ void TranslateReturn(Operand op) {
     AddCodeToCodes(code);
 }
 
-void TranslateTemporary(Operand* op_dst, Operand op_src) {
+void TranslateReplace(Operand* op_dst, Operand op_src) {
     // TODO: consider the problem of pointer
     --temp_no;
     if (!op_dst) return;
     *op_dst = op_src;
 }
 
+void TranslateReplacePointer(Operand* op_dst, Operand op_src) {
+    // TODO: consider the problem of pointer
+    --temp_no;
+    if (!op_dst) return;
+    *op_dst = op_src;
+    if (op_src->kind == kVariable) (*op_dst)->kind = kVariablePointer;
+    else (*op_dst)->kind = kTemporaryPointer;
+}
+
+void TranslateFunEnd() {
+    InterCode code = (InterCode)malloc(sizeof(InterCode_));
+    code->kind = kFunEnd;
+    AddCodeToCodes(code);
+}
+
+void TranslateDereference(enum DereferenceType dereference_type,
+                        Operand* op_dst, Operand op_src) {
+    InterCode code = (InterCode)malloc(sizeof(InterCode_));
+    code->kind = kDereference;
+    code->u.dereference.type = dereference_type;
+    code->u.dereference.op_left = *op_dst;
+    code->u.dereference.op_right = op_src;
+    AddCodeToCodes(code);
+}

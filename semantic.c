@@ -143,10 +143,10 @@ int CheckLvalue(TreeNode* exp) {
 Type ProcessCond(TreeNode* exp, Operand* op_dst) {
     Operand label_true = NewOperandLabel(),
             label_false = NewOperandLabel();
-    TranslateAssign(op_dst, NewOperandConstantInt(0));
+    TranslateAssignOrReplace(op_dst, NewOperandConstantInt(0));
     Type type = TranslateCond(exp, label_true, label_false);
     TranslateLabel(label_true);
-    TranslateAssign(op_dst, NewOperandConstantInt(1));
+    TranslateAssignOrReplace(op_dst, NewOperandConstantInt(1));
     TranslateLabel(label_false);
     return type;    
 }
@@ -167,7 +167,7 @@ Type ProcessExp(TreeNode* exp, Operand* op_dst) {
                 free(error_msg);
             } else {
                 //  translate id
-                TranslateTemporary(op_dst, id_op);
+                TranslateReplace(op_dst, id_op);
             }
             return type;
         } else {        /*  function call   */
@@ -246,7 +246,7 @@ Type ProcessExp(TreeNode* exp, Operand* op_dst) {
                 return NULL;
             }
 
-            TranslateAssign(&op_l, op_r);
+            TranslateAssignOrReplace(&op_l, op_r);
             TranslateAssign(op_dst, op_l);
 
             return type_l;
@@ -302,8 +302,10 @@ Type ProcessExp(TreeNode* exp, Operand* op_dst) {
                 free(error_msg);
                 return NULL;
             } else {
-                TranslateBinOpType(kArithAdd, op_dst, op_base, 
+                Operand op_addr = NewOperandTemporary();
+                TranslateBinOpType(kArithAdd, &op_addr, op_base, 
                                     NewOperandConstantInt(offset));
+                TranslateRightDereferenceOrReplace(op_dst, op_addr);
             }
             return type;
         }
@@ -591,6 +593,7 @@ void ProcessFunDef(TreeNode* fun_def, Type type_ret) {
     ProcessCompSt(comp_st, type_ret);
     //  remove formal parameter from symbol table
     RemoveFormalParameterFromSymbolTable(type->u.function.param_list);
+    TranslateFunEnd();
 }
 
 void AddFuncToFunctionList(const char* name, int lineno) {

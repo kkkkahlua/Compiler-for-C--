@@ -9,7 +9,7 @@ typedef struct InterCode_* InterCode;
 typedef struct InterCodeIterator_* InterCodeIterator;
 
 typedef struct Operand_ {
-    enum { kVariable, kTemporary, kPointer, kConstantInt, kConstantFloat, kLABEL } kind;
+    enum { kVariable, kTemporary, kVariablePointer, kTemporaryPointer, kConstantInt, kConstantFloat, kLABEL } kind;
     union {
         int var_no;
         int temp_no;
@@ -39,7 +39,8 @@ typedef struct InterCode_ {
         kArg,
         kCall,
         kParam,
-        kIO  
+        kIO,
+        kFunEnd
     } kind;
     union {
         struct { Operand op; } label;
@@ -52,7 +53,7 @@ typedef struct InterCode_ {
         struct { Operand op_right, op_left; } address_of;
         struct {
             Operand op_right, op_left; 
-            enum { kLeftDereference, kRightDereference } type;
+            enum DereferenceType { kLeftDereference, kRightDereference } type;
         } dereference;
         struct { Operand op; } go_to;
         struct {

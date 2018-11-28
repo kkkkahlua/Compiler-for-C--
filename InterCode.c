@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 extern InterCodeIterator iter;
+extern FILE* stream;
 int var_no = 0;
 int temp_no = 0;
 int label_no = 0;
@@ -17,7 +18,7 @@ Operand NewOperandVariable() {
 
 Operand NewOperandPointer() {
     Operand operand = (Operand)malloc(sizeof(Operand_));
-    operand->kind = kPointer;
+    operand->kind = kVariablePointer;
     operand->u.var_no = ++var_no;
     return operand;
 }
@@ -76,104 +77,107 @@ void OutputInterCodes(InterCodes codes) {
 
 void OutputOperand(Operand op) {
     switch (op->kind) {
-        case kVariable: printf("v%d", op->u.var_no); break;
-        case kTemporary: printf("t%d", op->u.temp_no); break;
-        case kPointer: printf("*v%d", op->u.var_no); break;
-        case kLABEL: printf("label%d", op->u.label_no); break;
-        case kConstantInt: printf("#%d", op->u.int_value); break;
-        case kConstantFloat: printf("#%f", op->u.float_value); break;
+        case kVariable: fprintf(stream, "v%d", op->u.var_no); break;
+        case kVariablePointer: fprintf(stream, "*v%d", op->u.var_no); break;
+        case kTemporary: fprintf(stream, "t%d", op->u.temp_no); break;
+        case kTemporaryPointer: fprintf(stream, "*t%d", op->u.temp_no); break;
+        case kLABEL: fprintf(stream, "label%d", op->u.label_no); break;
+        case kConstantInt: fprintf(stream, "#%d", op->u.int_value); break;
+        case kConstantFloat: fprintf(stream, "#%f", op->u.float_value); break;
     }
 }
 
 void OutputInterCode(InterCode code) {
     switch (code->kind) {
         case kLabel: 
-            printf("LABEL ");
+            fprintf(stream, "LABEL ");
             OutputOperand(code->u.label.op);
-            printf(" :");
+            fprintf(stream, " :");
             break;
         case kFunction: 
-            printf("FUNCTION %s :", code->u.function.func_name); 
+            fprintf(stream, "FUNCTION %s :", code->u.function.func_name); 
             break;
         case kAssign:
             OutputOperand(code->u.assign.op_left);
-            printf(" := ");
+            fprintf(stream, " := ");
             OutputOperand(code->u.assign.op_right);
             break;
         case kBinOp:
             OutputOperand(code->u.bin_op.op_result);
-            printf(" := ");
+            fprintf(stream, " := ");
             OutputOperand(code->u.bin_op.op_1);
             switch (code->u.bin_op.type) {
-                case kArithAdd: printf(" + "); break;
-                case kArithSub: printf(" - "); break;
-                case kArithMul: printf(" * "); break;
-                case kArithDiv: printf(" / "); break;
+                case kArithAdd: fprintf(stream, " + "); break;
+                case kArithSub: fprintf(stream, " - "); break;
+                case kArithMul: fprintf(stream, " * "); break;
+                case kArithDiv: fprintf(stream, " / "); break;
             }
             OutputOperand(code->u.bin_op.op_2);
             break;
         case kAddressOf:
             OutputOperand(code->u.address_of.op_left);
-            printf(" := &");
+            fprintf(stream, " := &");
             OutputOperand(code->u.address_of.op_right);
             break;
         case kDereference:
-            if (code->u.dereference.type == kLeftDereference) printf("*");
+            if (code->u.dereference.type == kLeftDereference) fprintf(stream, "*");
             OutputOperand(code->u.dereference.op_left);
-            printf(" := ");
-            if (code->u.dereference.type == kRightDereference) printf("*");
+            fprintf(stream, " := ");
+            if (code->u.dereference.type == kRightDereference) fprintf(stream, "*");
             OutputOperand(code->u.dereference.op_right);
             break;
         case kGoto: 
-            printf("GOTO ");
+            fprintf(stream, "GOTO ");
             OutputOperand(code->u.go_to.op);
             break;
         case kConditionalJump:
-            printf("IF ");
+            fprintf(stream, "IF ");
             OutputOperand(code->u.conditional_jump.op_1);
             switch (code->u.conditional_jump.relop_type) {
-                case kGT: printf(" > "); break;
-                case kGE: printf(" >= "); break;
-                case kLT: printf(" < "); break;
-                case kLE: printf(" <= "); break;
-                case kEQ: printf(" == "); break;
-                case kNE: printf(" != "); break;
+                case kGT: fprintf(stream, " > "); break;
+                case kGE: fprintf(stream, " >= "); break;
+                case kLT: fprintf(stream, " < "); break;
+                case kLE: fprintf(stream, " <= "); break;
+                case kEQ: fprintf(stream, " == "); break;
+                case kNE: fprintf(stream, " != "); break;
             }
             OutputOperand(code->u.conditional_jump.op_2);
-            printf(" GOTO ");
+            fprintf(stream, " GOTO ");
             OutputOperand(code->u.conditional_jump.op_label);
             break;
         case kReturn:
-            printf("RETURN ");
+            fprintf(stream, "RETURN ");
             OutputOperand(code->u.ret.op);
             break;
         case kDeclare:
-            printf("DEC: ");
+            fprintf(stream, "DEC ");
             OutputOperand(code->u.declare.op);
-            printf(" %d", code->u.declare.size);
+            fprintf(stream, " %d", code->u.declare.size);
             break;
         case kArg:
-            printf("ARG: ");
+            fprintf(stream, "ARG ");
             OutputOperand(code->u.arg.op);
             break;
         case kCall:
             if (code->u.call.op_result) {
                 OutputOperand(code->u.call.op_result);
-                printf(" := CALL %s", code->u.call.func_name);
+                fprintf(stream, " := CALL %s", code->u.call.func_name);
             } else {
-                printf("CALL %s", code->u.call.func_name);
+                fprintf(stream, "CALL %s", code->u.call.func_name);
             }
             break;
         case kParam:
-            printf("PARAM: ");
+            fprintf(stream, "PARAM: ");
             OutputOperand(code->u.param.op);
             break;
         case kIO:
             switch (code->u.io.type) {
-                case kRead: printf("READ "); break;
-                case kWrite: printf("WRITE ");
+                case kRead: fprintf(stream, "READ "); break;
+                case kWrite: fprintf(stream, "WRITE ");
             }
             OutputOperand(code->u.io.op);
+            break;
+        case kFunEnd:
             break;
     }
     puts("");

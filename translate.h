@@ -22,15 +22,21 @@ Type TranslateCond(TreeNode* exp_1, Operand label_true, Operand label_false);
 
 void TranslateConditionalJump(Operand op_1, Operand op_2, Operand op_label, RelopType relop_type);
 
+void TranslateRightDereferenceOrReplace(Operand* op_dst, Operand op_src);
+
 void TranslateExp(TreeNode* exp, int dec_var_no, Type* type);
 
 void TranslateFunCall(Operand* dst_op, const char* name);
 
 void TranslateFunDef(const char* name, DefList param_list);
 
+void TranslateFunEnd();
+
 void TranslateGoto(Operand op_label);
 
-void TranslateTemporary(Operand* op_dst, Operand op_src);
+void TranslateReplace(Operand* op_dst, Operand op_src);
+
+void TranslateReplacePointer(Operand* op_dst, Operand op_src);
 
 void TranslateLabel(Operand label);
 

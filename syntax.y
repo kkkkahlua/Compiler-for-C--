@@ -11,6 +11,7 @@ extern int error_lex;
 extern int yylineno;
 int error_syntax = 0;
 int yyerror(const char* msg);
+FILE* stream;
 
 TreeNode* root;
 %}
@@ -156,6 +157,8 @@ int main(int argc, char** argv) {
 			perror(argv[1]);
 			return 1;
 		}
+		if (argc == 1) stream = stdout;
+		else stream = freopen(argv[2], "w", stdout);
 	}
 	yyparse();
 
