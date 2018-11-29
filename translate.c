@@ -141,7 +141,8 @@ void TranslateWrite(Operand* op_dst) {
 void TranslateAssignOrReplace(Operand* op_dst, Operand op_src) {
     if (!op_dst) return;
     if ((*op_dst)->kind == kVariable
-        || (*op_dst)->kind == kTemporaryPointer) {
+        || (*op_dst)->kind == kTemporaryPointer
+        || (*op_dst)->kind == kVariablePointer) {
         //  assign
         TranslateAssign(op_dst, op_src);
     } else {    /*  == kTemporary   */

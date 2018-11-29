@@ -28,6 +28,18 @@ Operand NewOperandVariableAddress() {
     return operand;
 }
 
+Operand ToOperand(Operand operand) {
+    switch (operand->kind) {
+        case kVariable:
+        case kVariablePointer:
+            return ToOperandVariable(operand);
+            break;
+        case kTemporary:
+        case kTemporaryPointer:
+            return ToOperandTemporary(operand);
+    }
+}
+
 Operand ToOperandAddress(Operand operand) {
     switch (operand->kind) {
         case kVariable:

@@ -16,10 +16,9 @@ v6 := v6 + #1
 GOTO label1
 LABEL label3 :
 t21 := v4 + #400
-t22 := v5 / v7
-*t21 := t22
-t25 := v5 / v7
-RETURN t25
+*t21 := v5 / v7
+t24 := v5 / v7
+RETURN t24
 
 FUNCTION main :
 DEC v8 20200
@@ -36,15 +35,14 @@ LABEL label7 :
 IF v10 < v11 GOTO label8
 GOTO label9
 LABEL label8 :
-t43 := v9 * #404
-t40 := &v8 + t43
-t44 := t40 + #0
-t46 := v10 * #8
-t38 := t44 + t46
-t47 := t38 + #4
-t50 := v10 * #5
-t48 := v9 + t50
-*t47 := t48
+t42 := v9 * #404
+t39 := &v8 + t42
+t43 := t39 + #0
+t45 := v10 * #8
+t37 := t43 + t45
+t46 := t37 + #4
+t48 := v10 * #5
+*t46 := v9 + t48
 v10 := v10 + #1
 GOTO label7
 LABEL label9 :
@@ -57,11 +55,11 @@ LABEL label10 :
 IF v9 < v12 GOTO label11
 GOTO label12
 LABEL label11 :
-t69 := v9 * #404
-t66 := &v8 + t69
-ARG t66
-t65 := CALL calculate
-v10 := v10 + t65
+t67 := v9 * #404
+t64 := &v8 + t67
+ARG t64
+t63 := CALL calculate
+v10 := v10 + t63
 v9 := v9 + #1
 GOTO label10
 LABEL label12 :

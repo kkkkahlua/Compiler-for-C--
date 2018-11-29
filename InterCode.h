@@ -106,6 +106,8 @@ Operand NewOperandVariablePointer();
 
 Operand NewOperandTemporaryPointer();
 
+Operand ToOperand(Operand operand);
+
 Operand ToOperandAddress(Operand operand);
 
 Operand ToOperandTemporary(Operand op);
@@ -114,9 +116,9 @@ Operand ToOperandTemporaryAddress(Operand operand);
 
 Operand ToOperandTemporaryPointer(Operand op_temp);
 
-Operand ToOperandVariableAddress(Operand operand);
-
 Operand ToOperandVariable(Operand operand_pointer);
+
+Operand ToOperandVariableAddress(Operand operand);
 
 void OutputInterCode(InterCode code);
 

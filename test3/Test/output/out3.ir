@@ -7,13 +7,12 @@ RETURN t1
 
 FUNCTION main :
 DEC v3 8
-t11 := &v3 + #0
-*t11 := #1
-t15 := &v3 + #4
-*t15 := #2
+t10 := &v3 + #0
+*t10 := #1
+t13 := &v3 + #4
+*t13 := #2
 ARG &v3
-t16 := CALL add
-v2 := t16
+v2 := CALL add
 WRITE v2
 RETURN #0
 

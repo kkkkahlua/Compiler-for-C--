@@ -11,6 +11,7 @@
 
 int layer = 0;
 int in_fundef = 0;
+int error_semantic = 0;
 const int kErrorMsgLen = 100;
 FunctionList function_list = NULL;
 InterCodeIterator iter = NULL;
@@ -29,7 +30,9 @@ void ProcessProgram(TreeNode* root) {
     iter = (InterCodeIterator)malloc(sizeof(InterCodeIterator_));
     ProcessExtDefList(root->son);
     CheckFunctionDefinition();
-    OutputInterCodes(iter->begin);
+    if (!error_semantic) {
+        OutputInterCodes(iter->begin);
+    }
 }
 
 void ProcessExtDefList(TreeNode* ext_def_list) {
@@ -120,7 +123,19 @@ DefList FillArgIntoParam(TreeNode* exp) {
     switch (param->type->kind) {
         case kBASIC: TranslateArg(op); break;
         case kSTRUCTURE:
-        case kARRAY: TranslateArg(ToOperandAddress(op)); break;
+        case kARRAY: 
+            switch (op->kind) {
+                case kTemporary:
+                case kVariable:
+                    TranslateArg(ToOperandAddress(op));
+                    break;
+                case kTemporaryPointer:
+                case kVariablePointer:
+                    TranslateArg(ToOperand(op));
+                    break;
+                default:
+                    assert(0);
+            }
     }
     param->tail = NULL;
     return param;
@@ -132,8 +147,8 @@ DefList FillArgsIntoDefList(TreeNode* args) {
     }
     DefList param_list = FillArgsIntoDefList(args->son->bro->bro);
     DefList param = FillArgIntoParam(args->son);
-    param_list->tail = param;
-    return param_list;
+    param->tail = param_list;
+    return param;
 }
 
 int CheckLvalue(TreeNode* exp) {
@@ -236,11 +251,21 @@ Type ProcessExp(TreeNode* exp, Operand* op_dst) {
                 //  Error 6: rvalue on the left-hand side of an assignment
                 OutputSemanticErrorMsg(6, exp_1->lineno, "The left-hand side of an assignment must be a variable");
             }
-            Operand op_r = NewOperandTemporary();
-            Type type_r = ProcessExp(exp_1->bro->bro, &op_r);
-
+            
             Operand op_l = NewOperandTemporary();
             Type type_l = ProcessExp(exp_1, &op_l);
+
+            Type type_r;
+            if (op_l->kind == kVariable
+                // TODO: figure out why
+                // || op_l->kind == kTemporaryPointer
+                || op_l->kind == kVariablePointer) {
+                type_r = ProcessExp(exp_1->bro->bro, &op_l);
+            } else {
+                Operand op_r = NewOperandTemporary();
+                type_r = ProcessExp(exp_1->bro->bro, &op_r);
+                TranslateAssignOrReplace(&op_l, op_r);
+            }
 
             if (!TypeConsistent(type_r, type_l)) {
                 //  Error 5: type mismatch
@@ -248,7 +273,7 @@ Type ProcessExp(TreeNode* exp, Operand* op_dst) {
                 return NULL;
             }
 
-            TranslateAssignOrReplace(&op_l, op_r);
+            // TranslateAssignOrReplace(&op_l, op_r);
             TranslateAssignOrReplace(op_dst, op_l);
 
             return type_l;
@@ -260,8 +285,6 @@ Type ProcessExp(TreeNode* exp, Operand* op_dst) {
 
             Operand op_idx = NewOperandTemporary();
             Type type_idx = ProcessExp(exp_1->bro->bro, &op_idx);
-
-            Operand op_inter_ptr = NewOperandTemporaryPointer();
 
             Type type_ret = NULL;
 
@@ -275,37 +298,30 @@ Type ProcessExp(TreeNode* exp, Operand* op_dst) {
                 //  Error 12: array index not an integer
                 OutputSemanticErrorMsg(12, exp_1->bro->bro->lineno, "Array index not an integer");
             } else if (type_ret) {
-                Operand op_inter = ToOperandTemporary(op_inter_ptr);
+                Operand op_offset = NewOperandTemporary();
                 TranslateBinOpType(
-                    kArithMul, &op_inter, op_idx, 
+                    kArithMul, &op_offset, op_idx, 
                     NewOperandConstantInt(type_base->u.array.space)
                 );
 
                 Operand op_base;
 
                 switch (op_base_ptr->kind) {
+                    case kTemporary:
+                        op_base = ToOperandTemporaryAddress(op_base_ptr);
                     case kTemporaryPointer:
                         op_base = ToOperandTemporary(op_base_ptr);
                         break;
-                    case kVariablePointer:
+                    case kVariable:
                         op_base = ToOperandVariableAddress(op_base_ptr);
                         break;
-                    case kVariableAddress:
+                    case kVariablePointer:
                         op_base = ToOperandVariable(op_base_ptr);
-                        break;
                 }
-                // if (op_base_ptr->kind == kTemporaryPointer) {
-                //     // EXP -> EXP
-                //     op_base = ToOperandTemporary(op_base_ptr);
-                // } else {
-                //     // EXP -> ID
-                //     assert(op_base_ptr->kind == kVariablePointer);
-                //     op_base = ToOperandVariableAddress(op_base_ptr);
-                // }
 
                 Operand op_dst_temp = ToOperandTemporary(*op_dst);
                 TranslateBinOpType(kArithAdd, &op_dst_temp,
-                                    op_base, op_inter);
+                                    op_base, op_offset);
 
                 if ((*op_dst)->kind != kTemporaryPointer) {
                     *op_dst = ToOperandTemporaryPointer(*op_dst);
@@ -856,11 +872,11 @@ void RemoveStructElement(Type type) {
 void OutputDefList(DefList def_list, int indent) {
     if (!def_list) return;
     for (int i = 0; i < indent; ++i) printf(" ");
-    printf("%s\n", def_list->name);
     OutputType(def_list->type, indent);
     OutputDefList(def_list->tail, indent);
 }
 
 void OutputSemanticErrorMsg(int error_type, int lineno, const char* error_msg) {
+    error_semantic = 1;
     printf("Error type %d at Line %d: %s.\n", error_type, lineno, error_msg);
 }

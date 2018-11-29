@@ -207,10 +207,6 @@ LayerNode* NewLayerNode(Type type) {
             layer_node->op = NewOperandVariable(); 
             break;
         case kARRAY:
-            layer_node->op = in_fundef
-                            ? NewOperandVariableAddress()
-                            : NewOperandVariablePointer();
-            break;
         case kSTRUCTURE:
             layer_node->op = in_fundef 
                             ? NewOperandVariablePointer()
