@@ -10,8 +10,7 @@ v3 := #1
 t15 := #4 + &v3
 *t15 := #2
 ARG &v3
-t16 := CALL add
-v2 := t16
+v2 := CALL add
 WRITE v2
 RETURN #0
 

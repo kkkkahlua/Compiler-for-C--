@@ -31,8 +31,7 @@ t23 := &v4 + t28
 ARG *t23
 t29 := CALL swap
 LABEL label5 :
-t30 := #1 + v5
-v5 := t30
+v5 := #1 + v5
 GOTO label1
 LABEL label3 :
 RETURN #0

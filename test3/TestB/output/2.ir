@@ -10,8 +10,7 @@ LABEL label2 :
 t9 := #4 * v4
 t6 := &v2 + t9
 *t6 := #0
-t10 := #1 + v4
-v4 := t10
+v4 := #1 + v4
 GOTO label1
 LABEL label3 :
 v4 := #0
@@ -33,8 +32,7 @@ t34 := &v1 + t37
 t38 := #4 * *t34
 t32 := &v2 + t38
 *t32 := t23
-t39 := #1 + v4
-v4 := t39
+v4 := #1 + v4
 GOTO label4
 LABEL label6 :
 v4 := #1
@@ -51,8 +49,7 @@ t47 := *t48 + *t52
 t61 := #4 * v4
 t58 := &v2 + t61
 *t58 := t47
-t62 := #1 + v4
-v4 := t62
+v4 := #1 + v4
 GOTO label7
 LABEL label9 :
 v4 := #0
@@ -80,8 +77,7 @@ t97 := &v1 + t100
 t101 := #4 * *t97
 t95 := &v2 + t101
 *t95 := t86
-t102 := #1 + v4
-v4 := t102
+v4 := #1 + v4
 GOTO label10
 LABEL label12 :
 v4 := #0
@@ -92,8 +88,7 @@ LABEL label14 :
 t113 := #4 * v4
 t110 := &v3 + t113
 WRITE *t110
-t114 := #1 + v4
-v4 := t114
+v4 := #1 + v4
 GOTO label13
 LABEL label15 :
 RETURN #0
@@ -109,8 +104,7 @@ READ t123
 t127 := #4 * v6
 t124 := &v5 + t127
 *t124 := t123
-t128 := #1 + v6
-v6 := t128
+v6 := #1 + v6
 GOTO label16
 LABEL label18 :
 v7 := #1
@@ -147,8 +141,7 @@ t175 := #4 * v6
 t172 := &v5 + t175
 *t172 := v8
 LABEL label26 :
-t176 := #1 + v6
-v6 := t176
+v6 := #1 + v6
 GOTO label22
 LABEL label24 :
 GOTO label19
@@ -161,8 +154,7 @@ LABEL label28 :
 t187 := #4 * v6
 t184 := &v5 + t187
 WRITE *t184
-t188 := #1 + v6
-v6 := t188
+v6 := #1 + v6
 GOTO label27
 LABEL label29 :
 RETURN #0

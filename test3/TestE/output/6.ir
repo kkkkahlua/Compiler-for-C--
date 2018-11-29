@@ -7,9 +7,8 @@ v5 := #0
 v6 := #0
 v7 := #1
 IF *v2 == #1 GOTO label1
-GOTO label2
+GOTO label5
 LABEL label1 :
-LABEL label3 :
 IF v5 < v3 GOTO label4
 GOTO label5
 LABEL label4 :
@@ -30,8 +29,7 @@ t29 := #4 * v6
 t23 := t24 + t29
 *t23 := #1
 t31 := #10 * v7
-t30 := #1 + t31
-v7 := t30
+v7 := #1 + t31
 GOTO label11
 LABEL label10 :
 t41 := #40 * v5
@@ -39,19 +37,15 @@ t38 := &v4 + t41
 t43 := #4 * v6
 t37 := t38 + t43
 *t37 := #0
-t44 := #10 * v7
-v7 := t44
+v7 := #10 * v7
 LABEL label11 :
-t48 := #1 + v6
-v6 := t48
+v6 := #1 + v6
 GOTO label6
 LABEL label8 :
 WRITE v7
-t53 := #1 + v5
-v5 := t53
-GOTO label3
+v5 := #1 + v5
+GOTO label1
 LABEL label5 :
-LABEL label2 :
 RETURN #0
 
 FUNCTION dfs :
@@ -76,7 +70,6 @@ ARG v8
 t74 := CALL display
 RETURN #0
 LABEL label13 :
-LABEL label14 :
 IF v15 < v13 GOTO label15
 GOTO label16
 LABEL label15 :
@@ -113,8 +106,7 @@ t109 := v10 + t114
 t118 := #4 * v18
 t115 := &v16 + t118
 *t115 := *t109
-t119 := #1 + v18
-v18 := t119
+v18 := #1 + v18
 GOTO label21
 LABEL label23 :
 t126 := v13 - #1
@@ -129,8 +121,7 @@ t138 := #4 * t135
 t133 := &v16 + t138
 *t133 := #0
 LABEL label25 :
-t139 := v13 - #1
-v18 := t139
+v18 := v13 - #1
 LABEL label26 :
 IF v18 > #0 GOTO label27
 GOTO label28
@@ -141,8 +132,7 @@ t145 := v11 + t150
 t154 := #4 * v18
 t151 := &v17 + t154
 *t151 := *t145
-t155 := v18 - #1
-v18 := t155
+v18 := v18 - #1
 GOTO label26
 LABEL label28 :
 v17 := #1
@@ -168,9 +158,8 @@ t189 := #4 * v15
 t186 := v9 + t189
 *t186 := #1
 LABEL label18 :
-t190 := #1 + v15
-v15 := t190
-GOTO label14
+v15 := #1 + v15
+GOTO label13
 LABEL label16 :
 RETURN #0
 
@@ -191,7 +180,6 @@ GOTO label32
 LABEL label31 :
 RETURN #0
 LABEL label32 :
-LABEL label34 :
 IF v25 < v20 GOTO label35
 GOTO label36
 LABEL label35 :
@@ -204,9 +192,8 @@ t211 := &v23 + t214
 t219 := #4 * v25
 t216 := &v24 + t219
 *t216 := #1
-t220 := #1 + v25
-v25 := t220
-GOTO label34
+v25 := #1 + v25
+GOTO label32
 LABEL label36 :
 v21 := #0
 ARG &v21

@@ -16,7 +16,7 @@ LABEL label4 :
 t12 := v2 - v1
 WRITE t12
 LABEL label5 :
-GOTO label6
+GOTO label17
 LABEL label2 :
 IF v1 == #100 GOTO label7
 GOTO label8
@@ -30,10 +30,10 @@ LABEL label10 :
 t20 := v2 - #100
 WRITE t20
 LABEL label11 :
-GOTO label12
+GOTO label17
 LABEL label8 :
 IF v1 < #100 GOTO label13
-GOTO label14
+GOTO label17
 LABEL label13 :
 t25 := v2 + v1
 IF t25 > #100 GOTO label15
@@ -45,9 +45,6 @@ GOTO label17
 LABEL label16 :
 WRITE #100
 LABEL label17 :
-LABEL label14 :
-LABEL label12 :
-LABEL label6 :
 t33 := v1 + v2
 WRITE t33
 RETURN #0

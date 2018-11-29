@@ -16,13 +16,9 @@ extern int in_fundef;
 
 //  TODO: 
 //  OPTIMIZATION:   
-//  1. calculation
-//  2. remove code between one RETURN and one LABEL, cause it will never be executed
-//  3. multiply 1, add 0
-//  REMAINING WORK:
-//  1. DEC
-//  2. better design, like tree structure?
-//  3. not print '*' when representing address
+//  1. arithmetic rules: multiply 1, add 0
+//  2. remove code between one RETURN and one LABEL/FUNC, 
+//     cause it will never be executed
 
 void TranslateAssign(Operand* dst_op, Operand src_op);
 
@@ -369,7 +365,6 @@ void TranslateReturn(Operand op) {
 }
 
 void TranslateReplace(Operand* op_dst, Operand op_src) {
-    // TODO: consider the problem of pointer
     *op_dst = op_src;
 }
 

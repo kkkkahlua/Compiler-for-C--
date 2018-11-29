@@ -5,7 +5,7 @@ IF v1 > #0 GOTO label1
 GOTO label2
 LABEL label1 :
 WRITE #1
-GOTO label3
+GOTO label6
 LABEL label2 :
 IF v1 < #0 GOTO label4
 GOTO label5
@@ -15,6 +15,5 @@ GOTO label6
 LABEL label5 :
 WRITE #0
 LABEL label6 :
-LABEL label3 :
 RETURN #0
 

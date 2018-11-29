@@ -13,8 +13,7 @@ t18 := #8 * v2
 t15 := &v1 + t18
 t19 := #4 + t15
 *t19 := v2
-t20 := #1 + v2
-v2 := t20
+v2 := #1 + v2
 GOTO label1
 LABEL label3 :
 v2 := #0
@@ -26,8 +25,7 @@ t32 := #8 * v2
 t29 := &v1 + t32
 t33 := #4 + t29
 WRITE *t33
-t34 := #1 + v2
-v2 := t34
+v2 := #1 + v2
 GOTO label4
 LABEL label6 :
 v2 := #0
@@ -40,8 +38,7 @@ v3 := #0
 t52 := #8 * v2
 t49 := &v1 + t52
 t53 := #4 + t49
-t46 := v4 + *t53
-v4 := t46
+v4 := v4 + *t53
 t59 := #8 * v2
 t56 := &v1 + t59
 t60 := #4 + t56
@@ -62,12 +59,10 @@ t65 := *t67 + t72
 t84 := #8 * v2
 t81 := &v1 + t84
 *t81 := t65
-t86 := #1 + v3
-v3 := t86
+v3 := #1 + v3
 GOTO label10
 LABEL label12 :
-t90 := #1 + v2
-v2 := t90
+v2 := #1 + v2
 GOTO label7
 LABEL label9 :
 t97 := v5 - #1

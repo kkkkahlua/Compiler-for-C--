@@ -15,8 +15,7 @@ READ t10
 t14 := #4 * v3
 t11 := &v8 + t14
 *t11 := t10
-t15 := #1 + v3
-v3 := t15
+v3 := #1 + v3
 GOTO label1
 LABEL label3 :
 v3 := #0
@@ -29,8 +28,7 @@ t23 := &v8 + t26
 IF *t23 == #0 GOTO label5
 GOTO label6
 LABEL label5 :
-t28 := #1 + v3
-v3 := t28
+v3 := #1 + v3
 GOTO label4
 LABEL label6 :
 IF v3 >= v6 GOTO label8
@@ -43,8 +41,7 @@ t35 := &v8 + t38
 v1 := *t35
 v2 := v3
 v5 := #0
-t44 := #1 + v3
-v3 := t44
+v3 := #1 + v3
 LABEL label10 :
 IF v3 < v6 GOTO label11
 GOTO label12
@@ -57,26 +54,22 @@ LABEL label13 :
 t62 := #4 * v3
 t59 := &v8 + t62
 t57 := v1 - *t59
-t55 := v5 + t57
-v5 := t55
+v5 := v5 + t57
 GOTO label15
 LABEL label14 :
-t64 := v4 + v5
-v4 := t64
+v4 := v4 + v5
 t71 := #4 * v3
 t68 := &v8 + t71
 v1 := *t68
 v2 := v3
 v5 := #0
 LABEL label15 :
-t77 := #1 + v3
-v3 := t77
+v3 := #1 + v3
 GOTO label10
 LABEL label12 :
 v5 := #0
 v7 := #0
-t85 := v6 - #1
-v3 := t85
+v3 := v6 - #1
 LABEL label16 :
 IF v3 > v2 GOTO label19
 GOTO label18
@@ -86,15 +79,13 @@ t91 := &v8 + t94
 IF *t91 == #0 GOTO label17
 GOTO label18
 LABEL label17 :
-t96 := v3 - #1
-v3 := t96
+v3 := v3 - #1
 GOTO label16
 LABEL label18 :
 t103 := #4 * v3
 t100 := &v8 + t103
 v7 := *t100
-t105 := v3 - #1
-v3 := t105
+v3 := v3 - #1
 LABEL label20 :
 IF v3 > v2 GOTO label21
 GOTO label22
@@ -107,27 +98,23 @@ LABEL label23 :
 t123 := #4 * v3
 t120 := &v8 + t123
 t118 := v7 - *t120
-t116 := v5 + t118
-v5 := t116
+v5 := v5 + t118
 GOTO label25
 LABEL label24 :
-t125 := v4 + v5
-v4 := t125
+v4 := v4 + v5
 t132 := #4 * v3
 t129 := &v8 + t132
 v7 := *t129
 v5 := #0
 LABEL label25 :
-t136 := v3 - #1
-v3 := t136
+v3 := v3 - #1
 GOTO label20
 LABEL label22 :
 t140 := v4 + v5
 RETURN t140
 
 FUNCTION main :
-t143 := CALL trap
-v9 := t143
+v9 := CALL trap
 WRITE v9
 RETURN #0
 

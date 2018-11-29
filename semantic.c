@@ -1,6 +1,7 @@
 #include "semantic.h"
 
 #include "InterCode.h"
+#include "optimize.h"
 #include "SymbolTable.h"
 #include "translate.h"
 
@@ -31,6 +32,7 @@ void ProcessProgram(TreeNode* root) {
     ProcessExtDefList(root->son);
     CheckFunctionDefinition();
     if (!error_semantic) {
+        optimize(iter->begin);
         OutputInterCodes(iter->begin);
     }
 }

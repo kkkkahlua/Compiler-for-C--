@@ -10,10 +10,8 @@ LABEL label2 :
 t14 := #8 * v6
 t9 := v4 + t14
 t15 := #4 + t9
-t6 := v5 + *t15
-v5 := t6
-t17 := #1 + v6
-v6 := t17
+v5 := v5 + *t15
+v6 := #1 + v6
 GOTO label1
 LABEL label3 :
 t21 := v5 / v7
@@ -45,12 +43,10 @@ t54 := #8 * v10
 t46 := t48 + t54
 t55 := #4 + t46
 *t55 := t40
-t56 := #1 + v10
-v10 := t56
+v10 := #1 + v10
 GOTO label7
 LABEL label9 :
-t60 := #1 + v9
-v9 := t60
+v9 := #1 + v9
 GOTO label4
 LABEL label6 :
 v10 := #0
@@ -63,10 +59,8 @@ t76 := #404 * v9
 t73 := &v8 + t76
 ARG t73
 t72 := CALL calculate
-t70 := v10 + t72
-v10 := t70
-t78 := #1 + v9
-v9 := t78
+v10 := v10 + t72
+v9 := #1 + v9
 GOTO label10
 LABEL label12 :
 WRITE v10

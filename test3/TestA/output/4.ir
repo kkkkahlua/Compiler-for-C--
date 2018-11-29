@@ -9,8 +9,7 @@ READ t5
 t9 := #4 * v3
 t6 := &v1 + t9
 *t6 := t5
-t10 := #1 + v3
-v3 := t10
+v3 := #1 + v3
 GOTO label1
 LABEL label3 :
 v3 := #1
@@ -44,12 +43,10 @@ t50 := v4 - #1
 t53 := #4 * t50
 t48 := &v1 + t53
 *t48 := v2
-t54 := v4 - #1
-v4 := t54
+v4 := v4 - #1
 GOTO label7
 LABEL label9 :
-t58 := #1 + v3
-v3 := t58
+v3 := #1 + v3
 GOTO label4
 LABEL label6 :
 v3 := #0
@@ -60,8 +57,7 @@ LABEL label12 :
 t69 := #4 * v3
 t66 := &v1 + t69
 WRITE *t66
-t70 := #1 + v3
-v3 := t70
+v3 := #1 + v3
 GOTO label11
 LABEL label13 :
 RETURN #0
