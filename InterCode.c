@@ -32,11 +32,25 @@ Operand ToOperand(Operand operand) {
     switch (operand->kind) {
         case kVariable:
         case kVariablePointer:
+        case kVariableAddress:
             return ToOperandVariable(operand);
             break;
         case kTemporary:
         case kTemporaryPointer:
+        case kTemporaryAddress:
             return ToOperandTemporary(operand);
+    }
+}
+
+Operand ToOperandPointer(Operand operand) {
+    switch (operand->kind) {
+        case kVariable:
+        case kVariablePointer:
+            return ToOperandVariablePointer(operand);
+            break;
+        case kTemporary:
+        case kTemporaryPointer:
+            return ToOperandTemporaryPointer(operand);
     }
 }
 
@@ -92,6 +106,13 @@ Operand ToOperandTemporary(Operand op) {
     operand->kind = kTemporary;
     operand->u.temp_no = op->u.temp_no;
     return operand;
+}
+
+Operand ToOperandVariablePointer(Operand operand) {
+    Operand operand_pointer = (Operand)malloc(sizeof(Operand_));
+    operand_pointer->kind = kVariablePointer;
+    operand_pointer->u.var_no = operand->u.var_no;
+    return operand_pointer;
 }
 
 Operand ToOperandTemporaryPointer(Operand op_temp) {

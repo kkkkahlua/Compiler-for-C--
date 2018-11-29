@@ -7,10 +7,10 @@ IF v7 < #5 GOTO label2
 GOTO label3
 LABEL label2 :
 READ t4
-t8 := v7 * #4
+t8 := #4 * v7
 t5 := &v2 + t8
 *t5 := t4
-t9 := v7 + #1
+t9 := #1 + v7
 v7 := t9
 GOTO label1
 LABEL label3 :
@@ -23,7 +23,7 @@ LABEL label5 :
 t20 := v3 + v4
 t19 := t20 / #2
 v5 := t19
-t28 := v5 * #4
+t28 := #4 * v5
 t25 := &v2 + t28
 v6 := *t25
 IF v6 == v1 GOTO label7
@@ -31,12 +31,12 @@ GOTO label8
 LABEL label7 :
 RETURN v5
 LABEL label8 :
-t38 := v3 * #4
+t38 := #4 * v3
 t35 := &v2 + t38
 IF v6 > *t35 GOTO label14
 GOTO label12
 LABEL label14 :
-t43 := v3 * #4
+t43 := #4 * v3
 t40 := &v2 + t43
 IF v1 >= *t40 GOTO label13
 GOTO label12
@@ -52,7 +52,7 @@ t46 := v5 - #1
 v4 := t46
 GOTO label15
 LABEL label10 :
-t50 := v5 + #1
+t50 := #1 + v5
 v3 := t50
 LABEL label15 :
 GOTO label4

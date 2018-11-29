@@ -16,22 +16,22 @@ IF v5 < #5 GOTO label2
 GOTO label3
 LABEL label2 :
 READ t12
-t16 := v5 * #4
+t16 := #4 * v5
 t13 := &v4 + t16
 *t13 := t12
 IF v5 > #0 GOTO label4
 GOTO label5
 LABEL label4 :
-t22 := v5 * #4
+t22 := #4 * v5
 t19 := &v4 + t22
 ARG *t19
 t25 := v5 - #1
-t28 := t25 * #4
+t28 := #4 * t25
 t23 := &v4 + t28
 ARG *t23
 t29 := CALL swap
 LABEL label5 :
-t30 := v5 + #1
+t30 := #1 + v5
 v5 := t30
 GOTO label1
 LABEL label3 :

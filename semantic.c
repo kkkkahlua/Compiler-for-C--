@@ -251,21 +251,12 @@ Type ProcessExp(TreeNode* exp, Operand* op_dst) {
                 //  Error 6: rvalue on the left-hand side of an assignment
                 OutputSemanticErrorMsg(6, exp_1->lineno, "The left-hand side of an assignment must be a variable");
             }
+
+            Operand op_r = NewOperandTemporary();
+            Type type_r = ProcessExp(exp_1->bro->bro, &op_r);
             
             Operand op_l = NewOperandTemporary();
             Type type_l = ProcessExp(exp_1, &op_l);
-
-            Type type_r;
-            if (op_l->kind == kVariable
-                // TODO: figure out why
-                // || op_l->kind == kTemporaryPointer
-                || op_l->kind == kVariablePointer) {
-                type_r = ProcessExp(exp_1->bro->bro, &op_l);
-            } else {
-                Operand op_r = NewOperandTemporary();
-                type_r = ProcessExp(exp_1->bro->bro, &op_r);
-                TranslateAssignOrReplace(&op_l, op_r);
-            }
 
             if (!TypeConsistent(type_r, type_l)) {
                 //  Error 5: type mismatch
@@ -273,7 +264,7 @@ Type ProcessExp(TreeNode* exp, Operand* op_dst) {
                 return NULL;
             }
 
-            // TranslateAssignOrReplace(&op_l, op_r);
+            TranslateAssignOrReplace(&op_l, op_r);
             TranslateAssignOrReplace(op_dst, op_l);
 
             return type_l;
@@ -324,17 +315,14 @@ Type ProcessExp(TreeNode* exp, Operand* op_dst) {
                                     op_base, op_offset);
 
                 if ((*op_dst)->kind != kTemporaryPointer) {
-                    *op_dst = ToOperandTemporaryPointer(*op_dst);
+                    if (op_dst_temp->kind == kTemporary
+                        || op_dst_temp->kind == kVariable) {
+                        *op_dst = ToOperandPointer(op_dst_temp);
+                    } else {
+                        *op_dst = ToOperand(op_dst_temp);
+                    }
                 }
 
-                // if (op_base->kind == kTemporaryPointer) {
-                //     TranslateBinOpType(kArithAdd, op_dst, op_base, op_inter);
-                // } else {
-                //     assert(op_base->kind == kVariablePointer);
-                //     TranslateBinOpType(
-                //         kArithAdd, op_dst, 
-                //         ToOperandVariableAddress(op_base), op_inter);
-                // }
             }
             
             return type_ret;
@@ -380,17 +368,6 @@ Type ProcessExp(TreeNode* exp, Operand* op_dst) {
                 }
                 TranslateBinOpType(kArithAdd, &op_addr, op_base, 
                                         NewOperandConstantInt(offset));
-
-                /*if (op_base->kind == kVariablePointer) {
-                    TranslateBinOpType(kArithAdd, &op_addr,
-                                        ToOperandVariable(op_base),
-                                        NewOperandConstantInt(offset));
-                } else {
-                    // take address
-                    TranslateBinOpType(kArithAdd, &op_addr, 
-                                        ToOperandVariableAddress(op_base), 
-                                        NewOperandConstantInt(offset));
-                }*/
                 TranslateRightDereferenceOrReplace(op_dst, op_addr);
             }
             return type;

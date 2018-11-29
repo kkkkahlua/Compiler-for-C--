@@ -1,0 +1,113 @@
+FUNCTION assign :
+PARAM v5
+PARAM v6
+PARAM v7
+v8 := #0
+*v5 := v7
+LABEL label1 :
+IF v8 < v7 GOTO label2
+GOTO label3
+LABEL label2 :
+t12 := #4 * v8
+t9 := v6 + t12
+*t9 := v4
+t13 := #1 + v4
+v4 := t13
+t17 := #1 + v8
+v8 := t17
+GOTO label1
+LABEL label3 :
+RETURN *v5
+
+FUNCTION SumId :
+PARAM v9
+PARAM v10
+v11 := #0
+v12 := #0
+LABEL label4 :
+IF v12 < v10 GOTO label5
+GOTO label6
+LABEL label5 :
+t33 := #4 + v9
+t35 := #4 * v12
+t30 := t33 + t35
+t28 := v11 + *t30
+v11 := t28
+t37 := #1 + v12
+v12 := t37
+GOTO label4
+LABEL label6 :
+RETURN v11
+
+FUNCTION total :
+PARAM v13
+t59 := #44 + v13
+t44 := *v13 + *t59
+t63 := #88 + v13
+t43 := t44 + *t63
+t71 := #88 + v13
+t75 := #44 + t71
+t42 := t43 + *t75
+RETURN t42
+
+FUNCTION main :
+DEC v14 176
+v4 := #0
+ARG #10
+t87 := #4 + &v14
+ARG t87
+ARG &v14
+t94 := CALL assign
+ARG #10
+t102 := #44 + &v14
+t103 := #4 + t102
+ARG t103
+t109 := #44 + &v14
+ARG t109
+t110 := CALL assign
+ARG #10
+t114 := #88 + &v14
+t119 := #4 + t114
+ARG t119
+t121 := #88 + &v14
+ARG t121
+t126 := CALL assign
+ARG #10
+t130 := #88 + &v14
+t134 := #44 + t130
+t135 := #4 + t134
+ARG t135
+t137 := #88 + &v14
+t141 := #44 + t137
+ARG t141
+t142 := CALL assign
+ARG v14
+ARG &v14
+t143 := CALL SumId
+WRITE t143
+t165 := #44 + &v14
+ARG *t165
+t172 := #44 + &v14
+ARG t172
+t158 := CALL SumId
+WRITE t158
+t176 := #88 + &v14
+ARG *t176
+t183 := #88 + &v14
+ARG t183
+t173 := CALL SumId
+WRITE t173
+t191 := #88 + &v14
+t195 := #44 + t191
+ARG *t195
+t198 := #88 + &v14
+t202 := #44 + t198
+ARG t202
+t188 := CALL SumId
+WRITE t188
+ARG &v14
+t203 := CALL total
+v15 := t203
+WRITE v15
+RETURN #0
+

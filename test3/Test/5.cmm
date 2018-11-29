@@ -1,0 +1,48 @@
+struct People {
+    int num;
+    int id[10];
+};
+struct Class {
+    struct People teachers;
+    struct People students;
+};
+int i;
+int assign(struct People people, int id[10], int num) {
+    int j = 0;
+    people.num = num;
+    while (j < num) {
+        id[j] = i;
+        i = i + 1;
+        j = j + 1;
+    }
+    return people.num;
+}
+int SumId(struct People people, int num) {
+    int sum = 0;
+    int i = 0;
+    while (i < num) {
+        sum = sum + people.id[i];
+        i = i + 1;
+    }
+    return sum;
+}
+int total(struct Class class[2]) {
+    return class[0].teachers.num + class[0].students.num 
+            + class[1].teachers.num + class[1].students.num;
+}
+int main() {
+    struct Class class[2];
+    int sum;
+    i = 0;
+    assign(class[0].teachers, class[0].teachers.id, 10);
+    assign(class[0].students, class[0].students.id, 10);
+    assign(class[1].teachers, class[1].teachers.id, 10);
+    assign(class[1].students, class[1].students.id, 10);
+    write(SumId(class[0].teachers, class[0].teachers.num));
+    write(SumId(class[0].students, class[0].students.num));
+    write(SumId(class[1].teachers, class[1].teachers.num));
+    write(SumId(class[1].students, class[1].students.num));
+    sum = total(class);
+    write(sum);
+    return 0;
+}

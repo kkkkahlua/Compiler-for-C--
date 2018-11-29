@@ -157,8 +157,15 @@ void TranslateRightDereferenceOrReplace(Operand* op_dst, Operand op_src) {
         TranslateDereference(kRightDereference, op_dst, op_src);
     } else {    /*  == kTemporary   */
         //  change 
+
         TranslateReplacePointer(op_dst, op_src);
     }
+}
+
+void swap(Operand* op_1, Operand* op_2) {
+    Operand temp = *op_1;
+    *op_1 = *op_2;
+    *op_2 = temp;
 }
 
 void TranslateBinOpType(BinOpType bin_op_type, Operand* op_result, Operand op_l, Operand op_r) {
@@ -167,15 +174,86 @@ void TranslateBinOpType(BinOpType bin_op_type, Operand* op_result, Operand op_l,
         || (op_l->kind == kConstantFloat && op_r->kind == kConstantFloat)) {
         Operand op_res = ArithCalc(bin_op_type, op_l, op_r);
         TranslateAssignOrReplace(op_result, op_res);
-    } else {
-        InterCode code = (InterCode)malloc(sizeof(InterCode_));
-        code->kind = kBinOp;
-        code->u.bin_op.type = bin_op_type;
-        code->u.bin_op.op_result = *op_result;
-        code->u.bin_op.op_1 = op_l;
-        code->u.bin_op.op_2 = op_r;
-        AddCodeToCodes(code);
+        return;
     }
+    if (op_l->kind == kConstantInt || op_r->kind == kConstantInt) {
+        switch(bin_op_type) {
+            case kArithAdd:
+            case kArithMul:
+                if (op_r->kind == kConstantInt) swap(&op_l, &op_r);
+                assert(op_l->kind == kConstantInt);
+                if ((bin_op_type == kArithAdd && op_l->u.int_value == 0)) {
+                    //|| (bin_op_type == kArithMul && op_l->u.int_value == 1)) {
+                    TranslateAssignOrReplace(op_result, op_r);
+                    return;
+                }
+                if (bin_op_type == kArithMul && op_l->u.int_value == 0) {
+                    TranslateAssignOrReplace(op_result, 
+                                            NewOperandConstantInt(0));
+                    return;
+                }
+                break;
+            case kArithSub:
+                if (op_r->kind == kConstantInt && op_r->u.int_value == 0) {
+                    TranslateAssignOrReplace(op_result, op_l);
+                    return;
+                }
+                break;
+            case kArithDiv:
+                if (op_l->kind == kConstantInt && op_l->u.int_value == 0) {
+                    TranslateAssignOrReplace(op_result, 
+                                            NewOperandConstantInt(0));
+                    return;
+                }
+                if (op_r->kind == kConstantInt && op_r->u.int_value == 1) {
+                    TranslateAssignOrReplace(op_result, op_l);
+                    return;
+                }
+                break;
+        }
+    }
+    if (op_l->kind == kConstantFloat || op_r->kind == kConstantFloat) {
+        switch(bin_op_type) {
+            case kArithAdd:
+            case kArithMul:
+                if (op_r->kind == kConstantFloat) swap(&op_l, &op_r);
+                if ((bin_op_type == kArithAdd && op_l->u.float_value == 0)
+                    || (bin_op_type == kArithMul && op_l->u.float_value == 1)) {
+                    TranslateAssignOrReplace(op_result, op_r);
+                    return;
+                }
+                if (bin_op_type == kArithMul && op_l->u.float_value == 0) {
+                    TranslateAssignOrReplace(op_result, 
+                                            NewOperandConstantFloat(0));
+                    return;
+                }
+                break;
+            case kArithSub:
+                if (op_r->kind == kConstantFloat && op_r->u.float_value == 0) {
+                    TranslateAssignOrReplace(op_result, op_l);
+                    return;
+                }
+                break;
+            case kArithDiv:
+                if (op_l->kind == kConstantFloat && op_l->u.float_value == 0) {
+                    TranslateAssignOrReplace(op_result, 
+                                            NewOperandConstantFloat(0));
+                    return;
+                }
+                if (op_r->kind == kConstantFloat && op_r->u.float_value == 1) {
+                    TranslateAssignOrReplace(op_result, op_l);
+                    return;
+                }
+                break;
+        }
+    }
+    InterCode code = (InterCode)malloc(sizeof(InterCode_));
+    code->kind = kBinOp;
+    code->u.bin_op.type = bin_op_type;
+    code->u.bin_op.op_result = *op_result;
+    code->u.bin_op.op_1 = op_l;
+    code->u.bin_op.op_2 = op_r;
+    AddCodeToCodes(code);
 }
 
 void TranslateBinOp(TreeNode* bin_op, Operand* op_result, Operand op_l, Operand op_r) {
@@ -298,7 +376,17 @@ void TranslateReplace(Operand* op_dst, Operand op_src) {
 void TranslateReplacePointer(Operand* op_dst, Operand op_src) {
     // TODO: consider the problem of pointer
     if (!op_dst) return;
-    *op_dst = ToOperandTemporaryPointer(op_src);
+    switch (op_src->kind) {
+        case kVariable:
+        case kTemporary:
+            *op_dst = ToOperandPointer(op_src);
+            break;
+        case kVariableAddress:
+            *op_dst = ToOperandVariable(op_src);
+            break;
+        default:
+            assert(0);
+    }
 }
 
 void TranslateFunEnd() {

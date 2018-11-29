@@ -18,7 +18,7 @@ t9 := v1 * v1
 RETURN t9
 LABEL label6 :
 t14 := v2 / #2
-t13 := t14 * #2
+t13 := #2 * t14
 IF v2 == t13 GOTO label7
 GOTO label8
 LABEL label7 :

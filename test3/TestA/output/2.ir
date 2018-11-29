@@ -39,7 +39,7 @@ t25 := v2 + v1
 IF t25 > #100 GOTO label15
 GOTO label16
 LABEL label15 :
-t29 := v1 + #100
+t29 := #100 + v1
 WRITE t29
 GOTO label17
 LABEL label16 :

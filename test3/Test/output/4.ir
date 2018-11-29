@@ -1,8 +1,7 @@
 FUNCTION add :
 PARAM v1
-t2 := v1 + #0
-t6 := v1 + #4
-t1 := *t2 + *t6
+t6 := #4 + v1
+t1 := *v1 + *t6
 RETURN t1
 
 FUNCTION main :
@@ -18,22 +17,24 @@ LABEL label4 :
 IF v5 < #2 GOTO label5
 GOTO label6
 LABEL label5 :
-t19 := v5 * #4
-t16 := &v2 + t19
-*t16 := v4 + v5
-v5 := v5 + #1
+t16 := v4 + v5
+t22 := #4 * v5
+t19 := &v2 + t22
+*t19 := t16
+t23 := #1 + v5
+v5 := t23
 GOTO label4
 LABEL label6 :
-t26 := &v3 + #0
-t31 := v4 * #4
-t25 := t26 + t31
 ARG &v2
-*t25 := CALL add
-t34 := &v3 + #0
-t39 := v4 * #4
-t33 := t34 + t39
-WRITE *t33
-v4 := v4 + #1
+t27 := CALL add
+t35 := #4 * v4
+t29 := t30 + t35
+*t29 := t27
+t42 := #4 * v4
+t36 := t37 + t42
+WRITE *t36
+t43 := #1 + v4
+v4 := t43
 v5 := #0
 GOTO label1
 LABEL label3 :
