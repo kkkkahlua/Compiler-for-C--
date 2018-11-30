@@ -1,5 +1,5 @@
 struct People {
-    int num;
+    int nummm, numm, num;
     int id[10];
 };
 struct Class {
@@ -30,6 +30,24 @@ int total(struct Class class[2]) {
     return class[0].teachers.num + class[0].students.num 
             + class[1].teachers.num + class[1].students.num;
 }
+int EquateTeachers(struct Class class_1, struct Class class_2) {
+    int i = 0;
+    class_1.teachers.num = class_2.teachers.num;
+    while (i < 10) {
+        class_1.teachers.id[i] = class_2.teachers.id[i];
+        i = i + 1;
+    }
+    return 1;
+}
+int EquateStudents(struct Class class[2]) {
+    int i = 0;
+    class[0].students.num = class[1].students.num;
+    while (i < 10) {
+        class[0].students.id[i] = class[1].students.id[i];
+        i = i + 1;
+    }
+    return 1;
+}
 int main() {
     struct Class class[2];
     int sum;
@@ -42,6 +60,10 @@ int main() {
     write(SumId(class[0].students, class[0].students.num));
     write(SumId(class[1].teachers, class[1].teachers.num));
     write(SumId(class[1].students, class[1].students.num));
+    EquateTeachers(class[0], class[1]);
+    EquateStudents(class);
+    write(SumId(class[0].teachers, class[0].teachers.num));
+    write(SumId(class[0].students, class[0].students.num));
     sum = total(class);
     write(sum);
     return 0;

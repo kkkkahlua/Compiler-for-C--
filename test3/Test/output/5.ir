@@ -3,7 +3,8 @@ PARAM v5
 PARAM v6
 PARAM v7
 v8 := #0
-*v5 := v7
+t5 := #8 + v5
+*t5 := v7
 LABEL label1 :
 IF v8 < v7 GOTO label2
 GOTO label3
@@ -15,7 +16,8 @@ v4 := #1 + v4
 v8 := #1 + v8
 GOTO label1
 LABEL label3 :
-RETURN *v5
+t23 := #8 + v5
+RETURN *t23
 
 FUNCTION SumId :
 PARAM v9
@@ -26,7 +28,7 @@ LABEL label4 :
 IF v12 < v10 GOTO label5
 GOTO label6
 LABEL label5 :
-t33 := #4 + v9
+t33 := #12 + v9
 t35 := #4 * v12
 t30 := t33 + t35
 v11 := v11 + *t30
@@ -37,72 +39,149 @@ RETURN v11
 
 FUNCTION total :
 PARAM v13
-t59 := #44 + v13
-t44 := *v13 + *t59
-t63 := #88 + v13
-t43 := t44 + *t63
-t71 := #88 + v13
-t75 := #44 + t71
-t42 := t43 + *t75
+t52 := #8 + v13
+t59 := #52 + v13
+t60 := #8 + t59
+t44 := *t52 + *t60
+t63 := #104 + v13
+t68 := #8 + t63
+t43 := t44 + *t68
+t71 := #104 + v13
+t75 := #52 + t71
+t76 := #8 + t75
+t42 := t43 + *t76
 RETURN t42
 
+FUNCTION EquateTeachers :
+PARAM v14
+PARAM v15
+v16 := #0
+t82 := #8 + v15
+t87 := #8 + v14
+*t87 := *t82
+LABEL label7 :
+IF v16 < #10 GOTO label8
+GOTO label9
+LABEL label8 :
+t95 := #12 + v15
+t97 := #4 * v16
+t90 := t95 + t97
+t103 := #12 + v14
+t105 := #4 * v16
+t98 := t103 + t105
+*t98 := *t90
+v16 := #1 + v16
+GOTO label7
+LABEL label9 :
+RETURN #1
+
+FUNCTION EquateStudents :
+PARAM v17
+v18 := #0
+t114 := #104 + v17
+t118 := #52 + t114
+t119 := #8 + t118
+t126 := #52 + v17
+t127 := #8 + t126
+*t127 := *t119
+LABEL label10 :
+IF v18 < #10 GOTO label11
+GOTO label12
+LABEL label11 :
+t133 := #104 + v17
+t137 := #52 + t133
+t138 := #12 + t137
+t140 := #4 * v18
+t130 := t138 + t140
+t148 := #52 + v17
+t149 := #12 + t148
+t151 := #4 * v18
+t141 := t149 + t151
+*t141 := *t130
+v18 := #1 + v18
+GOTO label10
+LABEL label12 :
+RETURN #1
+
 FUNCTION main :
-DEC v14 176
+DEC v19 208
 v4 := #0
 ARG #10
-t87 := #4 + &v14
-ARG t87
-ARG &v14
-t94 := CALL assign
+t167 := #12 + &v19
+ARG t167
+ARG &v19
+t174 := CALL assign
 ARG #10
-t102 := #44 + &v14
-t103 := #4 + t102
-ARG t103
-t109 := #44 + &v14
-ARG t109
-t110 := CALL assign
-ARG #10
-t114 := #88 + &v14
-t119 := #4 + t114
-ARG t119
-t121 := #88 + &v14
-ARG t121
-t126 := CALL assign
-ARG #10
-t130 := #88 + &v14
-t134 := #44 + t130
-t135 := #4 + t134
-ARG t135
-t137 := #88 + &v14
-t141 := #44 + t137
-ARG t141
-t142 := CALL assign
-ARG v14
-ARG &v14
-t143 := CALL SumId
-WRITE t143
-t165 := #44 + &v14
-ARG *t165
-t172 := #44 + &v14
-ARG t172
-t158 := CALL SumId
-WRITE t158
-t176 := #88 + &v14
-ARG *t176
-t183 := #88 + &v14
+t182 := #52 + &v19
+t183 := #12 + t182
 ARG t183
-t173 := CALL SumId
-WRITE t173
-t191 := #88 + &v14
-t195 := #44 + t191
-ARG *t195
-t198 := #88 + &v14
-t202 := #44 + t198
-ARG t202
-t188 := CALL SumId
-WRITE t188
-ARG &v14
-v15 := CALL total
-WRITE v15
+t189 := #52 + &v19
+ARG t189
+t190 := CALL assign
+ARG #10
+t194 := #104 + &v19
+t199 := #12 + t194
+ARG t199
+t201 := #104 + &v19
+ARG t201
+t206 := CALL assign
+ARG #10
+t210 := #104 + &v19
+t214 := #52 + t210
+t215 := #12 + t214
+ARG t215
+t217 := #104 + &v19
+t221 := #52 + t217
+ARG t221
+t222 := CALL assign
+t231 := #8 + &v19
+ARG *t231
+ARG &v19
+t223 := CALL SumId
+WRITE t223
+t245 := #52 + &v19
+t246 := #8 + t245
+ARG *t246
+t252 := #52 + &v19
+ARG t252
+t238 := CALL SumId
+WRITE t238
+t256 := #104 + &v19
+t261 := #8 + t256
+ARG *t261
+t263 := #104 + &v19
+ARG t263
+t253 := CALL SumId
+WRITE t253
+t271 := #104 + &v19
+t275 := #52 + t271
+t276 := #8 + t275
+ARG *t276
+t278 := #104 + &v19
+t282 := #52 + t278
+ARG t282
+t268 := CALL SumId
+WRITE t268
+t283 := #104 + &v19
+ARG t283
+ARG &v19
+t291 := CALL EquateTeachers
+ARG &v19
+t293 := CALL EquateStudents
+t302 := #8 + &v19
+ARG *t302
+ARG &v19
+t294 := CALL SumId
+WRITE t294
+t316 := #52 + &v19
+t317 := #8 + t316
+ARG *t317
+t323 := #52 + &v19
+ARG t323
+t309 := CALL SumId
+WRITE t309
+ARG &v19
+v20 := CALL total
+WRITE v20
 RETURN #0
 

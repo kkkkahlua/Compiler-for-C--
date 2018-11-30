@@ -74,7 +74,7 @@ void TranslateParam(const char* name) {
 void TranslateFunDef(const char* name, DefList param_list) {
     InterCode code = (InterCode)malloc(sizeof(InterCode_));
     code->kind = kFunction;
-    code->u.function.func_name = NewString(name);
+    code->u.function.func_name = name;
     AddCodeToCodes(code);
 
     while (1) {

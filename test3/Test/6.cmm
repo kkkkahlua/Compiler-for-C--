@@ -1,0 +1,46 @@
+int sum(int a[10], int n) {
+    int i = 0, sum = 0;
+    while (i <= n) {
+        sum = sum + a[i];
+        i = i + 1;
+    }
+    return sum;
+}
+
+int total(int a[10][10], int n) {
+    int i = 0;
+    int j = 0;
+    int ret = 0;
+    while (i < n) {
+        j = 0;
+        while (j <= i) {
+            ret = ret + a[i][j];
+            j = j + 1;
+        }
+        i = i + 1;
+    }
+    return ret;
+}
+
+int main() {
+    int a[10][10];
+    int i = 0, j = 0;
+    while (i < 10) {
+        a[i][0] = a[i][i] = 1;
+        if (i >= 1) {
+            j = 1;
+            while (j < i) {
+                a[i][j] = a[i-1][j] + a[i-1][j-1];
+                j = j + 1;
+            }
+        }
+        i = i + 1;
+    }
+    i = 0;
+    while (i < 10) {
+        write(sum(a[i], i));
+        i = i + 1;
+    }
+    write(total(a, 10));
+    return 0;
+}
