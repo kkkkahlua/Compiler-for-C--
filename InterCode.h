@@ -23,6 +23,10 @@ typedef struct Operand_ {
         float float_value;
         int label_no;
     } u;
+    struct {
+        InterCodes code;
+        int lineno;
+    } active_info;
 } Operand_;
 
 typedef enum BinOpType {
@@ -81,6 +85,7 @@ typedef struct InterCode_ {
 typedef struct InterCodes_ {
     InterCode code;
     int start_of_block;
+    int lineno;
     InterCodes prev, next;
 } InterCodes_;
 
@@ -125,8 +130,6 @@ Operand ToOperandVariable(Operand operand_pointer);
 Operand ToOperandVariableAddress(Operand operand);
 
 Operand ToOperandVariablePointer(Operand operand);
-
-void ConstructBasicBlock(InterCodes codes);
 
 void OutputInterCode(InterCode code);
 

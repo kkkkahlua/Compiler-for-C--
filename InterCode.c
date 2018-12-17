@@ -8,12 +8,10 @@ extern InterCodeIterator iter;
 extern FILE* stream;
 extern int in_struct;
 
-InterCodeIterator basic_block_head;
-InterCodeIterator basic_block_tail;
-
 int var_no = 0;
 int temp_no = 0;
 int label_no = 0;
+int line_no = 0;
 
 Operand NewOperandVariable() {
     if (in_struct) return NULL;
@@ -158,6 +156,7 @@ void AddCodeToCodes(InterCode code) {
     InterCodes cur_code = (InterCodes)malloc(sizeof(InterCodes_));
     cur_code->code = code;
     cur_code->start_of_block = 0;
+    cur_code->lineno = ++line_no;
     cur_code->next = NULL;
     cur_code->prev = iter->end;
     if (!iter->begin) {
@@ -291,68 +290,4 @@ void OutputInterCode(InterCode code) {
             break;
     }
     puts("");
-}
-
-void MarkBegin(InterCodes codes) {
-    InterCode code = codes->code;
-    switch (code->kind) {
-        case kLabel:
-        case kFunction:
-            codes->start_of_block = 1;
-            break;
-        case kGoto:
-        case kConditionalJump:
-        case kReturn:
-            if (codes->next && codes->next->code->kind != kFunEnd) {
-                codes->next->start_of_block = 1;
-            }
-            break;
-    }
-}
-
-void AddIterToBasicBlock(InterCodeIterator iter) {
-    if (!basic_block_head) {
-        basic_block_head = basic_block_tail = iter;
-    } else {
-        basic_block_tail->next = iter;
-        basic_block_tail = iter;
-    }
-}
-
-void ConstructBasicBlock(InterCodes codes) {
-    InterCodes temp = codes;
-    codes->start_of_block = 1;
-    while (1) {
-        if (!codes) break;
-        MarkBegin(codes);
-        codes = codes->next;
-    }
-
-    codes = temp;
-    InterCodeIterator iter = NULL;
-    while (1) {
-        if (!codes) {
-            AddIterToBasicBlock(iter);
-            break;
-        }
-        if (codes->start_of_block) {
-            if (iter) {
-                iter->end = codes;
-                AddIterToBasicBlock(iter);
-            }
-            iter = (InterCodeIterator)malloc(sizeof(InterCodeIterator_));
-            iter->begin = codes;
-            iter->end = NULL;
-            iter->next = NULL;
-        }
-        codes = codes->next;
-    }
-
-    for (InterCodeIterator iter = basic_block_head; iter; iter = iter->next) {
-        puts("block");
-        for (InterCodes codes = iter->begin; codes != iter->end; codes = codes->next) {
-            OutputInterCode(codes->code);
-        }
-        puts("");
-    }
 }

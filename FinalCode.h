@@ -5,6 +5,15 @@
 
 // TODO: 
 // 1. static variable
+typedef struct Info {
+    int reg_no[3];  // 0: basic; 1: pointer; 2: address
+    struct {
+        InterCodes code;
+        int lineno;
+    } active_info;
+} Info;
+
+void ConstructBasicBlock(InterCodes codes);
 
 void TranslateToFinalCodes(InterCodes codes);
 
