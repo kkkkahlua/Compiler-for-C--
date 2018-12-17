@@ -29,6 +29,8 @@ typedef struct Operand_ {
     } active_info;
 } Operand_;
 
+typedef enum OperandType { kValue, kPointer, kAddress, kIntermediate } OperandType;
+
 typedef enum BinOpType {
     kArithAdd, kArithSub, kArithMul, kArithDiv, 
 } BinOpType;

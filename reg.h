@@ -3,8 +3,7 @@
 
 typedef struct Reg {
     const char* name;
-    enum { kTypeVariable, kTypeTemporary, kTypeNull } type;
-    int idx;
+    Operand op;
 } Reg;
 
 #endif

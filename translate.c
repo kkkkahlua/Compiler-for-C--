@@ -164,6 +164,12 @@ void swap(Operand* op_1, Operand* op_2) {
     *op_2 = temp;
 }
 
+void SwapOperandType(OperandType* type_1, OperandType* type_2) {
+    OperandType temp = *type_1;
+    *type_1 = *type_2;
+    *type_2 = temp;
+}
+
 void TranslateBinOpType(BinOpType bin_op_type, Operand* op_result, Operand op_l, Operand op_r) {
     if (!op_result) return;
     if ((op_l->kind == kConstantInt && op_r->kind == kConstantInt)

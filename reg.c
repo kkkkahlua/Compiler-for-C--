@@ -1,36 +1,39 @@
 #include "reg.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+
 Reg regs[32] = {
-    {"$zero", kTypeNull, -1},   //  0: constant 0
-    {"$at", kTypeNull, -1},     //  1: *** cannot be used
-    {"$v0", kTypeNull, -1},     //  2-3: function return value
-    {"$v1", kTypeNull, -1},
-    {"$a0", kTypeNull, -1},     //  4-7: function first 4 parameter 
-    {"$a1", kTypeNull, -1},
-    {"$a2", kTypeNull, -1},
-    {"$a3", kTypeNull, -1},
-    {"$t0", kTypeNull, -1},     //  8-15: (t0-t7) caller preserve
-    {"$t1", kTypeNull, -1},
-    {"$t2", kTypeNull, -1},
-    {"$t3", kTypeNull, -1},
-    {"$t4", kTypeNull, -1},
-    {"$t5", kTypeNull, -1},
-    {"$t6", kTypeNull, -1},
-    {"$t7", kTypeNull, -1},
-    {"$s0", kTypeNull, -1},     //  16-23: (s0-s7) callee preserve
-    {"$s1", kTypeNull, -1},
-    {"$s2", kTypeNull, -1},
-    {"$s3", kTypeNull, -1},
-    {"$s4", kTypeNull, -1},
-    {"$s5", kTypeNull, -1},
-    {"$s6", kTypeNull, -1},
-    {"$s7", kTypeNull, -1},
-    {"$t8", kTypeNull, -1},     //  24-25: (t8-t9) caller preserve
-    {"$t9", kTypeNull, -1},
-    {"$k0", kTypeNull, -1},     //  26-27: *** cannot be used
-    {"$k1", kTypeNull, -1},
-    {"$gp", kTypeNull, -1},
-    {"$sp", kTypeNull, -1},
-    {"$fp", kTypeNull, -1},
-    {"$ra", kTypeNull, -1},
+    {"$zero", NULL},   //  0: constant 0
+    {"$at", NULL},     //  1: *** cannot be used
+    {"$v0", NULL},     //  2-3: function return value
+    {"$v1", NULL},
+    {"$a0", NULL},     //  4-7: function first 4 parameter 
+    {"$a1", NULL},
+    {"$a2", NULL},
+    {"$a3", NULL},
+    {"$t0", NULL},     //  8-15: (t0-t7) caller preserve
+    {"$t1", NULL},
+    {"$t2", NULL},
+    {"$t3", NULL},
+    {"$t4", NULL},
+    {"$t5", NULL},
+    {"$t6", NULL},
+    {"$t7", NULL},
+    {"$s0", NULL},     //  16-23: (s0-s7) callee preserve
+    {"$s1", NULL},
+    {"$s2", NULL},
+    {"$s3", NULL},
+    {"$s4", NULL},
+    {"$s5", NULL},
+    {"$s6", NULL},
+    {"$s7", NULL},
+    {"$t8", NULL},     //  24-25: (t8-t9) caller preserve
+    {"$t9", NULL},
+    {"$k0", NULL},     //  26-27: *** cannot be used
+    {"$k1", NULL},
+    {"$gp", NULL},
+    {"$sp", NULL},
+    {"$fp", NULL},
+    {"$ra", NULL},
 };

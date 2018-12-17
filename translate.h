@@ -6,6 +6,8 @@
 #include "semantic.h"
 #include "SymbolTable.h"
 
+void SwapOperandType(OperandType* type_1, OperandType* type_2);
+
 void TranslateAddressOf(Operand dst_op, Operand src_op);
 
 void TranslateArg(Operand op);
