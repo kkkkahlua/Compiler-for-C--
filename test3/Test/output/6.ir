@@ -1,282 +1,282 @@
-FUNCTION sum :
-PARAM v1
-PARAM v2
-v3 := #0
-v4 := #0
-LABEL label1 :
-IF v3 <= v2 GOTO label2
-GOTO label3
-LABEL label2 :
-t10 := #4 * v3
-t7 := v1 + t10
-v4 := v4 + *t7
-v3 := #1 + v3
-GOTO label1
-LABEL label3 :
-RETURN v4
-
-FUNCTION total :
-PARAM v5
-PARAM v6
-v7 := #0
-v8 := #0
-v9 := #0
-LABEL label4 :
-IF v7 < v6 GOTO label5
-GOTO label6
-LABEL label5 :
-v8 := #0
-LABEL label7 :
-IF v8 <= v7 GOTO label8
-GOTO label9
-LABEL label8 :
-t32 := #40 * v7
-t29 := v5 + t32
-t34 := #4 * v8
-t28 := t29 + t34
-v9 := v9 + *t28
-v8 := #1 + v8
-GOTO label7
-LABEL label9 :
-v7 := #1 + v7
-GOTO label4
-LABEL label6 :
-RETURN v9
-
-FUNCTION main :
-DEC v10 400
-v11 := #0
-v12 := #0
-LABEL label10 :
-IF v11 < #10 GOTO label11
-GOTO label12
-LABEL label11 :
-t55 := #40 * v11
-t52 := &v10 + t55
-t57 := #4 * v11
-t51 := t52 + t57
-*t51 := #1
-t62 := #40 * v11
-t59 := &v10 + t62
-*t59 := *t51
-IF v11 >= #1 GOTO label13
-GOTO label17
-LABEL label13 :
-v12 := #1
-LABEL label15 :
-IF v12 < v11 GOTO label16
-GOTO label17
-LABEL label16 :
-t75 := v11 - #1
-t78 := #40 * t75
-t73 := &v10 + t78
-t80 := #4 * v12
-t72 := t73 + t80
-t84 := v11 - #1
-t87 := #40 * t84
-t82 := &v10 + t87
-t88 := v12 - #1
-t91 := #4 * t88
-t81 := t82 + t91
-t71 := *t72 + *t81
-t96 := #40 * v11
-t93 := &v10 + t96
-t98 := #4 * v12
-t92 := t93 + t98
-*t92 := t71
-v12 := #1 + v12
-GOTO label15
-LABEL label17 :
-v11 := #1 + v11
-GOTO label10
-LABEL label12 :
-v11 := #0
-LABEL label18 :
-IF v11 < #10 GOTO label19
-GOTO label20
-LABEL label19 :
-ARG v11
-t116 := #40 * v11
-t113 := &v10 + t116
-ARG t113
-t111 := CALL sum
-WRITE t111
-v11 := #1 + v11
-GOTO label18
-LABEL label20 :
-ARG #10
-ARG &v10
-t121 := CALL total
-WRITE t121
-RETURN #0
-
+1: FUNCTION sum :
+2: PARAM v1
+3: PARAM v2
+4: v3 := #0
+5: v4 := #0
+6: LABEL label1 :
+7: IF v3 <= v2 GOTO label2
+8: GOTO label3
+9: LABEL label2 :
+10: t10 := #4 * v3
+11: t7 := v1 + t10
+12: v4 := v4 + *t7
+14: v3 := #1 + v3
+16: GOTO label1
+17: LABEL label3 :
+18: RETURN v4
+19: 
+20: FUNCTION total :
+21: PARAM v5
+22: PARAM v6
+23: v7 := #0
+24: v8 := #0
+25: v9 := #0
+26: LABEL label4 :
+27: IF v7 < v6 GOTO label5
+28: GOTO label6
+29: LABEL label5 :
+30: v8 := #0
+31: LABEL label7 :
+32: IF v8 <= v7 GOTO label8
+33: GOTO label9
+34: LABEL label8 :
+35: t32 := #40 * v7
+36: t29 := v5 + t32
+37: t34 := #4 * v8
+38: t28 := t29 + t34
+39: v9 := v9 + *t28
+41: v8 := #1 + v8
+43: GOTO label7
+44: LABEL label9 :
+45: v7 := #1 + v7
+47: GOTO label4
+48: LABEL label6 :
+49: RETURN v9
+50: 
+51: FUNCTION main :
+52: DEC v10 400
+53: v11 := #0
+54: v12 := #0
+55: LABEL label10 :
+56: IF v11 < #10 GOTO label11
+57: GOTO label12
+58: LABEL label11 :
+59: t55 := #40 * v11
+60: t52 := &v10 + t55
+61: t57 := #4 * v11
+62: t51 := t52 + t57
+63: *t51 := #1
+64: t62 := #40 * v11
+65: t59 := &v10 + t62
+66: *t59 := *t51
+67: IF v11 >= #1 GOTO label13
+68: GOTO label17
+69: LABEL label13 :
+70: v12 := #1
+71: LABEL label15 :
+72: IF v12 < v11 GOTO label16
+73: GOTO label17
+74: LABEL label16 :
+75: t75 := v11 - #1
+76: t78 := #40 * t75
+77: t73 := &v10 + t78
+78: t80 := #4 * v12
+79: t72 := t73 + t80
+80: t84 := v11 - #1
+81: t87 := #40 * t84
+82: t82 := &v10 + t87
+83: t88 := v12 - #1
+84: t91 := #4 * t88
+85: t81 := t82 + t91
+86: t71 := *t72 + *t81
+87: t96 := #40 * v11
+88: t93 := &v10 + t96
+89: t98 := #4 * v12
+90: t92 := t93 + t98
+91: *t92 := t71
+92: v12 := #1 + v12
+94: GOTO label15
+95: LABEL label17 :
+97: v11 := #1 + v11
+99: GOTO label10
+100: LABEL label12 :
+101: v11 := #0
+102: LABEL label18 :
+103: IF v11 < #10 GOTO label19
+104: GOTO label20
+105: LABEL label19 :
+106: ARG v11
+107: t116 := #40 * v11
+108: t113 := &v10 + t116
+109: ARG t113
+110: t111 := CALL sum
+111: WRITE t111
+112: v11 := #1 + v11
+114: GOTO label18
+115: LABEL label20 :
+116: ARG #10
+117: ARG &v10
+118: t121 := CALL total
+119: WRITE t121
+120: RETURN #0
+121: 
 block
 FUNCTION sum :
-PARAM v1
-PARAM v2
-v3 := #0
-v4 := #0
+PARAM v1(0)
+PARAM v2(6)
+v3(6) := #0
+v4(6) := #0
 
 block
 LABEL label1 :
-IF v3 <= v2 GOTO label2
+IF v3(8) <= v2(8) GOTO label2
 
 block
 GOTO label3
 
 block
 LABEL label2 :
-t10 := #4 * v3
-t7 := v1 + t10
-v4 := v4 + *t7
-v3 := #1 + v3
+t10(11) := #4 * v3(14)
+t7(12) := v1(17) + t10(-1)
+v4(17) := v4(-1) + *t7(-1)
+v3(17) := #1 + v3(-1)
 GOTO label1
 
 block
 LABEL label3 :
-RETURN v4
+RETURN v4(20)
 
 
 block
 FUNCTION total :
-PARAM v5
-PARAM v6
-v7 := #0
-v8 := #0
-v9 := #0
+PARAM v5(0)
+PARAM v6(26)
+v7(26) := #0
+v8(26) := #0
+v9(26) := #0
 
 block
 LABEL label4 :
-IF v7 < v6 GOTO label5
+IF v7(28) < v6(28) GOTO label5
 
 block
 GOTO label6
 
 block
 LABEL label5 :
-v8 := #0
+v8(31) := #0
 
 block
 LABEL label7 :
-IF v8 <= v7 GOTO label8
+IF v8(33) <= v7(33) GOTO label8
 
 block
 GOTO label9
 
 block
 LABEL label8 :
-t32 := #40 * v7
-t29 := v5 + t32
-t34 := #4 * v8
-t28 := t29 + t34
-v9 := v9 + *t28
-v8 := #1 + v8
+t32(36) := #40 * v7(44)
+t29(38) := v5(44) + t32(-1)
+t34(38) := #4 * v8(41)
+t28(39) := t29(-1) + t34(-1)
+v9(44) := v9(-1) + *t28(-1)
+v8(44) := #1 + v8(-1)
 GOTO label7
 
 block
 LABEL label9 :
-v7 := #1 + v7
+v7(48) := #1 + v7(-1)
 GOTO label4
 
 block
 LABEL label6 :
-RETURN v9
+RETURN v9(51)
 
 
 block
 FUNCTION main :
-DEC v10 400
-v11 := #0
-v12 := #0
+DEC v10(55) 400
+v11(55) := #0
+v12(55) := #0
 
 block
 LABEL label10 :
-IF v11 < #10 GOTO label11
+IF v11(57) < #10 GOTO label11
 
 block
 GOTO label12
 
 block
 LABEL label11 :
-t55 := #40 * v11
-t52 := &v10 + t55
-t57 := #4 * v11
-t51 := t52 + t57
-*t51 := #1
-t62 := #40 * v11
-t59 := &v10 + t62
-*t59 := *t51
-IF v11 >= #1 GOTO label13
+t55(60) := #40 * v11(61)
+t52(62) := &v10(65) + t55(-1)
+t57(62) := #4 * v11(64)
+t51(-1) := t52(-1) + t57(-1)
+*t51(66) := #1
+t62(65) := #40 * v11(67)
+t59(-1) := &v10(68) + t62(-1)
+*t59(-1) := *t51(-1)
+IF v11(68) >= #1 GOTO label13
 
 block
 GOTO label17
 
 block
 LABEL label13 :
-v12 := #1
+v12(71) := #1
 
 block
 LABEL label15 :
-IF v12 < v11 GOTO label16
+IF v12(73) < v11(73) GOTO label16
 
 block
 GOTO label17
 
 block
 LABEL label16 :
-t75 := v11 - #1
-t78 := #40 * t75
-t73 := &v10 + t78
-t80 := #4 * v12
-t72 := t73 + t80
-t84 := v11 - #1
-t87 := #40 * t84
-t82 := &v10 + t87
-t88 := v12 - #1
-t91 := #4 * t88
-t81 := t82 + t91
-t71 := *t72 + *t81
-t96 := #40 * v11
-t93 := &v10 + t96
-t98 := #4 * v12
-t92 := t93 + t98
-*t92 := t71
-v12 := #1 + v12
+t75(76) := v11(80) - #1
+t78(77) := #40 * t75(-1)
+t73(79) := &v10(82) + t78(-1)
+t80(79) := #4 * v12(83)
+t72(86) := t73(-1) + t80(-1)
+t84(81) := v11(87) - #1
+t87(82) := #40 * t84(-1)
+t82(85) := &v10(88) + t87(-1)
+t88(84) := v12(89) - #1
+t91(85) := #4 * t88(-1)
+t81(86) := t82(-1) + t91(-1)
+t71(91) := *t72(-1) + *t81(-1)
+t96(88) := #40 * v11(95)
+t93(90) := &v10(95) + t96(-1)
+t98(90) := #4 * v12(92)
+t92(-1) := t93(-1) + t98(-1)
+*t92(-1) := t71(-1)
+v12(95) := #1 + v12(-1)
 GOTO label15
 
 block
 LABEL label17 :
-v11 := #1 + v11
+v11(100) := #1 + v11(-1)
 GOTO label10
 
 block
 LABEL label12 :
-v11 := #0
+v11(102) := #0
 
 block
 LABEL label18 :
-IF v11 < #10 GOTO label19
+IF v11(104) < #10 GOTO label19
 
 block
 GOTO label20
 
 block
 LABEL label19 :
-ARG v11
-t116 := #40 * v11
-t113 := &v10 + t116
-ARG t113
-t111 := CALL sum
-WRITE t111
-v11 := #1 + v11
+ARG v11(107)
+t116(108) := #40 * v11(112)
+t113(109) := &v10(115) + t116(-1)
+ARG t113(-1)
+t111(111) := CALL sum
+WRITE t111(-1)
+v11(115) := #1 + v11(-1)
 GOTO label18
 
 block
 LABEL label20 :
 ARG #10
-ARG &v10
-t121 := CALL total
-WRITE t121
+ARG &v10(122)
+t121(119) := CALL total
+WRITE t121(-1)
 RETURN #0
 
 

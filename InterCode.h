@@ -131,10 +131,10 @@ Operand ToOperandVariableAddress(Operand operand);
 
 Operand ToOperandVariablePointer(Operand operand);
 
-void OutputInterCode(InterCode code);
+void OutputInterCode(InterCode code, int flag);
 
-void OutputInterCodes(InterCodes codes);
+void OutputInterCodes(InterCodes codes, int flag);
 
-void OutputOperand(Operand op);
+void OutputOperand(Operand op, int flag);
 
 #endif

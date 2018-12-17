@@ -2,11 +2,12 @@
 
 #include "reg.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-Info* variable_info;
-Info* temporary_info;
+Info variable_info;
+Info temporary_info;
 
 InterCodeIterator basic_block_head;
 InterCodeIterator basic_block_tail;
@@ -14,24 +15,26 @@ InterCodeIterator basic_block_tail;
 extern int var_no;
 extern int temp_no;
 extern int line_no;
+extern InterCodeIterator iter;
 
-void InitializeInfo();
 void RetrieveActiveInfo();
 void TranslateToFinalCode(InterCode code);
 
 void TranslateToFinalCodes(InterCodes codes) {
-    InitializeInfo(variable_info, var_no+1);
-    InitializeInfo(temporary_info, temp_no+1);
+    variable_info = InitializeInfo(var_no+1);
+    temporary_info = InitializeInfo(temp_no+1);
 
     ConstructBasicBlock(codes);
 
     RetrieveActiveInfo();
 
-    while (1) {
-        if (!codes) return;
-        TranslateToFinalCode(codes->code);
-        codes = codes->next;
-    }
+    OutputBlockInfo();
+
+    // while (1) {
+    //     if (!codes) return;
+    //     TranslateToFinalCode(codes->code);
+    //     codes = codes->next;
+    // }
 }
 
 void TranslateToFinalCode(InterCode code) {
@@ -41,13 +44,14 @@ void TranslateToFinalCode(InterCode code) {
     // }
 }
 
-void InitializeInfo(Info* info, int num) {
-    info = (Info*)malloc(sizeof(Info) * num);
+Info InitializeInfo(int num) {
+    Info info = (Info)malloc(sizeof(Info_) * num);
     for (int i = 0; i < num; ++i) {
         info[i].reg_no[0] = info[i].reg_no[1] = info[i].reg_no[2] = -1;
         info[i].active_info.code = NULL;
         info[i].active_info.lineno = -1;
     }
+    return info;
 }
 
 void MarkBegin(InterCodes codes) {
@@ -104,40 +108,46 @@ void ConstructBasicBlock(InterCodes codes) {
         }
         codes = codes->next;
     }
-
-    for (InterCodeIterator iter = basic_block_head; iter; iter = iter->next) {
-        puts("block");
-        for (InterCodes codes = iter->begin; codes != iter->end; codes = codes->next) {
-            OutputInterCode(codes->code);
-        }
-        puts("");
-    }
 }
 
-void InitializeActiveInfo(Info* info, int num, int lineno) {
+void InitializeActiveInfo(Info info, int num, int lineno) {
     for (int i = 0; i < num; ++i) info[i].active_info.lineno = lineno;
 }
 
-void AssociateOperandWithCode(Operand op, InterCodes code, int active) {    
-    Info* info = NULL;
-    switch (op->kind) {
-        kVariable:
-        kVariablePointer:
-        kVariableAddress:
-            info = variable_info + op->u.var_no;
+void AssociateOperandWithCode(Operand* op, InterCodes code, int active) {  
+    Info info = NULL;
+    switch ((*op)->kind) {
+        case kVariable:
+            *op = ToOperandVariable(*op);
+            info = variable_info + (*op)->u.var_no;
             break;
-        kTemporary:
-        kTemporaryPointer:
-        kTemporaryAddress:
-            info = temporary_info + op->u.temp_no;
+        case kVariablePointer:
+            *op = ToOperandVariablePointer(*op);
+            info = variable_info + (*op)->u.var_no;
+            break;
+        case kVariableAddress:
+            *op = ToOperandVariableAddress(*op);
+            info = variable_info + (*op)->u.var_no;
+            break;
+        case kTemporary:
+            *op = ToOperandTemporary(*op);
+            info = temporary_info + (*op)->u.temp_no;
+            break;
+        case kTemporaryPointer:
+            *op = ToOperandTemporaryPointer(*op);
+            info = temporary_info + (*op)->u.temp_no;
+            break;
+        case kTemporaryAddress:
+            *op = ToOperandTemporaryAddress(*op);
+            info = temporary_info + (*op)->u.temp_no;
             break;
     }
     if (info) {
         // 1. connect operand in current code with later use info
         // 2. update info of current code for previous reference
 
-        op->active_info.lineno = info->active_info.lineno;
-        op->active_info.code = info->active_info.code;
+        (*op)->active_info.lineno = info->active_info.lineno;
+        (*op)->active_info.code = info->active_info.code;
         if (active) {
             info->active_info.lineno = code->lineno;
             info->active_info.code = code;
@@ -149,13 +159,13 @@ void AssociateOperandWithCode(Operand op, InterCodes code, int active) {
 }
 
 void RetrieveActiveInfo() {
-    for (InterCodeIterator iter = basic_block_head; iter; iter = iter->next) {
+    for (InterCodeIterator block_iter = basic_block_head; block_iter; block_iter = block_iter->next) {
         InitializeActiveInfo(variable_info, var_no+1,
-                            iter->end ? iter->end->lineno : line_no+1);
+                            block_iter->end ? block_iter->end->lineno : line_no+1);
         InitializeActiveInfo(temporary_info, temp_no+1, -1);
 
-        InterCodes rbegin = iter->end ? iter->end->prev : iter->end,
-                    rend = iter->begin->prev;
+        InterCodes rbegin = block_iter->end ? block_iter->end->prev : iter->end,
+                    rend = block_iter->begin->prev;
         for (InterCodes codes = rbegin; codes != rend; codes = codes->prev) {
             InterCode code = codes->code;
             
@@ -165,37 +175,47 @@ void RetrieveActiveInfo() {
                 case kGoto:
                     break;
                 case kAssign:
-                    AssociateOperandWithCode(code->u.assign.op_left, codes, 0);
-                    AssociateOperandWithCode(code->u.assign.op_right, codes, 1);
+                    AssociateOperandWithCode(&code->u.assign.op_left, codes, 0);
+                    AssociateOperandWithCode(&code->u.assign.op_right, codes, 1);
                     break;
                 case kBinOp:
-                    AssociateOperandWithCode(code->u.bin_op.op_result, codes, 0);
-                    AssociateOperandWithCode(code->u.bin_op.op_1, codes, 1);
-                    AssociateOperandWithCode(code->u.bin_op.op_2, codes, 1);
+                    AssociateOperandWithCode(&code->u.bin_op.op_result, codes, 0);
+                    AssociateOperandWithCode(&code->u.bin_op.op_1, codes, 1);
+                    AssociateOperandWithCode(&code->u.bin_op.op_2, codes, 1);
                     break;
                 case kConditionalJump:
-                    AssociateOperandWithCode(code->u.conditional_jump.op_1, codes, 1);
-                    AssociateOperandWithCode(code->u.conditional_jump.op_2, codes, 1);
+                    AssociateOperandWithCode(&code->u.conditional_jump.op_1, codes, 1);
+                    AssociateOperandWithCode(&code->u.conditional_jump.op_2, codes, 1);
                     break;
                 case kReturn:
-                    AssociateOperandWithCode(code->u.ret.op, codes, 1);
+                    AssociateOperandWithCode(&code->u.ret.op, codes, 1);
                     break;
                 case kDeclare:
-                    AssociateOperandWithCode(code->u.declare.op, codes, 0);
+                    AssociateOperandWithCode(&code->u.declare.op, codes, 0);
                     break;
                 case kArg:
-                    AssociateOperandWithCode(code->u.arg.op, codes, 1);
+                    AssociateOperandWithCode(&code->u.arg.op, codes, 1);
                     break;
                 case kCall:
-                    AssociateOperandWithCode(code->u.call.op_result, codes, 0);
+                    AssociateOperandWithCode(&code->u.call.op_result, codes, 0);
                     break;
                 case kParam:
-                    AssociateOperandWithCode(code->u.param.op, codes, 0);
+                    AssociateOperandWithCode(&code->u.param.op, codes, 0);
                     break;
                 case kIO:
-                    AssociateOperandWithCode(code->u.io.op, codes, 1);
+                    AssociateOperandWithCode(&code->u.io.op, codes, 1);
                     break;
             }
         }
     }
+}
+
+void OutputBlockInfo() {
+    for (InterCodeIterator iter = basic_block_head; iter; iter = iter->next) {
+        puts("block");
+        for (InterCodes codes = iter->begin; codes != iter->end; codes = codes->next) {
+            OutputInterCode(codes->code, 1);
+        }
+        puts("");
+    }    
 }

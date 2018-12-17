@@ -167,76 +167,91 @@ void AddCodeToCodes(InterCode code) {
     }
 }
 
-void OutputInterCode(InterCode code);
+void OutputInterCode(InterCode code, int flag);
 
-void OutputInterCodes(InterCodes codes) {
+void OutputInterCodes(InterCodes codes, int flag) {
     while (1) {
         if (!codes) return;
-        OutputInterCode(codes->code);
+        printf("%d: ", codes->lineno);
+        OutputInterCode(codes->code, flag);
         codes = codes->next;
     }
 }
 
-void OutputOperand(Operand op) {
-    switch (op->kind) {
-        case kVariable: fprintf(stream, "v%d", op->u.var_no); break;
-        case kVariablePointer: fprintf(stream, "*v%d", op->u.var_no); break;
-        case kVariableAddress: fprintf(stream, "&v%d", op->u.var_no); break;
-        case kTemporary: fprintf(stream, "t%d", op->u.temp_no); break;
-        case kTemporaryAddress: fprintf(stream, "&t%d", op->u.temp_no); break;
-        case kTemporaryPointer: fprintf(stream, "*t%d", op->u.temp_no); break;
-        case kLABEL: fprintf(stream, "label%d", op->u.label_no); break;
-        case kConstantInt: fprintf(stream, "#%d", op->u.int_value); break;
-        case kConstantFloat: fprintf(stream, "#%f", op->u.float_value); break;
+void OutputOperand(Operand op, int flag) {
+    if (!flag) {
+        switch (op->kind) {
+            case kVariable: fprintf(stream, "v%d", op->u.var_no); break;
+            case kVariablePointer: fprintf(stream, "*v%d", op->u.var_no); break;
+            case kVariableAddress: fprintf(stream, "&v%d", op->u.var_no); break;
+            case kTemporary: fprintf(stream, "t%d", op->u.temp_no); break;
+            case kTemporaryAddress: fprintf(stream, "&t%d", op->u.temp_no); break;
+            case kTemporaryPointer: fprintf(stream, "*t%d", op->u.temp_no); break;
+            case kLABEL: fprintf(stream, "label%d", op->u.label_no); break;
+            case kConstantInt: fprintf(stream, "#%d", op->u.int_value); break;
+            case kConstantFloat: fprintf(stream, "#%f", op->u.float_value); break;
+        }
+    } else {
+        switch (op->kind) {
+            case kVariable: fprintf(stream, "v%d(%d)", op->u.var_no, op->active_info.lineno); break;
+            case kVariablePointer: fprintf(stream, "*v%d(%d)", op->u.var_no, op->active_info.lineno); break;
+            case kVariableAddress: fprintf(stream, "&v%d(%d)", op->u.var_no, op->active_info.lineno); break;
+            case kTemporary: fprintf(stream, "t%d(%d)", op->u.temp_no, op->active_info.lineno); break;
+            case kTemporaryAddress: fprintf(stream, "&t%d(%d)", op->u.temp_no, op->active_info.lineno); break;
+            case kTemporaryPointer: fprintf(stream, "*t%d(%d)", op->u.temp_no, op->active_info.lineno); break;
+            case kLABEL: fprintf(stream, "label%d", op->u.label_no); break;
+            case kConstantInt: fprintf(stream, "#%d", op->u.int_value); break;
+            case kConstantFloat: fprintf(stream, "#%f", op->u.float_value); break;
+        }
     }
 }
 
-void OutputInterCode(InterCode code) {
+void OutputInterCode(InterCode code, int flag) {
     switch (code->kind) {
         case kLabel: 
             fprintf(stream, "LABEL ");
-            OutputOperand(code->u.label.op);
+            OutputOperand(code->u.label.op, flag);
             fprintf(stream, " :");
             break;
         case kFunction: 
             fprintf(stream, "FUNCTION %s :", code->u.function.func_name); 
             break;
         case kAssign:
-            OutputOperand(code->u.assign.op_left);
+            OutputOperand(code->u.assign.op_left, flag);
             fprintf(stream, " := ");
-            OutputOperand(code->u.assign.op_right);
+            OutputOperand(code->u.assign.op_right, flag);
             break;
         case kBinOp:
-            OutputOperand(code->u.bin_op.op_result);
+            OutputOperand(code->u.bin_op.op_result, flag);
             fprintf(stream, " := ");
-            OutputOperand(code->u.bin_op.op_1);
+            OutputOperand(code->u.bin_op.op_1, flag);
             switch (code->u.bin_op.type) {
                 case kArithAdd: fprintf(stream, " + "); break;
                 case kArithSub: fprintf(stream, " - "); break;
                 case kArithMul: fprintf(stream, " * "); break;
                 case kArithDiv: fprintf(stream, " / "); break;
             }
-            OutputOperand(code->u.bin_op.op_2);
+            OutputOperand(code->u.bin_op.op_2, flag);
             break;
         case kAddressOf:
-            OutputOperand(code->u.address_of.op_left);
+            OutputOperand(code->u.address_of.op_left, flag);
             fprintf(stream, " := &");
-            OutputOperand(code->u.address_of.op_right);
+            OutputOperand(code->u.address_of.op_right, flag);
             break;
         case kDereference:
             if (code->u.dereference.type == kLeftDereference) fprintf(stream, "*");
-            OutputOperand(code->u.dereference.op_left);
+            OutputOperand(code->u.dereference.op_left, flag);
             fprintf(stream, " := ");
             if (code->u.dereference.type == kRightDereference) fprintf(stream, "*");
-            OutputOperand(code->u.dereference.op_right);
+            OutputOperand(code->u.dereference.op_right, flag);
             break;
         case kGoto: 
             fprintf(stream, "GOTO ");
-            OutputOperand(code->u.go_to.op);
+            OutputOperand(code->u.go_to.op, flag);
             break;
         case kConditionalJump:
             fprintf(stream, "IF ");
-            OutputOperand(code->u.conditional_jump.op_1);
+            OutputOperand(code->u.conditional_jump.op_1, flag);
             switch (code->u.conditional_jump.relop_type) {
                 case kGT: fprintf(stream, " > "); break;
                 case kGE: fprintf(stream, " >= "); break;
@@ -245,38 +260,38 @@ void OutputInterCode(InterCode code) {
                 case kEQ: fprintf(stream, " == "); break;
                 case kNE: fprintf(stream, " != "); break;
             }
-            OutputOperand(code->u.conditional_jump.op_2);
+            OutputOperand(code->u.conditional_jump.op_2, flag);
             fprintf(stream, " GOTO ");
-            OutputOperand(code->u.conditional_jump.op_label);
+            OutputOperand(code->u.conditional_jump.op_label, flag);
             break;
         case kReturn:
             fprintf(stream, "RETURN ");
-            OutputOperand(code->u.ret.op);
+            OutputOperand(code->u.ret.op, flag);
             break;
         case kDeclare:
             fprintf(stream, "DEC ");
             if (code->u.declare.op->kind == kVariable) {
-                OutputOperand(code->u.declare.op);
+                OutputOperand(code->u.declare.op, flag);
             } else {
-                OutputOperand(ToOperandVariable(code->u.declare.op));
+                OutputOperand(ToOperandVariable(code->u.declare.op), flag);
             }
             fprintf(stream, " %d", code->u.declare.size);
             break;
         case kArg:
             fprintf(stream, "ARG ");
-            OutputOperand(code->u.arg.op);
+            OutputOperand(code->u.arg.op, flag);
             break;
         case kCall:
-            OutputOperand(code->u.call.op_result);
+            OutputOperand(code->u.call.op_result, flag);
             fprintf(stream, " := CALL %s", code->u.call.func_name);
             break;
         case kParam:
             fprintf(stream, "PARAM ");
             //  either variable or variable pointer
             if (code->u.param.op->kind == kVariable) {
-                OutputOperand(code->u.param.op);
+                OutputOperand(code->u.param.op, flag);
             } else {
-                OutputOperand(ToOperandVariable(code->u.param.op));
+                OutputOperand(ToOperandVariable(code->u.param.op), flag);
             }
             break;
         case kIO:
@@ -284,7 +299,7 @@ void OutputInterCode(InterCode code) {
                 case kRead: fprintf(stream, "READ "); break;
                 case kWrite: fprintf(stream, "WRITE ");
             }
-            OutputOperand(code->u.io.op);
+            OutputOperand(code->u.io.op, flag);
             break;
         case kFunEnd:
             break;

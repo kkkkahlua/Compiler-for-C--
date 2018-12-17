@@ -36,9 +36,9 @@ void ProcessProgram(TreeNode* root) {
     CheckFunctionDefinition();
     if (!error_semantic) {
         optimize(iter->begin);
-        OutputInterCodes(iter->begin);
-        ConstructBasicBlock(iter->begin);
-        // TranslateToFinalCodes(iter->begin);
+        OutputInterCodes(iter->begin, 0);
+        // ConstructBasicBlock(iter->begin);
+        TranslateToFinalCodes(iter->begin);
     }
 }
 
