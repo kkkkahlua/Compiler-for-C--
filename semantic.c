@@ -1,5 +1,6 @@
 #include "semantic.h"
 
+#include "FinalCode.h"
 #include "InterCode.h"
 #include "optimize.h"
 #include "SymbolTable.h"
@@ -29,12 +30,15 @@ void CheckFunctionDefinition();
 void ProcessProgram(TreeNode* root) {
     AddIOToSymbolTable();
     iter = (InterCodeIterator)malloc(sizeof(InterCodeIterator_));
+    iter->begin = iter->end = NULL;
+    iter->next = NULL;
     ProcessExtDefList(root->son);
     CheckFunctionDefinition();
     if (!error_semantic) {
         optimize(iter->begin);
         OutputInterCodes(iter->begin);
-        TranslateToFinalCodes(iter->begin);
+        ConstructBasicBlock(iter->begin);
+        // TranslateToFinalCodes(iter->begin);
     }
 }
 

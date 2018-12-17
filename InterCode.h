@@ -80,12 +80,14 @@ typedef struct InterCode_ {
 
 typedef struct InterCodes_ {
     InterCode code;
+    int start_of_block;
     InterCodes prev, next;
 } InterCodes_;
 
 typedef struct InterCodeIterator_ {
     InterCodes begin;
     InterCodes end;
+    InterCodeIterator next;
 } InterCodeIterator_;
 
 void AddCodeToCodes(InterCode code);
@@ -123,6 +125,8 @@ Operand ToOperandVariable(Operand operand_pointer);
 Operand ToOperandVariableAddress(Operand operand);
 
 Operand ToOperandVariablePointer(Operand operand);
+
+void ConstructBasicBlock(InterCodes codes);
 
 void OutputInterCode(InterCode code);
 

@@ -16,6 +16,8 @@ void TranslateToFinalCode(InterCode code);
 void TranslateToFinalCodes(InterCodes codes) {
     InitializeReg();
 
+    ConstructBasicBlock(codes);
+
     while (1) {
         if (!codes) return;
         TranslateToFinalCode(codes->code);
