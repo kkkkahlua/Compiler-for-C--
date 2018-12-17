@@ -18,9 +18,8 @@ extern int line_no;
 extern InterCodeIterator iter;
 
 void RetrieveActiveInfo();
-void TranslateToFinalCode(InterCode code);
 
-void TranslateToFinalCodes(InterCodes codes) {
+void GenerateFinalCode(InterCodes codes) {
     variable_info = InitializeInfo(var_no+1);
     temporary_info = InitializeInfo(temp_no+1);
 
@@ -30,18 +29,7 @@ void TranslateToFinalCodes(InterCodes codes) {
 
     OutputBlockInfo();
 
-    // while (1) {
-    //     if (!codes) return;
-    //     TranslateToFinalCode(codes->code);
-    //     codes = codes->next;
-    // }
-}
-
-void TranslateToFinalCode(InterCode code) {
-    // switch (code->kind) {
-    //     case kLabel:
-    //         fprintf(stdout, code->u.label.op->u.)
-    // }
+    TranslateToFinalCodes();
 }
 
 Info InitializeInfo(int num) {
@@ -218,4 +206,20 @@ void OutputBlockInfo() {
         }
         puts("");
     }    
+}
+
+void TranslateToFinalCode(InterCode code) {
+    switch (code->kind) {
+    }
+}
+
+void TranslateToFinalCodes() {
+    for (InterCodeIterator iter = basic_block_head; iter; iter = iter->next) {
+        // translate blocks one by one
+        for (InterCodes codes = iter->begin; codes != iter->end; codes = codes->next) {
+            TranslateToFinalCode(codes->code);
+        }
+        // write all variables back into memory
+        puts("");
+    }
 }

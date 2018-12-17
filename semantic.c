@@ -38,7 +38,7 @@ void ProcessProgram(TreeNode* root) {
         optimize(iter->begin);
         OutputInterCodes(iter->begin, 0);
         // ConstructBasicBlock(iter->begin);
-        TranslateToFinalCodes(iter->begin);
+        GenerateFinalCode(iter->begin);
     }
 }
 
