@@ -34,6 +34,7 @@ void ProcessProgram(TreeNode* root) {
     if (!error_semantic) {
         optimize(iter->begin);
         OutputInterCodes(iter->begin);
+        TranslateToFinalCodes(iter->begin);
     }
 }
 

@@ -1,0 +1,118 @@
+FUNCTION inc :
+PARAM v3
+v4 := #0
+v5 := #0
+LABEL label1 :
+IF v4 < #2 GOTO label2
+GOTO label3
+LABEL label2 :
+t10 := #40 + v3
+t12 := #48 * v4
+t7 := t10 + t12
+t5 := #1 + *t7
+t19 := #40 + v3
+t21 := #48 * v4
+t16 := t19 + t21
+*t16 := t5
+t27 := #40 + v3
+t29 := #48 * v4
+t24 := t27 + t29
+WRITE *t24
+v4 := #1 + v4
+GOTO label1
+LABEL label3 :
+v4 := #0
+LABEL label4 :
+IF v4 < #10 GOTO label5
+GOTO label6
+LABEL label5 :
+t45 := #4 * v4
+t40 := v3 + t45
+*t40 := v4
+t52 := #40 + v3
+t54 := #48 * v4
+t49 := t52 + t54
+t55 := #4 + t49
+*t55 := #-1
+v4 := #1 + v4
+GOTO label4
+LABEL label6 :
+IF v5 < #10 GOTO label8
+GOTO label9
+LABEL label8 :
+v4 := #0
+LABEL label10 :
+IF v4 < #10 GOTO label11
+GOTO label12
+LABEL label11 :
+t66 := v4 + v5
+t74 := #40 + v3
+t76 := #48 * v5
+t71 := t74 + t76
+t77 := #8 + t71
+t79 := #4 * v4
+t69 := t77 + t79
+*t69 := t66
+v4 := #1 + v4
+GOTO label10
+LABEL label12 :
+v5 := #1 + v5
+GOTO label6
+LABEL label9 :
+RETURN v4
+
+FUNCTION sum :
+PARAM v6
+v7 := #0
+v8 := #0
+LABEL label13 :
+IF v8 < #10 GOTO label14
+GOTO label15
+LABEL label14 :
+t98 := #4 * v8
+t95 := v6 + t98
+v7 := v7 + *t95
+v8 := #1 + v8
+GOTO label13
+LABEL label15 :
+RETURN v7
+
+FUNCTION main :
+DEC v9 520
+v10 := #0
+LABEL label16 :
+IF v10 < #10 GOTO label17
+GOTO label18
+LABEL label17 :
+t114 := #4 * v10
+t109 := &v9 + t114
+*t109 := #1
+v10 := #1 + v10
+GOTO label16
+LABEL label18 :
+READ t119
+t124 := #40 + &v9
+*t124 := t119
+READ t128
+t133 := #40 + &v9
+t130 := #48 + t133
+*t130 := t128
+ARG &v9
+t138 := CALL inc
+v10 := #5
+LABEL label19 :
+IF v10 < #10 GOTO label20
+GOTO label21
+LABEL label20 :
+t148 := #40 + &v9
+t150 := #48 * v10
+t145 := t148 + t150
+t151 := #8 + t145
+ARG t151
+t143 := CALL sum
+WRITE t143
+v10 := #1 + v10
+GOTO label19
+LABEL label21 :
+RETURN #0
+
