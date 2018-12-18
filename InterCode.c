@@ -13,6 +13,41 @@ int temp_no = 0;
 int label_no = 0;
 int line_no = 0;
 
+int digits(int x) {
+    int ret = 0;
+    do {
+        x /= 10;
+        ret += 1;
+    } while (x);
+    return ret;
+}
+
+char* GetLabelName(Operand op) {
+    assert(op->kind == kLABEL);
+    int no = op->u.label_no;
+    char* ret = malloc(6 + digits(no));
+    sprintf(ret, "label%d", no);
+    return ret;
+}
+
+OperandType GetOperandType(Operand op) {
+    switch (op->kind) {
+        case kVariable:
+        case kTemporary:
+            return kValue;
+        case kVariablePointer:
+        case kTemporaryPointer:
+            return kPointer;
+        case kVariableAddress:
+        case kTemporaryAddress:
+            return kAddress;
+        case kConstantInt:
+            return kIntermediate;
+        default:
+            assert(0);
+    }
+}
+
 Operand NewOperandVariable() {
     if (in_struct) return NULL;
     Operand operand = (Operand)malloc(sizeof(Operand_));
@@ -193,12 +228,12 @@ void OutputOperand(Operand op, int flag) {
         }
     } else {
         switch (op->kind) {
-            case kVariable: fprintf(stream, "v%d(%d)", op->u.var_no, op->active_info.lineno); break;
-            case kVariablePointer: fprintf(stream, "*v%d(%d)", op->u.var_no, op->active_info.lineno); break;
-            case kVariableAddress: fprintf(stream, "&v%d(%d)", op->u.var_no, op->active_info.lineno); break;
-            case kTemporary: fprintf(stream, "t%d(%d)", op->u.temp_no, op->active_info.lineno); break;
-            case kTemporaryAddress: fprintf(stream, "&t%d(%d)", op->u.temp_no, op->active_info.lineno); break;
-            case kTemporaryPointer: fprintf(stream, "*t%d(%d)", op->u.temp_no, op->active_info.lineno); break;
+            case kVariable: fprintf(stream, "v%d(%d)", op->u.var_no, op->active_lineno); break;
+            case kVariablePointer: fprintf(stream, "*v%d(%d)", op->u.var_no, op->active_lineno); break;
+            case kVariableAddress: fprintf(stream, "&v%d(%d)", op->u.var_no, op->active_lineno); break;
+            case kTemporary: fprintf(stream, "t%d(%d)", op->u.temp_no, op->active_lineno); break;
+            case kTemporaryAddress: fprintf(stream, "&t%d(%d)", op->u.temp_no, op->active_lineno); break;
+            case kTemporaryPointer: fprintf(stream, "*t%d(%d)", op->u.temp_no, op->active_lineno); break;
             case kLABEL: fprintf(stream, "label%d", op->u.label_no); break;
             case kConstantInt: fprintf(stream, "#%d", op->u.int_value); break;
             case kConstantFloat: fprintf(stream, "#%f", op->u.float_value); break;

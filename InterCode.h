@@ -23,10 +23,7 @@ typedef struct Operand_ {
         float float_value;
         int label_no;
     } u;
-    struct {
-        InterCodes code;
-        int lineno;
-    } active_info;
+    int active_lineno;
 } Operand_;
 
 typedef enum OperandType { kValue, kPointer, kAddress, kIntermediate } OperandType;
@@ -34,6 +31,10 @@ typedef enum OperandType { kValue, kPointer, kAddress, kIntermediate } OperandTy
 typedef enum BinOpType {
     kArithAdd, kArithSub, kArithMul, kArithDiv, 
 } BinOpType;
+
+typedef enum DereferenceType {
+    kLeftDereference, kRightDereference
+} DereferenceType;
 
 typedef struct InterCode_ {
     enum { 
@@ -65,7 +66,7 @@ typedef struct InterCode_ {
         struct { Operand op_right, op_left; } address_of;
         struct {
             Operand op_right, op_left; 
-            enum DereferenceType { kLeftDereference, kRightDereference } type;
+            DereferenceType type;
         } dereference;
         struct { Operand op; } go_to;
         struct {
@@ -98,6 +99,10 @@ typedef struct InterCodeIterator_ {
 } InterCodeIterator_;
 
 void AddCodeToCodes(InterCode code);
+
+char* GetLabelName(Operand op);
+
+OperandType GetOperandType(Operand op);
 
 Operand NewOperandConstantInt(int val);
 

@@ -5,16 +5,11 @@
 
 // TODO: 
 // 1. static variable
-typedef struct Info_* Info;
 typedef struct FinalCode_* FinalCode;
 
-typedef struct Info_ {
-    int reg_no[3];  // 0: basic; 1: pointer; 2: address
-    struct {
-        InterCodes code;
-        int lineno;
-    } active_info;
-} Info_;
+typedef struct FinalCodes_* FinalCodes;
+
+typedef enum LabelType { kLabelLabel, kLabelFunc } LabelType;
 
 typedef struct FinalCode_ {
     enum {
@@ -28,6 +23,7 @@ typedef struct FinalCode_ {
         kFinalSw,
         kFinalJ,
         kFinalJal,
+        kFinalJr,
         kFinalRet,
         kFinalJc
     } kind;
@@ -44,25 +40,39 @@ typedef struct FinalCode_ {
         struct { int reg_1, reg_2; } lw;
         struct { int reg_1, reg_2; } sw;
         struct { const char* name; } j;
-        struct { const char* name; int reg_no; } jal;
+        struct { const char* name; } jal;
         struct { int reg_no; } ret;
         struct {
             enum { kFinalEQ, kFinalNE, kFinalGT, kFinalLT, kFinalGE, kFinalLE } jc_type;
             int reg_1, reg_2;
+            const char* name;
         } jc;
     } u;
 } FinalCode_;
 
-void ConstructBasicBlock(InterCodes codes);
+typedef struct FinalCodes_ {
+    FinalCode code;
+    FinalCodes next;
+} FinalCodes_;
 
-void GenerateFinalCode(InterCodes codes);
+void AddFinalCodeToFinalCodes(FinalCode code);
 
-Info InitializeInfo(int num);
+FinalCode NewFinalCodeAddi(int reg_res, int reg_1, int intermediate);
+
+FinalCode NewFinalCodeBinop(BinOpType type, int reg_res, int reg_1, int reg_2);
+
+FinalCode NewFinalCodeJ(const char* name);
+
+FinalCode NewFinalCodeJal(const char* name);
+
+FinalCode NewFinalCodeJr();
+
+FinalCode NewFinalCodeLi(int reg_no, int intermediate);
 
 FinalCode NewFinalCodeLw(int reg_1, int reg_2);
 
-void OutputBlockInfo();
+FinalCode NewFinalCodeMove(int reg_1, int reg_2);
 
-void TranslateToFinalCodes();
+FinalCode NewFinalCodeSw(int reg_1, int reg_2);
 
 #endif
