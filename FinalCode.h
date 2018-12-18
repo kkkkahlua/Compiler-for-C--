@@ -24,7 +24,6 @@ typedef struct FinalCode_ {
         kFinalJ,
         kFinalJal,
         kFinalJr,
-        kFinalRet,
         kFinalJc
     } kind;
     union {
@@ -43,7 +42,7 @@ typedef struct FinalCode_ {
         struct { const char* name; } jal;
         struct { int reg_no; } ret;
         struct {
-            enum { kFinalEQ, kFinalNE, kFinalGT, kFinalLT, kFinalGE, kFinalLE } jc_type;
+            RelopType type;
             int reg_1, reg_2;
             const char* name;
         } jc;

@@ -5,7 +5,7 @@
 
 typedef struct Reg {
     const char* name;
-    enum {
+    enum RegStatus {
         kOccupyTemporary,
         kOccupyValue,
         kAvailable
@@ -13,9 +13,11 @@ typedef struct Reg {
     Operand op;
 } Reg;
 
-int AllocateReg(Operand op);
+int AllocateReg(Operand op, enum RegStatus status);
 
 void FreeReg(int idx);
+
+void FreeRegIfNoNeed(int idx);
 
 int GetReg(Operand op);
 

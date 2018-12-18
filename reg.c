@@ -68,33 +68,43 @@ int GetReg(Operand op) {
         return info->reg_no;
     }
 
-    info->reg_no = AllocateReg(op);
+    info->reg_no = AllocateReg(op, kOccupyValue);
     // TODO: lw op from memory to reg_no
 }
 
-int AllocateReg(Operand op) {
+int AllocateReg(Operand op, enum RegStatus status) {
     for (int i = 2; i < 26; ++i) {
-        if (regs[i].status == kAvailable) return i;
+        if (regs[i].status == kAvailable) {
+            regs[i].status = status;
+            regs[i].op = op;
+            return i;
+        }
     }
     int idx = -1;
     for (int i = 2; i < 26; ++i) {
-        if (idx == -1 || 
-            (regs[i].status != kOccupyTemporary &&
-            regs[i].op->active_info.lineno > regs[idx].op->active_info.lineno)) {
+        if (regs[i].status == kOccupyValue && 
+            (idx == -1 || regs[i].op->active_lineno > regs[idx].op->active_lineno)) {
             idx = i;
         }
     }
-    // TODO: 
-    // 1. store content in regs[idx] into memory or stack
+    // TODO: 1. store content in regs[idx] into memory or stack
+
     // 2. store op in regs[idx]
+    regs[idx].status = status;
+    regs[idx].op = op;
     return idx;
 }
 
 int GetRegForTemporary() {
-    return 0;
+    return AllocateReg(NULL, kOccupyTemporary);
 }
 
 void FreeReg(int idx) {
     regs[idx].status = kAvailable;
     regs[idx].op = NULL;
+}
+
+void FreeRegIfNoNeed(int idx) {
+    assert(regs[idx].status == kOccupyValue);
+    if (regs[idx].op->active_lineno == -1) FreeReg(idx);
 }

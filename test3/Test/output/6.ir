@@ -255,28 +255,4 @@ v11(102) := #0
 
 block
 LABEL label18 :
-IF v11(104) < #10 GOTO label19
-
-block
-GOTO label20
-
-block
-LABEL label19 :
-ARG v11(107)
-t116(108) := #40 * v11(112)
-t113(109) := &v10(115) + t116(-1)
-ARG t113(-1)
-t111(111) := CALL sum
-WRITE t111(-1)
-v11(115) := #1 + v11(115)
-GOTO label18
-
-block
-LABEL label20 :
-ARG #10
-ARG &v10(122)
-t121(119) := CALL total
-WRITE t121(-1)
-RETURN #0
-
-
+IF v11(104

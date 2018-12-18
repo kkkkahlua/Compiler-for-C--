@@ -1,6 +1,7 @@
 #include "semantic.h"
 
 #include "FinalCode.h"
+#include "generate.h"
 #include "InterCode.h"
 #include "optimize.h"
 #include "SymbolTable.h"
@@ -37,7 +38,6 @@ void ProcessProgram(TreeNode* root) {
     if (!error_semantic) {
         optimize(iter->begin);
         OutputInterCodes(iter->begin, 0);
-        // ConstructBasicBlock(iter->begin);
         GenerateFinalCode(iter->begin);
     }
 }

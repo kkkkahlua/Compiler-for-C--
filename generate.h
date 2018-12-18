@@ -12,6 +12,8 @@ typedef struct Info_ {
 
 void ConstructBasicBlock(InterCodes codes);
 
+void GenerateFinalCode(InterCodes codes);
+
 Info InitializeInfo(int num);
 
 void OutputBlockInfo();

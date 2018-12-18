@@ -30,7 +30,7 @@ void GenerateFinalCode(InterCodes codes) {
 
     OutputBlockInfo();
 
-    // TranslateToFinalCodes();
+    TranslateToFinalCodes();
 }
 
 Info InitializeInfo(int num) {
@@ -250,7 +250,7 @@ void OutputBlockInfo() {
     }    
 }
 
-void TranslateFinalAssign(InterCode inter_code) {
+void GenerateAssign(InterCode inter_code) {
     Operand op_left = inter_code->u.assign.op_left,
             op_right = inter_code->u.assign.op_right;
     OperandType type_left = GetOperandType(op_left),
@@ -259,14 +259,19 @@ void TranslateFinalAssign(InterCode inter_code) {
         if (type_right == kValue) {
             int reg_dst = GetReg(op_left);
             int reg_src = GetReg(op_right);
+            FreeRegIfNoNeed(reg_dst);
+            FreeRegIfNoNeed(reg_src);
             AddFinalCodeToFinalCodes(NewFinalCodeMove(reg_dst, reg_src));
         } else if (type_right == kPointer) {
             int reg_1 = GetReg(op_left);
             int reg_2 = GetReg(op_right);
+            FreeRegIfNoNeed(reg_1);
+            FreeRegIfNoNeed(reg_2);
             AddFinalCodeToFinalCodes(NewFinalCodeLw(reg_1, reg_2));
         } else if (type_right == kIntermediate) {
             int intermediate = op_right->u.int_value;
             int reg_no = GetReg(op_left);
+            FreeRegIfNoNeed(reg_no);
             AddFinalCodeToFinalCodes(NewFinalCodeLi(reg_no, intermediate));
         } else {
             assert(type_right == kAddress);
@@ -277,20 +282,26 @@ void TranslateFinalAssign(InterCode inter_code) {
         if (type_right == kValue) {
             int reg_1 = GetReg(op_right);
             int reg_2 = GetReg(op_left);
+            FreeRegIfNoNeed(reg_1);
+            FreeRegIfNoNeed(reg_2);
             AddFinalCodeToFinalCodes(NewFinalCodeSw(reg_1, reg_2));
         } else if (type_right == kPointer) {
             int reg_2 = GetReg(op_right);
             int reg_1 = GetRegForTemporary();
+            FreeRegIfNoNeed(reg_2);
             AddFinalCodeToFinalCodes(NewFinalCodeLw(reg_1, reg_2));
-            AddFinalCodeToFinalCodes(NewFinalCodeLw(reg_1, GetReg(op_left)));
+            int reg_0 = GetReg(op_left);
+            FreeRegIfNoNeed(reg_0);
             FreeReg(reg_1);
+            AddFinalCodeToFinalCodes(NewFinalCodeLw(reg_1, reg_0));
         } else if (type_right == kIntermediate) {
             int intermediate = op_right->u.int_value;
             int reg_no = GetRegForTemporary();
             AddFinalCodeToFinalCodes(NewFinalCodeLi(reg_no, intermediate));
             int reg_2 = GetReg(op_left);
-            AddFinalCodeToFinalCodes(NewFinalCodeSw(reg_no, reg_2));
+            FreeRegIfNoNeed(reg_2);
             FreeReg(reg_no);
+            AddFinalCodeToFinalCodes(NewFinalCodeSw(reg_no, reg_2));
         } else {
             assert(type_right == kAddress);
             // TODO: address
@@ -298,7 +309,7 @@ void TranslateFinalAssign(InterCode inter_code) {
     }
 }
 
-void TranslateFinalBinOp(InterCode inter_code) {
+void GenerateBinOp(InterCode inter_code) {
     Operand op_res = inter_code->u.bin_op.op_result,
             op_1 = inter_code->u.bin_op.op_1,
             op_2 = inter_code->u.bin_op.op_2;
@@ -319,14 +330,21 @@ void TranslateFinalBinOp(InterCode inter_code) {
                 int reg_1 = GetReg(op_1);
                 int reg_2 = GetReg(op_2);
                 int reg_res = GetReg(op_res);
+                FreeRegIfNoNeed(reg_1);
+                FreeRegIfNoNeed(reg_2);
+                FreeRegIfNoNeed(reg_res);
                 AddFinalCodeToFinalCodes(
                     NewFinalCodeBinop(op_type, reg_res, reg_1, reg_2));
             } else if (type_2 == kPointer) {
                 int reg_2 = GetReg(op_2);
                 int reg_0 = GetRegForTemporary();
+                FreeRegIfNoNeed(reg_2);
                 AddFinalCodeToFinalCodes(NewFinalCodeLw(reg_0, reg_2));
                 int reg_1 = GetReg(op_1);
                 int reg_res = GetReg(op_res);
+                FreeRegIfNoNeed(reg_1);
+                FreeRegIfNoNeed(reg_res);
+                FreeReg(reg_0);
                 AddFinalCodeToFinalCodes(
                     NewFinalCodeBinop(op_type, reg_res, reg_1, reg_0));
                 FreeReg(reg_0);
@@ -334,6 +352,8 @@ void TranslateFinalBinOp(InterCode inter_code) {
                 int intermediate = op_2->u.int_value;
                 int reg_1 = GetReg(op_1);
                 int reg_res = GetReg(op_res);
+                FreeRegIfNoNeed(reg_1);
+                FreeRegIfNoNeed(reg_res);
                 AddFinalCodeToFinalCodes(
                     NewFinalCodeAddi(reg_res, reg_1, intermediate));
             } else {
@@ -345,24 +365,29 @@ void TranslateFinalBinOp(InterCode inter_code) {
             if (type_2 == kPointer) {
                 int reg_1 = GetReg(op_1);
                 int reg_10 = GetRegForTemporary();
+                FreeRegIfNoNeed(reg_1);
                 AddFinalCodeToFinalCodes(NewFinalCodeLw(reg_10, reg_1));
                 int reg_2 = GetReg(op_2);
                 int reg_20 = GetRegForTemporary();
+                FreeRegIfNoNeed(reg_2);
                 AddFinalCodeToFinalCodes(NewFinalCodeLw(reg_20, reg_2));
                 int reg_res = GetReg(op_res);
-                AddFinalCodeToFinalCodes(
-                    NewFinalCodeBinop(op_type, reg_res, reg_10, reg_20));
                 FreeReg(reg_10);
                 FreeReg(reg_20);
+                FreeRegIfNoNeed(reg_res);
+                AddFinalCodeToFinalCodes(
+                    NewFinalCodeBinop(op_type, reg_res, reg_10, reg_20));
             } else {
                 assert(type_2 == kIntermediate);
                 int reg_1 = GetReg(op_1);
                 int reg_10 = GetRegForTemporary();
+                FreeRegIfNoNeed(reg_1);
                 AddFinalCodeToFinalCodes(NewFinalCodeLw(reg_10, reg_1));
                 int intermediate = op_2->u.int_value;
                 int reg_res = GetReg(op_res);
-                AddFinalCodeToFinalCodes(NewFinalCodeAddi(reg_res, reg_10, intermediate));
+                FreeRegIfNoNeed(reg_res);
                 FreeReg(reg_10);
+                AddFinalCodeToFinalCodes(NewFinalCodeAddi(reg_res, reg_10, intermediate));
             }
         } 
     } else {
@@ -373,32 +398,40 @@ void TranslateFinalBinOp(InterCode inter_code) {
                 int reg_1 = GetReg(op_1);
                 int reg_2 = GetReg(op_2);
                 int reg_0 = GetRegForTemporary();
+                FreeRegIfNoNeed(reg_1);
+                FreeRegIfNoNeed(reg_2);
                 AddFinalCodeToFinalCodes(
                     NewFinalCodeBinop(op_type, reg_0, reg_1, reg_2));
                 int reg_res = GetReg(op_res);
-                AddFinalCodeToFinalCodes(NewFinalCodeSw(reg_0, reg_res));
+                FreeRegIfNoNeed(reg_res);
                 FreeReg(reg_0);
+                AddFinalCodeToFinalCodes(NewFinalCodeSw(reg_0, reg_res));
             } else if (type_2 == kPointer) {
                 int reg_2 = GetReg(op_2);
                 int reg_0 = GetRegForTemporary();
+                FreeRegIfNoNeed(reg_2);
                 AddFinalCodeToFinalCodes(NewFinalCodeLw(reg_0, reg_2));
                 int reg_1 = GetReg(op_1);
                 int reg_temp = GetRegForTemporary();
+                FreeRegIfNoNeed(reg_1);
                 AddFinalCodeToFinalCodes(
                     NewFinalCodeBinop(op_type, reg_temp, reg_1, reg_0));
                 int reg_res = GetReg(op_res);
-                AddFinalCodeToFinalCodes(NewFinalCodeSw(reg_temp, reg_res));
-                FreeReg(reg_temp);
+                FreeRegIfNoNeed(reg_res);
                 FreeReg(reg_0);
+                FreeReg(reg_temp);
+                AddFinalCodeToFinalCodes(NewFinalCodeSw(reg_temp, reg_res));
             } else if (type_2 == kIntermediate) {
                 int intermediate = op_2->u.int_value;
                 int reg_1 = GetReg(op_1);
                 int reg_temp = GetRegForTemporary();
+                FreeRegIfNoNeed(reg_1);
                 AddFinalCodeToFinalCodes(
                     NewFinalCodeAddi(reg_temp, reg_1, intermediate));
                 int reg_res = GetReg(op_res);
-                AddFinalCodeToFinalCodes(NewFinalCodeSw(reg_temp, reg_res));
+                FreeRegIfNoNeed(reg_res);
                 FreeReg(reg_temp);
+                AddFinalCodeToFinalCodes(NewFinalCodeSw(reg_temp, reg_res));
             } else {
                 assert(type_2 == kAddress);
                 // TODO: address
@@ -408,55 +441,60 @@ void TranslateFinalBinOp(InterCode inter_code) {
             if (type_2 == kPointer) {
                 int reg_1 = GetReg(op_1);
                 int reg_10 = GetRegForTemporary();
+                FreeRegIfNoNeed(reg_1);
                 AddFinalCodeToFinalCodes(NewFinalCodeLw(reg_10, reg_1));
                 int reg_2 = GetReg(op_2);
                 int reg_20 = GetRegForTemporary();
+                FreeRegIfNoNeed(reg_2);
                 AddFinalCodeToFinalCodes(NewFinalCodeLw(reg_20, reg_2));
                 int reg_temp = GetRegForTemporary();
                 AddFinalCodeToFinalCodes(
                     NewFinalCodeBinop(op_type, reg_temp, reg_10, reg_20));
                 int reg_res = GetReg(op_res);
-                AddFinalCodeToFinalCodes(NewFinalCodeSw(reg_temp, reg_res));
+                FreeRegIfNoNeed(reg_res);
                 FreeReg(reg_temp);
                 FreeReg(reg_10);
                 FreeReg(reg_20);
+                AddFinalCodeToFinalCodes(NewFinalCodeSw(reg_temp, reg_res));
             } else {
                 assert(type_2 == kIntermediate);
                 int reg_1 = GetReg(op_1);
                 int reg_10 = GetRegForTemporary();
+                FreeRegIfNoNeed(reg_1);
                 AddFinalCodeToFinalCodes(NewFinalCodeLw(reg_10, reg_1));
                 int intermediate = op_2->u.int_value;
                 int reg_temp = GetRegForTemporary();
                 AddFinalCodeToFinalCodes(
                     NewFinalCodeAddi(reg_temp, reg_10, intermediate));
                 int reg_res = GetReg(op_res);
-                AddFinalCodeToFinalCodes(NewFinalCodeSw(reg_temp, reg_res));
+                FreeRegIfNoNeed(reg_res);
                 FreeReg(reg_temp);
                 FreeReg(reg_10);
+                AddFinalCodeToFinalCodes(NewFinalCodeSw(reg_temp, reg_res));
             }
         }         
     }
 }
 
-void TranslateFinalLabel(const char* name) {
+void GenerateLabel(const char* name) {
     FinalCode code = (FinalCode)malloc(sizeof(FinalCode_));
     code->kind = kFinalLabel;
     code->u.label.name = name;
     AddFinalCodeToFinalCodes(code);
 }
 
-void TranslateFinalJc(InterCode inter_code) {
+void GenerateJc(InterCode inter_code) {
     // TODO: currently only asuume both operands are value, needs check
     FinalCode code = (FinalCode)malloc(sizeof(FinalCode_));
     code->kind = kFinalJc;
-    code->u.jc.jc_type = inter_code->u.conditional_jump.relop_type;
+    code->u.jc.type = inter_code->u.conditional_jump.relop_type;
     code->u.jc.reg_1 = GetReg(inter_code->u.conditional_jump.op_1);
     code->u.jc.reg_2 = GetReg(inter_code->u.conditional_jump.op_2);
     code->u.jc.name = GetLabelName(inter_code->u.conditional_jump.op_label);
     AddFinalCodeToFinalCodes(code);
 }
 
-void TranslateFinalReturn(Operand op) {
+void GenerateReturn(Operand op) {
     OperandType type = GetOperandType(op);
     switch (type) {
         case kValue: {
@@ -481,7 +519,7 @@ void TranslateFinalReturn(Operand op) {
     AddFinalCodeToFinalCodes(NewFinalCodeJr());
 }
 
-void TranslateFinalCall(InterCode code) {
+void GenerateCall(InterCode code) {
     AddFinalCodeToFinalCodes(NewFinalCodeJal(code->u.call.func_name));
     OperandType type = GetOperandType(code->u.call.op_result);
     int reg_no = GetReg(code->u.call.op_result);
@@ -497,33 +535,35 @@ void TranslateFinalCall(InterCode code) {
     }
 }
 
-void TranslateFinalGoto(Operand op) {
+void GenerateGoto(Operand op) {
     AddFinalCodeToFinalCodes(NewFinalCodeJ(GetLabelName(op)));
 }
 
 void TranslateToFinalCode(InterCode code) {
+    puts("yes!");
+    OutputInterCode(code, 1);
     switch (code->kind) {
         case kLabel:
-            TranslateFinalLabel(GetLabelName(code->u.label.op));
+            GenerateLabel(GetLabelName(code->u.label.op));
             break;
         case kFunction:
-            TranslateFinalLabel(code->u.function.func_name);
+            GenerateLabel(code->u.function.func_name);
             break;
         case kAssign:
-            TranslateFinalAssign(code);
+            GenerateAssign(code);
             break;
         case kBinOp:
             // TODO: special case - div
-            TranslateFinalBinOp(code);
+            GenerateBinOp(code);
             break;
         case kGoto:
-            TranslateFinalGoto(code->u.go_to.op);
+            GenerateGoto(code->u.go_to.op);
             break;
         case kConditionalJump:
-            TranslateFinalJc(code);
+            GenerateJc(code);
             break;
         case kReturn:
-            TranslateFinalReturn(code->u.ret.op);
+            GenerateReturn(code->u.ret.op);
             break;
         case kDeclare:
             // TODO: allocate space in stack
@@ -532,7 +572,7 @@ void TranslateToFinalCode(InterCode code) {
             // TODO: function call, first 4 in register, then in stack
             break;
         case kCall:
-            TranslateFinalCall(code);
+            GenerateCall(code);
             break;
         case kParam:
             // TODO: function parameter declaration?
