@@ -257,20 +257,23 @@ void GenerateAssign(InterCode inter_code) {
             type_right = GetOperandType(op_right);
     if (type_left == kValue) {
         if (type_right == kValue) {
-            int reg_dst = GetReg(op_left);
+            int reg_dst = GetRegForDefinition(op_left);
             int reg_src = GetReg(op_right);
             FreeRegIfNoNeed(reg_dst);
             FreeRegIfNoNeed(reg_src);
             AddFinalCodeToFinalCodes(NewFinalCodeMove(reg_dst, reg_src));
         } else if (type_right == kPointer) {
-            int reg_1 = GetReg(op_left);
+            int reg_1 = GetRegForDefinition(op_left);
             int reg_2 = GetReg(op_right);
             FreeRegIfNoNeed(reg_1);
             FreeRegIfNoNeed(reg_2);
             AddFinalCodeToFinalCodes(NewFinalCodeLw(reg_1, reg_2));
         } else if (type_right == kIntermediate) {
+            puts("here");
             int intermediate = op_right->u.int_value;
-            int reg_no = GetReg(op_left);
+            printf("intermediate = %d\n", intermediate);
+            int reg_no = GetRegForDefinition(op_left);
+            printf("%d\n", reg_no);
             FreeRegIfNoNeed(reg_no);
             AddFinalCodeToFinalCodes(NewFinalCodeLi(reg_no, intermediate));
         } else {
@@ -281,7 +284,7 @@ void GenerateAssign(InterCode inter_code) {
         assert(type_left == kPointer);
         if (type_right == kValue) {
             int reg_1 = GetReg(op_right);
-            int reg_2 = GetReg(op_left);
+            int reg_2 = GetRegForDefinition(op_left);
             FreeRegIfNoNeed(reg_1);
             FreeRegIfNoNeed(reg_2);
             AddFinalCodeToFinalCodes(NewFinalCodeSw(reg_1, reg_2));
@@ -290,7 +293,7 @@ void GenerateAssign(InterCode inter_code) {
             int reg_1 = GetRegForTemporary();
             FreeRegIfNoNeed(reg_2);
             AddFinalCodeToFinalCodes(NewFinalCodeLw(reg_1, reg_2));
-            int reg_0 = GetReg(op_left);
+            int reg_0 = GetRegForDefinition(op_left);
             FreeRegIfNoNeed(reg_0);
             FreeReg(reg_1);
             AddFinalCodeToFinalCodes(NewFinalCodeLw(reg_1, reg_0));
@@ -298,7 +301,7 @@ void GenerateAssign(InterCode inter_code) {
             int intermediate = op_right->u.int_value;
             int reg_no = GetRegForTemporary();
             AddFinalCodeToFinalCodes(NewFinalCodeLi(reg_no, intermediate));
-            int reg_2 = GetReg(op_left);
+            int reg_2 = GetRegForDefinition(op_left);
             FreeRegIfNoNeed(reg_2);
             FreeReg(reg_no);
             AddFinalCodeToFinalCodes(NewFinalCodeSw(reg_no, reg_2));
@@ -329,7 +332,7 @@ void GenerateBinOp(InterCode inter_code) {
             if (type_2 == kValue) {
                 int reg_1 = GetReg(op_1);
                 int reg_2 = GetReg(op_2);
-                int reg_res = GetReg(op_res);
+                int reg_res = GetRegForDefinition(op_res);
                 FreeRegIfNoNeed(reg_1);
                 FreeRegIfNoNeed(reg_2);
                 FreeRegIfNoNeed(reg_res);
@@ -341,7 +344,7 @@ void GenerateBinOp(InterCode inter_code) {
                 FreeRegIfNoNeed(reg_2);
                 AddFinalCodeToFinalCodes(NewFinalCodeLw(reg_0, reg_2));
                 int reg_1 = GetReg(op_1);
-                int reg_res = GetReg(op_res);
+                int reg_res = GetRegForDefinition(op_res);
                 FreeRegIfNoNeed(reg_1);
                 FreeRegIfNoNeed(reg_res);
                 FreeReg(reg_0);
@@ -351,7 +354,7 @@ void GenerateBinOp(InterCode inter_code) {
             } else if (type_2 == kIntermediate) {
                 int intermediate = op_2->u.int_value;
                 int reg_1 = GetReg(op_1);
-                int reg_res = GetReg(op_res);
+                int reg_res = GetRegForDefinition(op_res);
                 FreeRegIfNoNeed(reg_1);
                 FreeRegIfNoNeed(reg_res);
                 AddFinalCodeToFinalCodes(
@@ -371,7 +374,7 @@ void GenerateBinOp(InterCode inter_code) {
                 int reg_20 = GetRegForTemporary();
                 FreeRegIfNoNeed(reg_2);
                 AddFinalCodeToFinalCodes(NewFinalCodeLw(reg_20, reg_2));
-                int reg_res = GetReg(op_res);
+                int reg_res = GetRegForDefinition(op_res);
                 FreeReg(reg_10);
                 FreeReg(reg_20);
                 FreeRegIfNoNeed(reg_res);
@@ -384,7 +387,7 @@ void GenerateBinOp(InterCode inter_code) {
                 FreeRegIfNoNeed(reg_1);
                 AddFinalCodeToFinalCodes(NewFinalCodeLw(reg_10, reg_1));
                 int intermediate = op_2->u.int_value;
-                int reg_res = GetReg(op_res);
+                int reg_res = GetRegForDefinition(op_res);
                 FreeRegIfNoNeed(reg_res);
                 FreeReg(reg_10);
                 AddFinalCodeToFinalCodes(NewFinalCodeAddi(reg_res, reg_10, intermediate));
@@ -402,7 +405,7 @@ void GenerateBinOp(InterCode inter_code) {
                 FreeRegIfNoNeed(reg_2);
                 AddFinalCodeToFinalCodes(
                     NewFinalCodeBinop(op_type, reg_0, reg_1, reg_2));
-                int reg_res = GetReg(op_res);
+                int reg_res = GetRegForDefinition(op_res);
                 FreeRegIfNoNeed(reg_res);
                 FreeReg(reg_0);
                 AddFinalCodeToFinalCodes(NewFinalCodeSw(reg_0, reg_res));
@@ -416,7 +419,7 @@ void GenerateBinOp(InterCode inter_code) {
                 FreeRegIfNoNeed(reg_1);
                 AddFinalCodeToFinalCodes(
                     NewFinalCodeBinop(op_type, reg_temp, reg_1, reg_0));
-                int reg_res = GetReg(op_res);
+                int reg_res = GetRegForDefinition(op_res);
                 FreeRegIfNoNeed(reg_res);
                 FreeReg(reg_0);
                 FreeReg(reg_temp);
@@ -428,7 +431,7 @@ void GenerateBinOp(InterCode inter_code) {
                 FreeRegIfNoNeed(reg_1);
                 AddFinalCodeToFinalCodes(
                     NewFinalCodeAddi(reg_temp, reg_1, intermediate));
-                int reg_res = GetReg(op_res);
+                int reg_res = GetRegForDefinition(op_res);
                 FreeRegIfNoNeed(reg_res);
                 FreeReg(reg_temp);
                 AddFinalCodeToFinalCodes(NewFinalCodeSw(reg_temp, reg_res));
@@ -450,7 +453,7 @@ void GenerateBinOp(InterCode inter_code) {
                 int reg_temp = GetRegForTemporary();
                 AddFinalCodeToFinalCodes(
                     NewFinalCodeBinop(op_type, reg_temp, reg_10, reg_20));
-                int reg_res = GetReg(op_res);
+                int reg_res = GetRegForDefinition(op_res);
                 FreeRegIfNoNeed(reg_res);
                 FreeReg(reg_temp);
                 FreeReg(reg_10);
@@ -466,7 +469,7 @@ void GenerateBinOp(InterCode inter_code) {
                 int reg_temp = GetRegForTemporary();
                 AddFinalCodeToFinalCodes(
                     NewFinalCodeAddi(reg_temp, reg_10, intermediate));
-                int reg_res = GetReg(op_res);
+                int reg_res = GetRegForDefinition(op_res);
                 FreeRegIfNoNeed(reg_res);
                 FreeReg(reg_temp);
                 FreeReg(reg_10);
@@ -484,7 +487,7 @@ void GenerateLabel(const char* name) {
 }
 
 void GenerateJc(InterCode inter_code) {
-    // TODO: currently only asuume both operands are value, needs check
+    // TODO: currently only assume both operands are value, needs check
     FinalCode code = (FinalCode)malloc(sizeof(FinalCode_));
     code->kind = kFinalJc;
     code->u.jc.type = inter_code->u.conditional_jump.relop_type;

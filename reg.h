@@ -21,6 +21,8 @@ void FreeRegIfNoNeed(int idx);
 
 int GetReg(Operand op);
 
+int GetRegForDefinition(Operand op);
+
 int GetRegForTemporary();
 
 #endif

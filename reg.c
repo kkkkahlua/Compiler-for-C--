@@ -99,6 +99,10 @@ int GetRegForTemporary() {
     return AllocateReg(NULL, kOccupyTemporary);
 }
 
+int GetRegForDefinition(Operand op) {
+    return AllocateReg(op, kOccupyValue);
+}
+
 void FreeReg(int idx) {
     regs[idx].status = kAvailable;
     regs[idx].op = NULL;
