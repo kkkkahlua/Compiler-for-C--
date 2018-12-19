@@ -126,12 +126,12 @@ void FreeRegForTemporary(int idx) {
 }
 
 void FreeRegForValue(Operand op) {
+    // OutputOperand(op, 1); puts("");
     Info info = GetInfoForValue(op);
     assert(info);
     int idx = info->reg_no;
     assert(regs[idx].status == kOccupyValue);
-
-    if (regs[idx].op->active_lineno == -1) {
+    if (op->active_lineno == -1) {
         FreeReg(info, idx);
     }
 }

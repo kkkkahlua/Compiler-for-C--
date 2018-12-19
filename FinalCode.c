@@ -12,6 +12,9 @@ extern FILE* stream;
 extern Reg regs[32];
 
 void OutputFinalCode(FinalCode code) {
+    if (code->kind != kFinalLabel) {
+        fprintf(stream, "  ");
+    }
     switch (code->kind) {
         case kFinalLabel:
             fprintf(stream, "%s:", code->u.label.name);
@@ -112,7 +115,7 @@ FinalCode NewFinalCodeSw(int reg_1, int reg_2) {
 }
 
 FinalCode NewFinalCodeBinop(BinOpType type, int reg_res, int reg_1, int reg_2) {
-    FinalCode code = (FinalCode)malloc(sizeof(FinalCode));
+    FinalCode code = (FinalCode)malloc(sizeof(FinalCode_));
     code->kind = kFinalBinop;
     code->u.binop.type = type;
     code->u.binop.reg_res = reg_res;
@@ -157,6 +160,16 @@ FinalCode NewFinalCodeJ(const char* name) {
     return code;
 }
 
+FinalCode NewFinalCodeJc(RelopType type, int reg_1, int reg_2, const char* name) {
+    FinalCode code = (FinalCode)malloc(sizeof(FinalCode_));
+    code->kind = kFinalJc;
+    code->u.jc.type = type;
+    code->u.jc.name = name;
+    code->u.jc.reg_1 = reg_1;
+    code->u.jc.reg_2 = reg_2;
+    return code;
+}
+
 FinalCode NewFinalCodeAddi(int reg_res, int reg_1, int intermediate) {
     FinalCode code = (FinalCode)malloc(sizeof(FinalCode_));
     code->kind = kFinalAddi;
@@ -164,4 +177,10 @@ FinalCode NewFinalCodeAddi(int reg_res, int reg_1, int intermediate) {
     code->u.addi.reg_1 = reg_1;
     code->u.addi.intermediate = intermediate;
     return code;
+}
+
+void OutputFinalCodes() {
+    for (FinalCodes it = final_codes_head; it; it = it->next) {
+        OutputFinalCode(it->code);
+    }
 }

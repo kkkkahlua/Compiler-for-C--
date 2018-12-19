@@ -64,6 +64,8 @@ FinalCode NewFinalCodeJ(const char* name);
 
 FinalCode NewFinalCodeJal(const char* name);
 
+FinalCode NewFinalCodeJc(RelopType type, int reg_1, int reg_2, const char* name);
+
 FinalCode NewFinalCodeJr();
 
 FinalCode NewFinalCodeLi(int reg_no, int intermediate);
@@ -73,5 +75,7 @@ FinalCode NewFinalCodeLw(int reg_1, int reg_2);
 FinalCode NewFinalCodeMove(int reg_1, int reg_2);
 
 FinalCode NewFinalCodeSw(int reg_1, int reg_2);
+
+void OutputFinalCodes();
 
 #endif

@@ -34,6 +34,8 @@ void GenerateFinalCode(InterCodes codes) {
     OutputBlockInfo();
 
     TranslateToFinalCodes();
+
+    OutputFinalCodes();
 }
 
 Info InitializeInfo(int num) {
@@ -343,7 +345,6 @@ void GenerateBinOp(InterCode inter_code) {
                 AddFinalCodeToFinalCodes(
                     NewFinalCodeBinop(op_type, reg_res, reg_1, reg_0));
             } else if (type_2 == kIntermediate) {
-                puts("here!");
                 int intermediate = op_2->u.int_value;
                 int reg_1 = GetReg(op_1);
                 if (op_type == kArithAdd) {
@@ -514,13 +515,23 @@ void GenerateLabel(const char* name) {
 
 void GenerateJc(InterCode inter_code) {
     // TODO: currently only assume both operands are value, needs check
-    FinalCode code = (FinalCode)malloc(sizeof(FinalCode_));
-    code->kind = kFinalJc;
-    code->u.jc.type = inter_code->u.conditional_jump.relop_type;
-    code->u.jc.reg_1 = GetReg(inter_code->u.conditional_jump.op_1);
-    code->u.jc.reg_2 = GetReg(inter_code->u.conditional_jump.op_2);
-    code->u.jc.name = GetLabelName(inter_code->u.conditional_jump.op_label);
-    AddFinalCodeToFinalCodes(code);
+    RelopType type = inter_code->u.conditional_jump.relop_type;
+    Operand op_1 = inter_code->u.conditional_jump.op_1;
+    Operand op_2 = inter_code->u.conditional_jump.op_2;
+    int reg_1 = GetReg(op_1);
+    const char* name = GetLabelName(inter_code->u.conditional_jump.op_label);
+    if (op_2->kind == kConstantInt) {
+        int intermediate = op_2->u.int_value;
+        int reg_temp = GetRegForTemporary();
+        AddFinalCodeToFinalCodes(NewFinalCodeLi(reg_temp, intermediate));
+        FreeRegForTemporary(reg_temp);
+        AddFinalCodeToFinalCodes(NewFinalCodeJc(type, reg_1, reg_temp, name));
+    } else {
+        int reg_2 = GetReg(op_2);
+        FreeRegForValue(op_2);
+        AddFinalCodeToFinalCodes(NewFinalCodeJc(type, reg_1, reg_2, name));
+    }
+    FreeRegForValue(op_1);
 }
 
 void GenerateReturn(Operand op) {
@@ -548,20 +559,36 @@ void GenerateReturn(Operand op) {
     AddFinalCodeToFinalCodes(NewFinalCodeJr());
 }
 
-void GenerateCall(InterCode code) {
-    AddFinalCodeToFinalCodes(NewFinalCodeJal(code->u.call.func_name));
-    OperandType type = GetOperandType(code->u.call.op_result);
-    int reg_no = GetReg(code->u.call.op_result);
-    switch (type) {
-        case kValue:
-            AddFinalCodeToFinalCodes(NewFinalCodeMove(reg_no, 2));
-            break;
-        case kPointer:
-            AddFinalCodeToFinalCodes(NewFinalCodeSw(2, reg_no));
-            break;
-        default:
-            assert(0);
+void GenerateFuncCall(Operand op, const char* name) {
+    // addi $sp, $sp, -4
+    AddFinalCodeToFinalCodes(NewFinalCodeAddi(29, 29, -4));
+    // sw $ra, 0($sp)
+    AddFinalCodeToFinalCodes(NewFinalCodeSw(31, 29));
+    // jal func_name
+    AddFinalCodeToFinalCodes(NewFinalCodeJal(name));
+    // lw $ra, 0($sp)
+    AddFinalCodeToFinalCodes(NewFinalCodeLw(31, 29));
+    // addi $sp, $sp, 4
+    AddFinalCodeToFinalCodes(NewFinalCodeAddi(29, 29, 4));
+
+    if (op) {
+        OperandType type = GetOperandType(op);
+        int reg_no = GetReg(op);
+        switch (type) {
+            case kValue:
+                AddFinalCodeToFinalCodes(NewFinalCodeMove(reg_no, 2));
+                break;
+            case kPointer:
+                AddFinalCodeToFinalCodes(NewFinalCodeSw(2, reg_no));
+                break;
+            default:
+                assert(0);
+        }
     }
+}
+
+void GenerateCall(InterCode code) {
+    GenerateFuncCall(code->u.call.op_result, code->u.call.func_name);
 }
 
 void GenerateGoto(Operand op) {
@@ -576,8 +603,20 @@ void GenerateParam(Operand op) {
     }
 }
 
+void GenerateIO(InterCode code) {
+    Operand op = code->u.io.op;
+    if (code->u.io.type == kRead) {
+        GenerateFuncCall(op, "read");
+    } else {
+        int reg_no = GetReg(code->u.io.op);
+        // TODO: save register content to stack for later recovery
+        AddFinalCodeToFinalCodes(NewFinalCodeMove(/*a0*/4, reg_no));
+        GenerateFuncCall(NULL, "write");
+    }
+}
+
 void TranslateToFinalCode(InterCode code) {
-    OutputInterCode(code, 1);
+    // OutputInterCode(code, 1);
     switch (code->kind) {
         case kLabel:
             GenerateLabel(GetLabelName(code->u.label.op));
@@ -616,6 +655,7 @@ void TranslateToFinalCode(InterCode code) {
             break;
         case kIO:
             // TODO: special case: read & write
+            GenerateIO(code);
             break;
         case kFunEnd:
             param_no = 0;
