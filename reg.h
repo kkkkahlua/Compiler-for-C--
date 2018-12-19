@@ -2,27 +2,30 @@
 #define __REG_H_INCLUDED_
 
 #include "InterCode.h"
+#include "generate.h"
+
+typedef enum RegStatus { kOccupyTemporary, kOccupyValue, kAvailable } RegStatus;
 
 typedef struct Reg {
     const char* name;
-    enum RegStatus {
-        kOccupyTemporary,
-        kOccupyValue,
-        kAvailable
-    } status;
+    RegStatus status;
     Operand op;
 } Reg;
 
-int AllocateReg(Operand op, enum RegStatus status);
+int AllocateReg(Info info, Operand op, RegStatus status);
 
-void FreeReg(int idx);
+void FillInReg(Info info, int idx, Operand op, RegStatus status);
 
-void FreeRegIfNoNeed(int idx);
+void FreeRegForTemporary(int idx);
+
+void FreeRegForValue(Operand op);
 
 int GetReg(Operand op);
 
 int GetRegForDefinition(Operand op);
 
 int GetRegForTemporary();
+
+void SetReg(int idx, Operand op);
 
 #endif

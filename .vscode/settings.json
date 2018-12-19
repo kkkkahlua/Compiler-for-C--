@@ -2,6 +2,7 @@
     "C_Cpp.dimInactiveRegions": false,
     "C_Cpp.errorSquiggles": "Enabled",
     "files.associations": {
-        "finalcode.h": "c"
+        "finalcode.h": "c",
+        "generate.h": "c"
     }
 }

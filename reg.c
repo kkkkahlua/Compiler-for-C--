@@ -1,7 +1,5 @@
 #include "reg.h"
 
-#include "generate.h"
-
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,7 +44,7 @@ Reg regs[32] = {
     {"$ra", kAvailable, NULL},
 };
 
-int GetReg(Operand op) {
+Info GetInfoForValue(Operand op) {
     Info info;
     switch (op->kind) {
         case kVariable:
@@ -62,26 +60,39 @@ int GetReg(Operand op) {
         default:
             assert(0);
     }
+    return info;
+}
+
+int GetReg(Operand op) {
+    Info info = GetInfoForValue(op);
+
+    // OutputOperand(op, 1);
+    // printf(" %d\n", info->reg_no);
 
     if (info->reg_no != -1) {
         // already in some register
         return info->reg_no;
     }
 
-    info->reg_no = AllocateReg(op, kOccupyValue);
+    int reg_no = AllocateReg(info, op, kOccupyValue);
+
     // TODO: lw op from memory to reg_no
+
+    return info->reg_no;
 }
 
-int AllocateReg(Operand op, enum RegStatus status) {
-    for (int i = 2; i < 26; ++i) {
+int AllocateReg(Info info, Operand op, RegStatus status) {
+    for (int i = 8; i < 26; ++i) {
         if (regs[i].status == kAvailable) {
-            regs[i].status = status;
-            regs[i].op = op;
+            FillInReg(info, i, op, status);
+            // puts("in allocate:");
+            // OutputOperand(op, 1);
+            // printf(" %d\n", i);
             return i;
         }
     }
     int idx = -1;
-    for (int i = 2; i < 26; ++i) {
+    for (int i = 8; i < 26; ++i) {
         if (regs[i].status == kOccupyValue && 
             (idx == -1 || regs[i].op->active_lineno > regs[idx].op->active_lineno)) {
             idx = i;
@@ -90,25 +101,47 @@ int AllocateReg(Operand op, enum RegStatus status) {
     // TODO: 1. store content in regs[idx] into memory or stack
 
     // 2. store op in regs[idx]
-    regs[idx].status = status;
-    regs[idx].op = op;
+    FillInReg(info, idx, op, status);
+
     return idx;
 }
 
 int GetRegForTemporary() {
-    return AllocateReg(NULL, kOccupyTemporary);
+    return AllocateReg(NULL, NULL, kOccupyTemporary);
 }
 
 int GetRegForDefinition(Operand op) {
-    return AllocateReg(op, kOccupyValue);
+    return AllocateReg(GetInfoForValue(op), op, kOccupyValue);
 }
 
-void FreeReg(int idx) {
+void FreeReg(Info info, int idx) {
+    printf("----------------------free %d\n", idx);
+    if (info) info->reg_no = -1;
     regs[idx].status = kAvailable;
     regs[idx].op = NULL;
 }
 
-void FreeRegIfNoNeed(int idx) {
+void FreeRegForTemporary(int idx) {
+    FreeReg(NULL, idx);
+}
+
+void FreeRegForValue(Operand op) {
+    Info info = GetInfoForValue(op);
+    assert(info);
+    int idx = info->reg_no;
     assert(regs[idx].status == kOccupyValue);
-    if (regs[idx].op->active_lineno == -1) FreeReg(idx);
+
+    if (regs[idx].op->active_lineno == -1) {
+        FreeReg(info, idx);
+    }
+}
+
+void FillInReg(Info info, int idx, Operand op, RegStatus status) {
+    regs[idx].status = status;
+    regs[idx].op = op;
+    if (info) info->reg_no = idx;
+}
+
+void SetReg(int idx, Operand op) {
+    FillInReg(GetInfoForValue(op), idx, op, kOccupyValue);
 }

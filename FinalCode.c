@@ -25,7 +25,7 @@ void OutputFinalCode(FinalCode code) {
                                         regs[code->u.move.reg_src].name);
             break;
         case kFinalAddi:
-            fprintf(stream, "addi $s, %s, %d", regs[code->u.addi.reg_res].name,
+            fprintf(stream, "addi %s, %s, %d", regs[code->u.addi.reg_res].name,
                                             regs[code->u.addi.reg_1].name,
                                             code->u.addi.intermediate);
             break;
@@ -114,6 +114,7 @@ FinalCode NewFinalCodeSw(int reg_1, int reg_2) {
 FinalCode NewFinalCodeBinop(BinOpType type, int reg_res, int reg_1, int reg_2) {
     FinalCode code = (FinalCode)malloc(sizeof(FinalCode));
     code->kind = kFinalBinop;
+    code->u.binop.type = type;
     code->u.binop.reg_res = reg_res;
     code->u.binop.reg_1 = reg_1;
     code->u.binop.reg_2 = reg_2;
