@@ -3,6 +3,7 @@ _ret: .asciiz "\n"
 .globl main
 .text
 main:
+  move $fp, $sp
   li $t0, 3
   li $t1, 12
   mul $t2, $t1, $t1
@@ -19,9 +20,14 @@ main:
   sw $a0, 0($sp)
   move $a0, $t6
   addi $sp, $sp, -4
+  sw $fp, 0($sp)
+  addi $sp, $sp, -4
   sw $ra, 0($sp)
+  move $fp, $sp
   jal write
   lw $ra, 0($sp)
+  addi $sp, $sp, 4
+  lw $fp, 0($sp)
   addi $sp, $sp, 4
   lw $a0, 0($sp)
   addi $sp, $sp, 4
@@ -32,9 +38,14 @@ main:
   sw $a0, 0($sp)
   move $a0, $t4
   addi $sp, $sp, -4
+  sw $fp, 0($sp)
+  addi $sp, $sp, -4
   sw $ra, 0($sp)
+  move $fp, $sp
   jal write
   lw $ra, 0($sp)
+  addi $sp, $sp, 4
+  lw $fp, 0($sp)
   addi $sp, $sp, 4
   lw $a0, 0($sp)
   addi $sp, $sp, 4
@@ -48,9 +59,14 @@ main:
   sw $a0, 0($sp)
   move $a0, $t0
   addi $sp, $sp, -4
+  sw $fp, 0($sp)
+  addi $sp, $sp, -4
   sw $ra, 0($sp)
+  move $fp, $sp
   jal write
   lw $ra, 0($sp)
+  addi $sp, $sp, 4
+  lw $fp, 0($sp)
   addi $sp, $sp, 4
   lw $a0, 0($sp)
   addi $sp, $sp, 4

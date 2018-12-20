@@ -48,7 +48,8 @@ void OutputFinalCode(FinalCode code) {
             break;
         }
         case kFinalLw: 
-            fprintf(stream, "lw %s, 0(%s)", regs[code->u.lw.reg_1].name, 
+            fprintf(stream, "lw %s, %d(%s)", regs[code->u.lw.reg_1].name,
+                                            code->u.lw.offset, 
                                             regs[code->u.lw.reg_2].name);
             break;
         case kFinalSw:
@@ -101,7 +102,7 @@ void OutputFinalCode(FinalCode code) {
 }
 
 void AddFinalCodeToFinalCodes(FinalCode code) {
-    // OutputFinalCode(code);
+    OutputFinalCode(code);
     FinalCodes cur_code = (FinalCodes)malloc(sizeof(FinalCodes_));
     cur_code->code = code;
     cur_code->next = NULL;
@@ -127,11 +128,12 @@ FinalCode NewFinalCodeSyscall() {
     return code;
 }
 
-FinalCode NewFinalCodeLw(int reg_1, int reg_2) {
+FinalCode NewFinalCodeLw(int reg_1, int reg_2, int offset) {
     FinalCode code = (FinalCode)malloc(sizeof(FinalCode_));
     code->kind = kFinalLw;
     code->u.lw.reg_1 = reg_1;
     code->u.lw.reg_2 = reg_2;
+    code->u.lw.offset = offset;
     return code;
 }
 

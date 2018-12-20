@@ -42,7 +42,7 @@ typedef struct FinalCode_ {
         struct { int reg_1, reg_2; } divv;
         struct { int reg_no; } mflo;
         struct { int reg_des; const char* name; } la;
-        struct { int reg_1, reg_2; } lw;
+        struct { int reg_1, reg_2; int offset; } lw;
         struct { int reg_1, reg_2; } sw;
         struct { const char* name; } j;
         struct { const char* name; } jal;
@@ -84,7 +84,7 @@ FinalCode NewFinalCodeLabel(const char* name);
 
 FinalCode NewFinalCodeLi(int reg_no, int intermediate);
 
-FinalCode NewFinalCodeLw(int reg_1, int reg_2);
+FinalCode NewFinalCodeLw(int reg_1, int reg_2, int offset);
 
 FinalCode NewFinalCodeMflo(int reg_no);
 

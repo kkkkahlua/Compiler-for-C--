@@ -7,6 +7,7 @@ typedef struct Info_* Info;
 
 typedef struct Info_ {
     int reg_no;
+    int offset;
     int active_lineno;
 } Info_;
 

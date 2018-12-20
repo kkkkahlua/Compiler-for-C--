@@ -4,13 +4,19 @@ _ret: .asciiz "\n"
 .globl main
 .text
 main:
+  move $fp, $sp
   li $t0, 0
   li $t1, 1
   li $t2, 0
   addi $sp, $sp, -4
+  sw $fp, 0($sp)
+  addi $sp, $sp, -4
   sw $ra, 0($sp)
+  move $fp, $sp
   jal read
   lw $ra, 0($sp)
+  addi $sp, $sp, 4
+  lw $fp, 0($sp)
   addi $sp, $sp, 4
   move $t3, $v0
   move $t4, $t3
@@ -23,9 +29,14 @@ label2:
   sw $a0, 0($sp)
   move $a0, $t1
   addi $sp, $sp, -4
+  sw $fp, 0($sp)
+  addi $sp, $sp, -4
   sw $ra, 0($sp)
+  move $fp, $sp
   jal write
   lw $ra, 0($sp)
+  addi $sp, $sp, 4
+  lw $fp, 0($sp)
   addi $sp, $sp, 4
   lw $a0, 0($sp)
   addi $sp, $sp, 4
@@ -36,6 +47,7 @@ label2:
 label3:
   li $v0, 0
   jr $ra
+  addi $sp, $sp, 0
   
 read:
   li $v0, 4
@@ -53,3 +65,4 @@ write:
   syscall
   move $v0, $zero
   jr $ra
+  

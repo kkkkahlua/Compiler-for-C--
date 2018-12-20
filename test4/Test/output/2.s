@@ -17,9 +17,14 @@ label2:
   sw $a0, 0($sp)
   move $a0, $t1
   addi $sp, $sp, -4
+  sw $fp, 0($sp)
+  addi $sp, $sp, -4
   sw $ra, 0($sp)
+  move $fp, $sp
   jal fact
   lw $ra, 0($sp)
+  addi $sp, $sp, 4
+  lw $fp, 0($sp)
   addi $sp, $sp, 4
   lw $a0, 0($sp)
   addi $sp, $sp, 4
@@ -28,12 +33,19 @@ label2:
   move $v0, $t1
   jr $ra
 label3:
+  addi $sp, $sp, 0
   
 main:
+  move $fp, $sp
+  addi $sp, $sp, -4
+  sw $fp, 0($sp)
   addi $sp, $sp, -4
   sw $ra, 0($sp)
+  move $fp, $sp
   jal read
   lw $ra, 0($sp)
+  addi $sp, $sp, 4
+  lw $fp, 0($sp)
   addi $sp, $sp, 4
   move $t0, $v0
   move $t2, $t0
@@ -45,9 +57,14 @@ label4:
   sw $a0, 0($sp)
   move $a0, $t2
   addi $sp, $sp, -4
+  sw $fp, 0($sp)
+  addi $sp, $sp, -4
   sw $ra, 0($sp)
+  move $fp, $sp
   jal fact
   lw $ra, 0($sp)
+  addi $sp, $sp, 4
+  lw $fp, 0($sp)
   addi $sp, $sp, 4
   lw $a0, 0($sp)
   addi $sp, $sp, 4
@@ -60,14 +77,20 @@ label6:
   sw $a0, 0($sp)
   move $a0, $t0
   addi $sp, $sp, -4
+  sw $fp, 0($sp)
+  addi $sp, $sp, -4
   sw $ra, 0($sp)
+  move $fp, $sp
   jal write
   lw $ra, 0($sp)
+  addi $sp, $sp, 4
+  lw $fp, 0($sp)
   addi $sp, $sp, 4
   lw $a0, 0($sp)
   addi $sp, $sp, 4
   li $v0, 0
   jr $ra
+  addi $sp, $sp, 0
   
 read:
   li $v0, 4
@@ -85,4 +108,3 @@ write:
   syscall
   move $v0, $zero
   jr $ra
-  
