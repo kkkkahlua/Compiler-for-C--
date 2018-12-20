@@ -10,6 +10,8 @@ typedef struct Info_ {
     int active_lineno;
 } Info_;
 
+void AppendIO();
+
 void ConstructBasicBlock(InterCodes codes);
 
 void GenerateFinalCode(InterCodes codes);

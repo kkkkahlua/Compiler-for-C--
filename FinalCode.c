@@ -81,12 +81,20 @@ void OutputFinalCode(FinalCode code) {
                                             code->u.jc.name);
             break;
         }
+        case kFinalFunEnd:
+            break;
+        case kFinalLa:
+            fprintf(stream, "la %s, %s", regs[code->u.la.reg_des].name, code->u.la.name);
+            break;
+        case kFinalSyscall:
+            fprintf(stream, "syscall");
+            break;
     }
     fprintf(stream, "\n");
 }
 
 void AddFinalCodeToFinalCodes(FinalCode code) {
-    OutputFinalCode(code);
+    // OutputFinalCode(code);
     FinalCodes cur_code = (FinalCodes)malloc(sizeof(FinalCodes_));
     cur_code->code = code;
     cur_code->next = NULL;
@@ -98,12 +106,33 @@ void AddFinalCodeToFinalCodes(FinalCode code) {
     }
 }
 
+FinalCode NewFinalCodeLa(int reg_des, const char* name) {
+    FinalCode code = (FinalCode)malloc(sizeof(FinalCode_));
+    code->kind = kFinalLa;
+    code->u.la.reg_des = reg_des;
+    code->u.la.name = name;
+    return code;
+}
+
+FinalCode NewFinalCodeSyscall() {
+    FinalCode code = (FinalCode)malloc(sizeof(FinalCode_));
+    code->kind = kFinalSyscall;
+    return code;
+}
+
 FinalCode NewFinalCodeLw(int reg_1, int reg_2) {
     FinalCode code = (FinalCode)malloc(sizeof(FinalCode_));
     code->kind = kFinalLw;
     code->u.lw.reg_1 = reg_1;
     code->u.lw.reg_2 = reg_2;
     return code;
+}
+
+FinalCode NewFinalCodeLabel(const char* name) {
+    FinalCode code = (FinalCode)malloc(sizeof(FinalCode_));
+    code->kind = kFinalLabel;
+    code->u.label.name = name;
+    return code;    
 }
 
 FinalCode NewFinalCodeSw(int reg_1, int reg_2) {
@@ -176,6 +205,12 @@ FinalCode NewFinalCodeAddi(int reg_res, int reg_1, int intermediate) {
     code->u.addi.reg_res = reg_res;
     code->u.addi.reg_1 = reg_1;
     code->u.addi.intermediate = intermediate;
+    return code;
+}
+
+FinalCode NewFinalCodeFunEnd() {
+    FinalCode code = (FinalCode)malloc(sizeof(FinalCode_));
+    code->kind = kFinalFunEnd;
     return code;
 }
 

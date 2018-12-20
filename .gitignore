@@ -1,10 +1,4 @@
 .vscode/
-test3/Test/output/
-test3/TestA/output/
-test3/TestB/output/
-test3/TestC/output/
-test3/TestD/output/
-test3/TestE/output/
 *.o
 lex.yy.c
 parser
