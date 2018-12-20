@@ -10,6 +10,8 @@ FinalCodes final_codes_tail;
 
 extern FILE* stream;
 extern Reg regs[32];
+extern int code_read;
+extern int code_write;
 
 void OutputFinalCode(FinalCode code) {
     if (code->kind != kFinalLabel) {
@@ -44,9 +46,6 @@ void OutputFinalCode(FinalCode code) {
                                         regs[code->u.binop.reg_1].name,
                                         regs[code->u.binop.reg_2].name);
             break;
-        }
-        case kFinalDiv: {
-            // TODO:
         }
         case kFinalLw: 
             fprintf(stream, "lw %s, 0(%s)", regs[code->u.lw.reg_1].name, 
@@ -84,10 +83,18 @@ void OutputFinalCode(FinalCode code) {
         case kFinalFunEnd:
             break;
         case kFinalLa:
-            fprintf(stream, "la %s, %s", regs[code->u.la.reg_des].name, code->u.la.name);
+            fprintf(stream, "la %s, %s", regs[code->u.la.reg_des].name, 
+                                        code->u.la.name);
             break;
         case kFinalSyscall:
             fprintf(stream, "syscall");
+            break;
+        case kFinalMflo:
+            fprintf(stream, "mflo %s", regs[code->u.mflo.reg_no].name);
+            break;
+        case kFinalDiv:
+            fprintf(stream, "div %s %s", regs[code->u.divv.reg_1].name,
+                                        regs[code->u.divv.reg_2].name);
             break;
     }
     fprintf(stream, "\n");
@@ -140,6 +147,21 @@ FinalCode NewFinalCodeSw(int reg_1, int reg_2) {
     code->kind = kFinalSw;
     code->u.sw.reg_1 = reg_1;
     code->u.sw.reg_2 = reg_2;
+    return code;
+}
+
+FinalCode NewFinalCodeDiv(int reg_1, int reg_2) {
+    FinalCode code = (FinalCode)malloc(sizeof(FinalCode_));
+    code->kind = kFinalDiv;
+    code->u.divv.reg_1 = reg_1;
+    code->u.divv.reg_2 = reg_2;
+    return code;
+}
+
+FinalCode NewFinalCodeMflo(int reg_no) {
+    FinalCode code = (FinalCode)malloc(sizeof(FinalCode_));
+    code->kind = kFinalMflo;
+    code->u.mflo.reg_no = reg_no;
     return code;
 }
 
@@ -215,6 +237,18 @@ FinalCode NewFinalCodeFunEnd() {
 }
 
 void OutputFinalCodes() {
+    if (code_read || code_write) {
+        puts(".data");
+        if (code_read) {
+            puts("_prompt: .asciiz \"Enter an integer:\"");
+        }
+        if (code_write) {
+            puts("_ret: .asciiz \"\\n\"");
+        }
+        puts(".globl main");
+        puts(".text");
+    }
+
     for (FinalCodes it = final_codes_head; it; it = it->next) {
         OutputFinalCode(it->code);
     }

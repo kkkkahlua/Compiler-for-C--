@@ -19,11 +19,15 @@ label1:
   j label3
 label2:
   add $t3, $t0, $t1
+  addi $sp, $sp, -4
+  sw $a0, 0($sp)
   move $a0, $t1
   addi $sp, $sp, -4
   sw $ra, 0($sp)
   jal write
   lw $ra, 0($sp)
+  addi $sp, $sp, 4
+  lw $a0, 0($sp)
   addi $sp, $sp, 4
   move $t0, $t1
   move $t1, $t3
@@ -49,4 +53,3 @@ write:
   syscall
   move $v0, $zero
   jr $ra
-  

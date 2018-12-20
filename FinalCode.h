@@ -19,6 +19,7 @@ typedef struct FinalCode_ {
         kFinalAddi,
         kFinalBinop, // add sub mul
         kFinalDiv,
+        kFinalMflo,
         kFinalLa,
         kFinalLw,
         kFinalSw,
@@ -38,7 +39,8 @@ typedef struct FinalCode_ {
             BinOpType type;
             int reg_res, reg_1, reg_2;    
         } binop;
-        struct { int reg_1, reg_2, reg_3; } divv;
+        struct { int reg_1, reg_2; } divv;
+        struct { int reg_no; } mflo;
         struct { int reg_des; const char* name; } la;
         struct { int reg_1, reg_2; } lw;
         struct { int reg_1, reg_2; } sw;
@@ -64,6 +66,8 @@ FinalCode NewFinalCodeAddi(int reg_res, int reg_1, int intermediate);
 
 FinalCode NewFinalCodeBinop(BinOpType type, int reg_res, int reg_1, int reg_2);
 
+FinalCode NewFinalCodeDiv(int reg_1, int reg_2);
+
 FinalCode NewFinalCodeFunEnd();
 
 FinalCode NewFinalCodeJ(const char* name);
@@ -81,6 +85,8 @@ FinalCode NewFinalCodeLabel(const char* name);
 FinalCode NewFinalCodeLi(int reg_no, int intermediate);
 
 FinalCode NewFinalCodeLw(int reg_1, int reg_2);
+
+FinalCode NewFinalCodeMflo(int reg_no);
 
 FinalCode NewFinalCodeMove(int reg_1, int reg_2);
 

@@ -3,32 +3,6 @@ _prompt: .asciiz "Enter an integer:"
 _ret: .asciiz "\n"
 .globl main
 .text
-fact:
-  li $t0, 1
-  beq $a0, $t0, label1
-  j label2
-label1:
-  move $v0, $a0
-  jr $ra
-label2:
-  li $t0, 1
-  sub $t1, $a0, $t0
-  addi $sp, $sp, -4
-  sw $a0, 0($sp)
-  move $a0, $t1
-  addi $sp, $sp, -4
-  sw $ra, 0($sp)
-  jal fact
-  lw $ra, 0($sp)
-  addi $sp, $sp, 4
-  lw $a0, 0($sp)
-  addi $sp, $sp, 4
-  move $t0, $v0
-  mul $t1, $a0, $t0
-  move $v0, $t1
-  jr $ra
-label3:
-  
 main:
   addi $sp, $sp, -4
   sw $ra, 0($sp)
@@ -36,28 +10,14 @@ main:
   lw $ra, 0($sp)
   addi $sp, $sp, 4
   move $t0, $v0
-  move $t2, $t0
-  li $t0, 1
-  bgt $t2, $t0, label4
-  j label5
-label4:
+  move $t1, $t0
+  li $t0, 0
+  bgt $t1, $t0, label1
+  j label2
+label1:
   addi $sp, $sp, -4
   sw $a0, 0($sp)
-  move $a0, $t2
-  addi $sp, $sp, -4
-  sw $ra, 0($sp)
-  jal fact
-  lw $ra, 0($sp)
-  addi $sp, $sp, 4
-  lw $a0, 0($sp)
-  addi $sp, $sp, 4
-  move $t0, $v0
-  j label6
-label5:
   li $t0, 1
-label6:
-  addi $sp, $sp, -4
-  sw $a0, 0($sp)
   move $a0, $t0
   addi $sp, $sp, -4
   sw $ra, 0($sp)
@@ -66,6 +26,37 @@ label6:
   addi $sp, $sp, 4
   lw $a0, 0($sp)
   addi $sp, $sp, 4
+  j label6
+label2:
+  li $t0, 0
+  blt $t1, $t0, label4
+  j label5
+label4:
+  addi $sp, $sp, -4
+  sw $a0, 0($sp)
+  li $t0, -1
+  move $a0, $t0
+  addi $sp, $sp, -4
+  sw $ra, 0($sp)
+  jal write
+  lw $ra, 0($sp)
+  addi $sp, $sp, 4
+  lw $a0, 0($sp)
+  addi $sp, $sp, 4
+  j label6
+label5:
+  addi $sp, $sp, -4
+  sw $a0, 0($sp)
+  li $t0, 0
+  move $a0, $t0
+  addi $sp, $sp, -4
+  sw $ra, 0($sp)
+  jal write
+  lw $ra, 0($sp)
+  addi $sp, $sp, 4
+  lw $a0, 0($sp)
+  addi $sp, $sp, 4
+label6:
   li $v0, 0
   jr $ra
   
