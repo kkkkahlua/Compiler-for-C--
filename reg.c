@@ -111,6 +111,12 @@ int GetRegForTemporary() {
 }
 
 int GetRegForDefinition(Operand op) {
+    Info info = GetInfoForValue(op);
+
+    if (info->reg_no != -1) {
+        // already in some register
+        return info->reg_no;
+    }
     return AllocateReg(GetInfoForValue(op), op, kOccupyValue);
 }
 

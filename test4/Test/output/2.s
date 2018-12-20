@@ -13,11 +13,15 @@ label1:
 label2:
   li $t0, 1
   sub $t1, $a0, $t0
+  addi $sp, $sp, -4
+  sw $a0, 0($sp)
   move $a0, $t1
   addi $sp, $sp, -4
   sw $ra, 0($sp)
   jal fact
   lw $ra, 0($sp)
+  addi $sp, $sp, 4
+  lw $a0, 0($sp)
   addi $sp, $sp, 4
   move $t0, $v0
   mul $t1, $a0, $t0
