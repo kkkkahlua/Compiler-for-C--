@@ -33,7 +33,6 @@ label2:
   move $v0, $t1
   jr $ra
 label3:
-  addi $sp, $sp, 0
   
 main:
   move $fp, $sp
@@ -90,7 +89,6 @@ label6:
   addi $sp, $sp, 4
   li $v0, 0
   jr $ra
-  addi $sp, $sp, 0
   
 read:
   li $v0, 4
@@ -108,3 +106,4 @@ write:
   syscall
   move $v0, $zero
   jr $ra
+  

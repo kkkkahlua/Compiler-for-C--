@@ -47,7 +47,6 @@ label2:
 label3:
   li $v0, 0
   jr $ra
-  addi $sp, $sp, 0
   
 read:
   li $v0, 4

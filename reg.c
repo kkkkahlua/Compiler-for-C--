@@ -1,11 +1,15 @@
 #include "reg.h"
 
+#include "FinalCode.h"
+#include "generate.h"
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 extern Info variable_info;
 extern Info temporary_info;
+extern int frame_size;
 
 Reg regs[32] = {
     {"$zero", kAvailable, NULL},   //  0: constant 0
@@ -76,7 +80,8 @@ int GetReg(Operand op) {
 
     int reg_no = AllocateReg(info, op, kOccupyValue);
 
-    // TODO: lw op from memory to reg_no
+    // lw op from memory to reg_no
+    AddFinalCodeToFinalCodes(NewFinalCodeLw(reg_no, 30, info->offset));
 
     return info->reg_no;
 }
@@ -98,7 +103,13 @@ int AllocateReg(Info info, Operand op, RegStatus status) {
             idx = i;
         }
     }
-    // TODO: 1. store content in regs[idx] into memory or stack
+    // TODO: test
+    // 1. store content in regs[idx] on stack
+    AddFinalCodeToFinalCodes(NewFinalCodeAddi(29, 29, -4));
+    AddFinalCodeToFinalCodes(NewFinalCodeSw(idx, 29));
+    Info info_prev = GetOperandInfo(regs[idx].op);
+    info_prev->offset = (frame_size += 4);
+    info_prev->reg_no = -1;
 
     // 2. store op in regs[idx]
     FillInReg(info, idx, op, status);

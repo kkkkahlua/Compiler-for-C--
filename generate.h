@@ -17,6 +17,8 @@ void ConstructBasicBlock(InterCodes codes);
 
 void GenerateFinalCode(InterCodes codes);
 
+Info GetOperandInfo(Operand op);
+
 void GetStackAddress(int reg_no, Operand op);
 
 Info InitializeInfo(int num);

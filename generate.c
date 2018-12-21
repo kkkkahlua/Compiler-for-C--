@@ -672,7 +672,7 @@ void GenerateFuncCall(Operand op, const char* name) {
 
     if (op) {
         OperandType type = GetOperandType(op);
-        int reg_no = GetReg(op);
+        int reg_no = GetRegForDefinition(op);
         switch (type) {
             case kValue:
                 AddFinalCodeToFinalCodes(NewFinalCodeMove(reg_no, 2));
@@ -743,6 +743,13 @@ void GenerateArg(Operand op) {
         case kAddress: {
             int reg_temp = GetRegForTemporary();
             GetStackAddress(reg_temp, op);
+            FreeRegForTemporary(reg_temp);
+            PlaceInRegOrStack(reg_temp);
+            break;
+        }
+        case kIntermediate: {
+            int reg_temp = GetRegForTemporary();
+            AddFinalCodeToFinalCodes(NewFinalCodeLi(reg_temp, op->u.int_value));
             FreeRegForTemporary(reg_temp);
             PlaceInRegOrStack(reg_temp);
             break;
