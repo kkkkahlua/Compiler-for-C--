@@ -9,6 +9,8 @@
 
 extern int error_lex;
 extern int yylineno;
+
+char** output_files;
 int error_syntax = 0;
 int yyerror(const char* msg);
 FILE* stream;
@@ -158,7 +160,8 @@ int main(int argc, char** argv) {
 			return 1;
 		}
 		if (argc == 1) stream = stdout;
-		else stream = freopen(argv[2], "w", stdout);
+		else stream = fopen(argv[2], "w");
+		output_files = argv + 2;
 	}
 	yyparse();
 

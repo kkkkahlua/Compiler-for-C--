@@ -8,7 +8,9 @@
 FinalCodes final_codes_head;
 FinalCodes final_codes_tail;
 
+extern FILE* stream_ir;
 extern FILE* stream;
+extern char** output_files;
 extern Reg regs[32];
 extern int code_read;
 extern int code_write;
@@ -239,16 +241,18 @@ FinalCode NewFinalCodeFunEnd() {
 }
 
 void OutputFinalCodes() {
+    fclose(stream);
+    stream = fopen(output_files[1], "w");
     if (code_read || code_write) {
-        puts(".data");
+        fprintf(stream, ".data\n");
         if (code_read) {
-            puts("_prompt: .asciiz \"Enter an integer:\"");
+            fprintf(stream, "_prompt: .asciiz \"Enter an integer:\"\n");
         }
         if (code_write) {
-            puts("_ret: .asciiz \"\\n\"");
+            fprintf(stream, "_ret: .asciiz \"\\n\"\n");
         }
-        puts(".globl main");
-        puts(".text");
+        fprintf(stream, ".globl main\n");
+        fprintf(stream, ".text\n");
     }
 
     for (FinalCodes it = final_codes_head; it; it = it->next) {

@@ -1,4 +1,5 @@
 .vscode/
+test4/Test/output/*.ir
 *.o
 lex.yy.c
 parser

@@ -112,7 +112,6 @@ int GetRegForTemporary() {
 
 int GetRegForDefinition(Operand op) {
     Info info = GetInfoForValue(op);
-
     if (info->reg_no != -1) {
         // already in some register
         return info->reg_no;
@@ -121,7 +120,7 @@ int GetRegForDefinition(Operand op) {
 }
 
 void FreeReg(Info info, int idx) {
-    printf("----------------------free %d\n", idx);
+    // printf("----------------------free %d\n", idx);
     if (info) info->reg_no = -1;
     regs[idx].status = kAvailable;
     regs[idx].op = NULL;

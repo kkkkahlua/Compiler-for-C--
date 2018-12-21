@@ -3,8 +3,6 @@
 
 #include "InterCode.h"
 
-// TODO: 
-// 1. static variable
 typedef struct FinalCode_* FinalCode;
 
 typedef struct FinalCodes_* FinalCodes;

@@ -339,5 +339,5 @@ void OutputInterCode(InterCode code, int flag) {
         case kFunEnd:
             break;
     }
-    puts("");
+    fprintf(stream, "\n");
 }

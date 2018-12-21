@@ -14,12 +14,6 @@ extern InterCodeIterator iter;
 extern int temp_no;
 extern int in_fundef;
 
-//  TODO: 
-//  OPTIMIZATION:   
-//  1. arithmetic rules: multiply 1, add 0
-//  2. remove code between one RETURN and one LABEL/FUNC, 
-//     cause it will never be executed
-
 void TranslateAssign(Operand* dst_op, Operand src_op);
 
 void TranslateDereference(enum DereferenceType dereference_type,
