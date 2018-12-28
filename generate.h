@@ -4,12 +4,19 @@
 #include "InterCode.h"
 
 typedef struct Info_* Info;
+typedef struct FuncInfo_* FuncInfo;
 
 typedef struct Info_ {
     int reg_no;
     int offset;
     int active_lineno;
 } Info_;
+
+typedef struct FuncInfo_ {
+    const char* name;
+    int param_num;
+    FuncInfo next;
+} FuncInfo_;
 
 void AppendIO();
 

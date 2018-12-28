@@ -159,7 +159,7 @@ int main(int argc, char** argv) {
 			perror(argv[1]);
 			return 1;
 		}
-		if (argc == 1) stream = stdout;
+		if (argc == 2) stream = stdout;
 		else stream = fopen(argv[2], "w");
 		output_files = argv + 2;
 	}

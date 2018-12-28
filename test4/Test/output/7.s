@@ -120,7 +120,6 @@ label12:
 label13:
   li $v0, 0
   jr $ra
-  addi $sp, $sp, 20
   
 read:
   li $v0, 4
