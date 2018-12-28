@@ -10,6 +10,7 @@
 extern Info variable_info;
 extern Info temporary_info;
 extern int frame_size;
+extern FILE* stream;
 
 Reg regs[32] = {
     {"$zero", kAvailable, NULL},   //  0: constant 0
@@ -73,8 +74,10 @@ int GetReg(Operand op) {
     // OutputOperand(op, 1);
     // printf(" %d\n", info->reg_no);
 
+    // already in some register
     if (info->reg_no != -1) {
-        // already in some register
+        // update info
+        FillInReg(info, info->reg_no, op, kOccupyValue);
         return info->reg_no;
     }
 
@@ -98,9 +101,10 @@ int AllocateReg(Info info, Operand op, RegStatus status) {
     }
     int idx = -1;
     for (int i = 8; i < 26; ++i) {
-        if (regs[i].status == kOccupyValue && 
-            (idx == -1 || regs[i].op->active_lineno > regs[idx].op->active_lineno)) {
-            idx = i;
+        if (regs[i].status == kOccupyValue) {
+            if (idx == -1 || regs[i].op->active_lineno > regs[idx].op->active_lineno) {
+                idx = i;
+            }
         }
     }
     // TODO: test
@@ -108,7 +112,7 @@ int AllocateReg(Info info, Operand op, RegStatus status) {
     AddFinalCodeToFinalCodes(NewFinalCodeAddi(29, 29, -4));
     AddFinalCodeToFinalCodes(NewFinalCodeSw(idx, 29));
     Info info_prev = GetOperandInfo(regs[idx].op);
-    info_prev->offset = (frame_size += 4);
+    info_prev->offset = -(frame_size += 4);
     info_prev->reg_no = -1;
 
     // 2. store op in regs[idx]
@@ -146,6 +150,13 @@ void FreeRegForValue(Operand op) {
     Info info = GetInfoForValue(op);
     assert(info);
     int idx = info->reg_no;
+
+    if (idx == -1) {
+        // already be replaced out by allocating reg to definition
+        return;
+    }
+    
+    // fprintf(stream, "%d %d\n", idx, regs[idx].status);
     assert(regs[idx].status == kOccupyValue);
     if (op->active_lineno == -1) {
         FreeReg(info, idx);

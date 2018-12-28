@@ -207,7 +207,7 @@ void OutputInterCode(InterCode code, int flag);
 void OutputInterCodes(InterCodes codes, int flag) {
     while (1) {
         if (!codes) return;
-        printf("%d: ", codes->lineno);
+        fprintf(stream, "%d: ", codes->lineno);
         OutputInterCode(codes->code, flag);
         codes = codes->next;
     }
