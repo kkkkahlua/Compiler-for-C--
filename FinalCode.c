@@ -5,8 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-FinalCodes final_codes_head;
-FinalCodes final_codes_tail;
+FinalCodeIterator final_code_iter_head;
+FinalCodeIterator final_code_iter_tail;
 
 extern FILE* stream_ir;
 extern FILE* stream;
@@ -55,7 +55,7 @@ void OutputFinalCode(FinalCode code) {
                                             regs[code->u.lw.reg_2].name);
             break;
         case kFinalSw:
-            fprintf(stream, "sw %s, (%s)", regs[code->u.sw.reg_1].name, 
+            fprintf(stream, "sw %s, %d(%s)", regs[code->u.sw.reg_1].name, 
                                             code->u.sw.offset,
                                             regs[code->u.sw.reg_2].name);
             break;
@@ -109,11 +109,14 @@ void AddFinalCodeToFinalCodes(FinalCode code) {
     FinalCodes cur_code = (FinalCodes)malloc(sizeof(FinalCodes_));
     cur_code->code = code;
     cur_code->next = NULL;
-    if (!final_codes_head) {
-        final_codes_head = final_codes_tail = cur_code;
+    cur_code->prev = NULL;
+    FinalCodeIterator cur_iter = final_code_iter_tail;
+    if (!cur_iter->begin) {
+        cur_iter->begin = cur_iter->end = cur_code;
     } else {
-        final_codes_tail->next = cur_code;
-        final_codes_tail = cur_code;
+        cur_iter->end->next = cur_code;
+        cur_code->prev = cur_iter->end;
+        cur_iter->end = cur_code;
     }
 }
 
@@ -242,6 +245,13 @@ FinalCode NewFinalCodeFunEnd() {
     return code;
 }
 
+FinalCodeIterator NewFinalCodeIterator() {
+    FinalCodeIterator iter = (FinalCodeIterator)malloc(sizeof(FinalCodeIterator_));
+    iter->begin = iter->end = NULL;
+    iter->next = NULL;
+    return iter;
+}
+
 void OutputFinalCodes() {
     fclose(stream);
     stream = fopen(output_files[1], "w");
@@ -257,7 +267,29 @@ void OutputFinalCodes() {
         fprintf(stream, ".text\n");
     }
 
-    for (FinalCodes it = final_codes_head; it; it = it->next) {
-        OutputFinalCode(it->code);
+    for (FinalCodeIterator it = final_code_iter_head; it; it = it->next) {
+        for (FinalCodes codes = it->begin; ; codes = codes->next) {
+            OutputFinalCode(codes->code);
+            if (codes == it->end) break;
+        }
     }
+}
+
+void PostponeJump() {
+    FinalCodeIterator iter = final_code_iter_tail;
+    FinalCodes jump_codes = iter->end;
+    for (; ; jump_codes = jump_codes->prev) {
+        if (jump_codes->code->kind == kFinalJ
+            || jump_codes->code->kind == kFinalJc
+            || jump_codes->code->kind == kFinalJr) {
+            break;
+        }
+    }
+    if (jump_codes == iter->end) return;
+    jump_codes->prev->next = jump_codes->next;
+    jump_codes->next->prev = jump_codes->prev;
+    iter->end->next = jump_codes;
+    jump_codes->prev = iter->end;
+    jump_codes->next = NULL;
+    iter->end = jump_codes;
 }

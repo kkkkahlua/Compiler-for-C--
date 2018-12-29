@@ -7,6 +7,8 @@ typedef struct FinalCode_* FinalCode;
 
 typedef struct FinalCodes_* FinalCodes;
 
+typedef struct FinalCodeIterator_* FinalCodeIterator;
+
 typedef enum LabelType { kLabelLabel, kLabelFunc } LabelType;
 
 typedef struct FinalCode_ {
@@ -56,7 +58,14 @@ typedef struct FinalCode_ {
 typedef struct FinalCodes_ {
     FinalCode code;
     FinalCodes next;
+    FinalCodes prev;
 } FinalCodes_;
+
+typedef struct FinalCodeIterator_ {
+    FinalCodes begin;
+    FinalCodes end;
+    FinalCodeIterator next;
+} FinalCodeIterator_;
 
 void AddFinalCodeToFinalCodes(FinalCode code);
 
@@ -92,6 +101,10 @@ FinalCode NewFinalCodeSw(int reg_1, int reg_2, int offset);
 
 FinalCode NewFinalCodeSyscall();
 
+FinalCodeIterator NewFinalCodeIterator();
+
 void OutputFinalCodes();
+
+void PostponeJump();
 
 #endif

@@ -28,11 +28,13 @@ Info GetOperandInfo(Operand op);
 
 void GetStackAddress(int reg_no, Operand op);
 
-Info InitializeInfo(int num);
+void InitializeInfo(Info info, int num);
+
+Info NewInfo(int num);
 
 void OutputBlockInfo();
 
-void RetrieveActiveInfo();
+void RetrieveActiveInfo(InterCodeIterator block_iter);
 
 void TranslateToFinalCode(InterCode code);
 

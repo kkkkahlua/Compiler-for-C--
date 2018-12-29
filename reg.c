@@ -111,7 +111,7 @@ int AllocateReg(Info info, Operand op, RegStatus status) {
     // TODO: test
     // 1. store content in regs[idx] on stack
     AddFinalCodeToFinalCodes(NewFinalCodeAddi(29, 29, -4));
-    AddFinalCodeToFinalCodes(NewFinalCodeSw(idx, 29));
+    AddFinalCodeToFinalCodes(NewFinalCodeSw(idx, 29, 0));
     Info info_prev = GetOperandInfo(regs[idx].op);
     frame_size += 4;
     frame_offset += 4;

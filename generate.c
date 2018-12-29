@@ -17,7 +17,6 @@ Info temporary_info;
 InterCodeIterator basic_block_head;
 InterCodeIterator basic_block_tail;
 
-int param_no = 0;
 int param_dec_no = 0;
 int code_read = 0;
 int code_write = 0;
@@ -28,6 +27,9 @@ int clean = 0;
 FuncInfo func_info_head = NULL;
 FuncInfo func_info_tail = NULL;
 
+extern FinalCodeIterator final_code_iter_head;
+extern FinalCodeIterator final_code_iter_tail;
+
 extern int var_no;
 extern int temp_no;
 extern int line_no;
@@ -35,14 +37,14 @@ extern InterCodeIterator iter;
 extern void swap(Operand* op_1, Operand* op_2);
 
 void GenerateFinalCode(InterCodes codes) {
-    variable_info = InitializeInfo(var_no+1);
-    temporary_info = InitializeInfo(temp_no+1);
+    variable_info = NewInfo(var_no+1);
+    temporary_info = NewInfo(temp_no+1);
 
     ConstructBasicBlock(codes);
     
-    RetrieveActiveInfo();
+    // RetrieveActiveInfo();
 
-    OutputBlockInfo();
+    // OutputBlockInfo();
 
     TranslateToFinalCodes();
 
@@ -51,14 +53,16 @@ void GenerateFinalCode(InterCodes codes) {
     OutputFinalCodes();
 }
 
-Info InitializeInfo(int num) {
+Info NewInfo(int num) {
     Info info = (Info)malloc(sizeof(Info_) * num);
     for (int i = 0; i < num; ++i) {
-        info[i].reg_no = -1;
-        info[i].offset = -1;
-        info[i].active_lineno = -1;
+        info[i].reg_no = info[i].offset = -1;
     }
     return info;
+}
+
+void InitializeInfo(Info info, int num) {
+    for (int i = 0; i < num; ++i) info[i].reg_no = -1;
 }
 
 void MarkBegin(InterCodes codes) {
@@ -181,79 +185,77 @@ void UpdateActiveInfo(Operand op, int lineno, int active) {
     }
 }
 
-void RetrieveActiveInfo() {
-    for (InterCodeIterator block_iter = basic_block_head; block_iter; block_iter = block_iter->next) {
-        InitializeActiveInfo(variable_info, var_no+1,
-                            block_iter->end ? block_iter->end->lineno : line_no+1);
-        InitializeActiveInfo(temporary_info, temp_no+1, -1);
+void RetrieveActiveInfo(InterCodeIterator block_iter) {
+    InitializeActiveInfo(variable_info, var_no+1,
+                        block_iter->end ? block_iter->end->lineno : line_no+1);
+    InitializeActiveInfo(temporary_info, temp_no+1, -1);
 
-        InterCodes rbegin = block_iter->end ? block_iter->end->prev : iter->end,
-                    rend = block_iter->begin->prev;
-        for (InterCodes codes = rbegin; codes != rend; codes = codes->prev) {
-            InterCode code = codes->code;
-            switch (code->kind) {
-                case kLabel:
-                case kFunction:
-                case kGoto:
-                    break;
-                case kAssign:
-                    RenewOperand(&code->u.assign.op_left);
-                    RenewOperand(&code->u.assign.op_right);
-                    AssociateOperandWithCode(code->u.assign.op_left);
-                    AssociateOperandWithCode(code->u.assign.op_right);
-                    UpdateActiveInfo(code->u.assign.op_left, codes->lineno, 0);
-                    UpdateActiveInfo(code->u.assign.op_right, codes->lineno, 1);
-                    break;
-                case kBinOp:
-                    RenewOperand(&code->u.bin_op.op_result);
-                    RenewOperand(&code->u.bin_op.op_1);
-                    RenewOperand(&code->u.bin_op.op_2);
-                    AssociateOperandWithCode(code->u.bin_op.op_result);
-                    AssociateOperandWithCode(code->u.bin_op.op_1);
-                    AssociateOperandWithCode(code->u.bin_op.op_2);
-                    UpdateActiveInfo(code->u.bin_op.op_result, codes->lineno, 0);
-                    UpdateActiveInfo(code->u.bin_op.op_1, codes->lineno, 1);
-                    UpdateActiveInfo(code->u.bin_op.op_2, codes->lineno, 1);
-                    break;
-                case kConditionalJump:
-                    RenewOperand(&code->u.conditional_jump.op_1);
-                    RenewOperand(&code->u.conditional_jump.op_2);
-                    AssociateOperandWithCode(code->u.conditional_jump.op_1);
-                    AssociateOperandWithCode(code->u.conditional_jump.op_2);
-                    UpdateActiveInfo(code->u.conditional_jump.op_1, codes->lineno, 1);
-                    UpdateActiveInfo(code->u.conditional_jump.op_2, codes->lineno, 1);
-                    break;
-                case kReturn:
-                    RenewOperand(&code->u.ret.op);
-                    AssociateOperandWithCode(code->u.ret.op);
-                    UpdateActiveInfo(code->u.ret.op, codes->lineno, 1);
-                    break;
-                case kDeclare:
-                    RenewOperand(&code->u.declare.op);
-                    AssociateOperandWithCode(code->u.declare.op);
-                    UpdateActiveInfo(code->u.declare.op, codes->lineno, 0);
-                    break;
-                case kArg:
-                    RenewOperand(&code->u.arg.op);
-                    AssociateOperandWithCode(code->u.arg.op);
-                    UpdateActiveInfo(code->u.arg.op, codes->lineno, 1);
-                    break;
-                case kCall:
-                    RenewOperand(&code->u.call.op_result);
-                    AssociateOperandWithCode(code->u.call.op_result);
-                    UpdateActiveInfo(code->u.call.op_result, codes->lineno, 0);
-                    break;
-                case kParam:
-                    RenewOperand(&code->u.param.op);
-                    AssociateOperandWithCode(code->u.param.op);
-                    UpdateActiveInfo(code->u.param.op, codes->lineno, 0);
-                    break;
-                case kIO:
-                    RenewOperand(&code->u.io.op);
-                    AssociateOperandWithCode(code->u.io.op);
-                    UpdateActiveInfo(code->u.io.op, codes->lineno, code->u.io.type == kRead ? 0 : 1);
-                    break;
-            }
+    InterCodes rbegin = block_iter->end ? block_iter->end->prev : iter->end,
+                rend = block_iter->begin->prev;
+    for (InterCodes codes = rbegin; codes != rend; codes = codes->prev) {
+        InterCode code = codes->code;
+        switch (code->kind) {
+            case kLabel:
+            case kFunction:
+            case kGoto:
+                break;
+            case kAssign:
+                RenewOperand(&code->u.assign.op_left);
+                RenewOperand(&code->u.assign.op_right);
+                AssociateOperandWithCode(code->u.assign.op_left);
+                AssociateOperandWithCode(code->u.assign.op_right);
+                UpdateActiveInfo(code->u.assign.op_left, codes->lineno, 0);
+                UpdateActiveInfo(code->u.assign.op_right, codes->lineno, 1);
+                break;
+            case kBinOp:
+                RenewOperand(&code->u.bin_op.op_result);
+                RenewOperand(&code->u.bin_op.op_1);
+                RenewOperand(&code->u.bin_op.op_2);
+                AssociateOperandWithCode(code->u.bin_op.op_result);
+                AssociateOperandWithCode(code->u.bin_op.op_1);
+                AssociateOperandWithCode(code->u.bin_op.op_2);
+                UpdateActiveInfo(code->u.bin_op.op_result, codes->lineno, 0);
+                UpdateActiveInfo(code->u.bin_op.op_1, codes->lineno, 1);
+                UpdateActiveInfo(code->u.bin_op.op_2, codes->lineno, 1);
+                break;
+            case kConditionalJump:
+                RenewOperand(&code->u.conditional_jump.op_1);
+                RenewOperand(&code->u.conditional_jump.op_2);
+                AssociateOperandWithCode(code->u.conditional_jump.op_1);
+                AssociateOperandWithCode(code->u.conditional_jump.op_2);
+                UpdateActiveInfo(code->u.conditional_jump.op_1, codes->lineno, 1);
+                UpdateActiveInfo(code->u.conditional_jump.op_2, codes->lineno, 1);
+                break;
+            case kReturn:
+                RenewOperand(&code->u.ret.op);
+                AssociateOperandWithCode(code->u.ret.op);
+                UpdateActiveInfo(code->u.ret.op, codes->lineno, 1);
+                break;
+            case kDeclare:
+                RenewOperand(&code->u.declare.op);
+                AssociateOperandWithCode(code->u.declare.op);
+                UpdateActiveInfo(code->u.declare.op, codes->lineno, 0);
+                break;
+            case kArg:
+                RenewOperand(&code->u.arg.op);
+                AssociateOperandWithCode(code->u.arg.op);
+                UpdateActiveInfo(code->u.arg.op, codes->lineno, 1);
+                break;
+            case kCall:
+                RenewOperand(&code->u.call.op_result);
+                AssociateOperandWithCode(code->u.call.op_result);
+                UpdateActiveInfo(code->u.call.op_result, codes->lineno, 0);
+                break;
+            case kParam:
+                RenewOperand(&code->u.param.op);
+                AssociateOperandWithCode(code->u.param.op);
+                UpdateActiveInfo(code->u.param.op, codes->lineno, 0);
+                break;
+            case kIO:
+                RenewOperand(&code->u.io.op);
+                AssociateOperandWithCode(code->u.io.op);
+                UpdateActiveInfo(code->u.io.op, codes->lineno, code->u.io.type == kRead ? 0 : 1);
+                break;
         }
     }
 }
@@ -620,6 +622,7 @@ void SaveRegisterOnStack(int reg_no) {
 }
 
 void PopRegisterFromStack(int reg_no) {
+    frame_offset -= 4;
     AddFinalCodeToFinalCodes(NewFinalCodeLw(reg_no, 29, 0));
     AddFinalCodeToFinalCodes(NewFinalCodeAddi(29, 29, 4));
 }
@@ -686,7 +689,6 @@ void GenerateFuncCall(Operand op, const char* name) {
     // move $fp, $sp
     AddFinalCodeToFinalCodes(NewFinalCodeMove(30, 29));
     // caller save register
-    frame_offset = frame_size = clean = 0;
     if (strcmp(name, "read") && strcmp(name, "write")) {
         for (int reg_no = 8; reg_no <= 15; ++reg_no) {
             SaveRegisterOnStack(reg_no);
@@ -852,12 +854,12 @@ void GenerateDeclare(InterCode code) {
     Info info = GetOperandInfo(code->u.declare.op);
     frame_size += code->u.declare.size;
     frame_offset += code->u.declare.size;
-    printf("%d %d\n", frame_size, frame_offset);
     info->offset = -frame_offset;
     AddFinalCodeToFinalCodes(NewFinalCodeAddi(29, 29, -code->u.declare.size));
 }
 
 void GenerateFunction(InterCode code) {
+    frame_size = frame_offset = clean = 0;
     FuncInfo func = (FuncInfo)malloc(sizeof(FuncInfo_));
     func->name = code->u.function.func_name;
     func->param_num = 0;
@@ -925,10 +927,10 @@ void TranslateToFinalCode(InterCode code) {
 }
 
 void SaveVariablesOnStack() {
-    for (int i = 0; i < var_no; ++i) {
-        if (variable_info[i].reg_no == -1) continue;
+    for (int i = 1; i <= var_no; ++i) {
         Info info = variable_info + i;
-        if (variable_info[i].offset == -1) {
+        if (info->reg_no == -1) continue;
+        if (info->offset == -1) {
             AddFinalCodeToFinalCodes(NewFinalCodeAddi(29, 29, -4));
             AddFinalCodeToFinalCodes(NewFinalCodeSw(info->reg_no, 29, 0));
             frame_size += 4;
@@ -936,6 +938,7 @@ void SaveVariablesOnStack() {
             info->offset = -frame_offset;
             info->reg_no = -1;
         } else {
+            fprintf(stream, "%d %d\n", frame_offset, info->offset);
             AddFinalCodeToFinalCodes(NewFinalCodeSw(info->reg_no, 30, info->offset));
             info->reg_no = -1;
         }
@@ -943,22 +946,36 @@ void SaveVariablesOnStack() {
 }
 
 void TranslateToFinalCodes() {
-    for (InterCodeIterator iter = basic_block_head; iter; iter = iter->next) {
+    for (InterCodeIterator block_iter = basic_block_head; block_iter; 
+                                            block_iter = block_iter->next) {
         // translate blocks one by one
-        for (InterCodes codes = iter->begin; codes != iter->end; codes = codes->next) {
-            if (param_no == 0 && codes->code->kind == kParam) {
-                for (InterCodes param_code = codes; param_code != iter->end; param_code = param_code->next) {
-                    if (param_code->code->kind != kParam) break;
-                    ++param_no;
-                }
-                func_info_tail->param_num = param_no;
-            }
+        FinalCodeIterator final_iter = NewFinalCodeIterator();
+        if (!final_code_iter_head) {
+            final_code_iter_head = final_code_iter_tail = final_iter;
+        } else {
+            final_code_iter_tail->next = final_iter;
+            final_code_iter_tail = final_iter;
+        }
+
+        // initialize at the beginning of each basic block
+        InitializeInfo(variable_info, var_no+1);
+        InitializeInfo(temporary_info, temp_no+1);
+        RetrieveActiveInfo(block_iter);
+
+        for (InterCodes codes = block_iter->begin; codes != block_iter->end; 
+                                                            codes = codes->next) {
             TranslateToFinalCode(codes->code);
         }
-        // TODO: 
-        // 1. write variable value on stack "in proper code section"
-        // 2. examine block separation correctness
+        // TODO: allocate space for basic type variables on stack
         SaveVariablesOnStack();
+
+        InterCodes rbegin = block_iter->end ? block_iter->end->prev : iter->end;
+        switch (rbegin->code->kind) {
+            case kConditionalJump:
+            case kGoto:
+            case kReturn:
+                PostponeJump();
+        }
         fprintf(stream, "\n");
     }
 }
