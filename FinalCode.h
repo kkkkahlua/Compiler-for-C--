@@ -41,7 +41,7 @@ typedef struct FinalCode_ {
         struct { int reg_no; } mflo;
         struct { int reg_des; const char* name; } la;
         struct { int reg_1, reg_2; int offset; } lw;
-        struct { int reg_1, reg_2; } sw;
+        struct { int reg_1, reg_2; int offset; } sw;
         struct { const char* name; } j;
         struct { const char* name; } jal;
         struct { int reg_no; } ret;
@@ -88,7 +88,7 @@ FinalCode NewFinalCodeMflo(int reg_no);
 
 FinalCode NewFinalCodeMove(int reg_1, int reg_2);
 
-FinalCode NewFinalCodeSw(int reg_1, int reg_2);
+FinalCode NewFinalCodeSw(int reg_1, int reg_2, int offset);
 
 FinalCode NewFinalCodeSyscall();
 

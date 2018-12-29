@@ -10,6 +10,7 @@
 extern Info variable_info;
 extern Info temporary_info;
 extern int frame_size;
+extern int frame_offset;
 extern FILE* stream;
 
 Reg regs[32] = {
@@ -112,7 +113,10 @@ int AllocateReg(Info info, Operand op, RegStatus status) {
     AddFinalCodeToFinalCodes(NewFinalCodeAddi(29, 29, -4));
     AddFinalCodeToFinalCodes(NewFinalCodeSw(idx, 29));
     Info info_prev = GetOperandInfo(regs[idx].op);
-    info_prev->offset = -(frame_size += 4);
+    frame_size += 4;
+    frame_offset += 4;
+    printf("reg: frame_size = %d, frame_offset = %d\n", frame_size, frame_offset);
+    info_prev->offset = -frame_offset;
     info_prev->reg_no = -1;
 
     // 2. store op in regs[idx]

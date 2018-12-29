@@ -55,8 +55,9 @@ void OutputFinalCode(FinalCode code) {
                                             regs[code->u.lw.reg_2].name);
             break;
         case kFinalSw:
-            fprintf(stream, "sw %s, 0(%s)", regs[code->u.lw.reg_1].name, 
-                                            regs[code->u.lw.reg_2].name);
+            fprintf(stream, "sw %s, (%s)", regs[code->u.sw.reg_1].name, 
+                                            code->u.sw.offset,
+                                            regs[code->u.sw.reg_2].name);
             break;
         case kFinalJ:
             fprintf(stream, "j %s", code->u.j.name);
@@ -146,11 +147,12 @@ FinalCode NewFinalCodeLabel(const char* name) {
     return code;    
 }
 
-FinalCode NewFinalCodeSw(int reg_1, int reg_2) {
+FinalCode NewFinalCodeSw(int reg_1, int reg_2, int offset) {
     FinalCode code = (FinalCode)malloc(sizeof(FinalCode_));
     code->kind = kFinalSw;
     code->u.sw.reg_1 = reg_1;
     code->u.sw.reg_2 = reg_2;
+    code->u.sw.offset = offset;
     return code;
 }
 
