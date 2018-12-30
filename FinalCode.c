@@ -284,6 +284,7 @@ void PostponeJump() {
             || jump_codes->code->kind == kFinalJr) {
             break;
         }
+        if (jump_codes == iter->begin) return;
     }
     if (jump_codes == iter->end) return;
     jump_codes->prev->next = jump_codes->next;

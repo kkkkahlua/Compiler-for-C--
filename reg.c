@@ -103,19 +103,19 @@ int AllocateReg(Info info, Operand op, RegStatus status) {
     int idx = -1;
     for (int i = 8; i < 26; ++i) {
         if (regs[i].status == kOccupyValue) {
+            // fprintf(stream, "allocate = %d %d\n", i, regs[i].op->active_lineno);
             if (idx == -1 || regs[i].op->active_lineno > regs[idx].op->active_lineno) {
                 idx = i;
             }
         }
     }
-    // TODO: test
     // 1. store content in regs[idx] on stack
     AddFinalCodeToFinalCodes(NewFinalCodeAddi(29, 29, -4));
     AddFinalCodeToFinalCodes(NewFinalCodeSw(idx, 29, 0));
     Info info_prev = GetOperandInfo(regs[idx].op);
     frame_size += 4;
     frame_offset += 4;
-    printf("reg: frame_size = %d, frame_offset = %d\n", frame_size, frame_offset);
+    // fprintf(stream, "reg: frame_size = %d, frame_offset = %d\n", frame_size, frame_offset);
     info_prev->offset = -frame_offset;
     info_prev->reg_no = -1;
 
@@ -139,7 +139,7 @@ int GetRegForDefinition(Operand op) {
 }
 
 void FreeReg(Info info, int idx) {
-    // printf("----------------------free %d\n", idx);
+    // fprintf(stream, "----------------------free %d\n", idx);
     if (info) info->reg_no = -1;
     regs[idx].status = kAvailable;
     regs[idx].op = NULL;
@@ -161,6 +161,7 @@ void FreeRegForValue(Operand op) {
     }
     
     // fprintf(stream, "%d %d\n", idx, regs[idx].status);
+    // OutputOperand(op, 1); fprintf(stream, "\n");
     assert(regs[idx].status == kOccupyValue);
     if (op->active_lineno == -1) {
         FreeReg(info, idx);
@@ -175,4 +176,11 @@ void FillInReg(Info info, int idx, Operand op, RegStatus status) {
 
 void SetReg(int idx, Operand op) {
     FillInReg(GetInfoForValue(op), idx, op, kOccupyValue);
+}
+
+void InitializeRegs() {
+    for (int i = 0; i < 32; ++i) {
+        regs[i].op = NULL;
+        regs[i].status = kAvailable;
+    }
 }

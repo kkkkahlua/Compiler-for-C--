@@ -462,6 +462,9 @@ void ProcessDecList(TreeNode* dec_list, Type type, DefList* comp_st_def_list) {
                 );
             } else if (type_comp->kind == kSTRUCTURE) {
                 TranslateDeclare(op_dec, type_comp->u.structure.space);
+            } else {
+                // basic type variable
+                TranslateDeclare(op_dec, 4);
             }
 
             AddCompStDefToDefList(name, type_comp, comp_st_def_list);

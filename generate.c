@@ -921,7 +921,7 @@ void TranslateToFinalCode(InterCode code) {
             GenerateIO(code);
             break;
         case kFunEnd:
-            GenerateFunEnd();
+            // GenerateFunEnd();
             break;
     }
 }
@@ -938,7 +938,6 @@ void SaveVariablesOnStack() {
             info->offset = -frame_offset;
             info->reg_no = -1;
         } else {
-            fprintf(stream, "%d %d\n", frame_offset, info->offset);
             AddFinalCodeToFinalCodes(NewFinalCodeSw(info->reg_no, 30, info->offset));
             info->reg_no = -1;
         }
@@ -961,20 +960,23 @@ void TranslateToFinalCodes() {
         InitializeInfo(variable_info, var_no+1);
         InitializeInfo(temporary_info, temp_no+1);
         RetrieveActiveInfo(block_iter);
+        InitializeRegs();
 
         for (InterCodes codes = block_iter->begin; codes != block_iter->end; 
                                                             codes = codes->next) {
             TranslateToFinalCode(codes->code);
         }
-        // TODO: allocate space for basic type variables on stack
         SaveVariablesOnStack();
-
         InterCodes rbegin = block_iter->end ? block_iter->end->prev : iter->end;
         switch (rbegin->code->kind) {
+            case kFunEnd:
             case kConditionalJump:
             case kGoto:
             case kReturn:
                 PostponeJump();
+        }
+        if (rbegin->code->kind == kFunEnd) {
+            AddFinalCodeToFinalCodes(NewFinalCodeFunEnd());
         }
         fprintf(stream, "\n");
     }

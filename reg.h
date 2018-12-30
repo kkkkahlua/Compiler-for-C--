@@ -26,6 +26,8 @@ int GetRegForDefinition(Operand op);
 
 int GetRegForTemporary();
 
+void InitializeRegs();
+
 void SetReg(int idx, Operand op);
 
 #endif
