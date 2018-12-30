@@ -6,6 +6,7 @@ _ret: .asciiz "\n"
 main:
   move $fp, $sp
   addi $sp, $sp, -4
+  addi $sp, $sp, -4
   sw $fp, 0($sp)
   addi $sp, $sp, -4
   sw $ra, 0($sp)
@@ -18,6 +19,7 @@ main:
   move $t0, $v0
   move $t1, $t0
   li $t0, 0
+  sw $t1, -4($fp)
   bgt $t1, $t0, label1
   j label2
 label1:
@@ -39,8 +41,10 @@ label1:
   addi $sp, $sp, 4
   j label6
 label2:
-  li $t0, 0
-  blt $t1, $t0, label4
+  lw $t0, -4($fp)
+  li $t1, 0
+  sw $t0, -4($fp)
+  blt $t0, $t1, label4
   j label5
 label4:
   addi $sp, $sp, -4
@@ -79,6 +83,7 @@ label5:
   addi $sp, $sp, 4
 label6:
   li $v0, 0
+  addi $sp, $sp, 4
   jr $ra
   
 read:

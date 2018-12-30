@@ -6,6 +6,8 @@ _ret: .asciiz "\n"
 main:
   move $fp, $sp
   addi $sp, $sp, -4
+  addi $sp, $sp, -4
+  addi $sp, $sp, -4
   sw $fp, 0($sp)
   addi $sp, $sp, -4
   sw $ra, 0($sp)
@@ -30,58 +32,20 @@ main:
   move $t0, $v0
   move $t2, $t0
   li $t0, 100
+  sw $t1, -4($fp)
+  sw $t2, -8($fp)
   bgt $t1, $t0, label1
   j label2
 label1:
-  li $t0, 50
-  blt $t2, $t0, label3
+  lw $t0, -8($fp)
+  li $t1, 50
+  sw $t0, -8($fp)
+  blt $t0, $t1, label3
   j label4
 label3:
-  add $t0, $t2, $t1
-  addi $sp, $sp, -4
-  sw $a0, 0($sp)
-  move $a0, $t0
-  addi $sp, $sp, -4
-  sw $fp, 0($sp)
-  addi $sp, $sp, -4
-  sw $ra, 0($sp)
-  move $fp, $sp
-  jal write
-  lw $ra, 0($sp)
-  addi $sp, $sp, 4
-  lw $fp, 0($sp)
-  addi $sp, $sp, 4
-  lw $a0, 0($sp)
-  addi $sp, $sp, 4
-  j label5
-label4:
-  sub $t0, $t2, $t1
-  addi $sp, $sp, -4
-  sw $a0, 0($sp)
-  move $a0, $t0
-  addi $sp, $sp, -4
-  sw $fp, 0($sp)
-  addi $sp, $sp, -4
-  sw $ra, 0($sp)
-  move $fp, $sp
-  jal write
-  lw $ra, 0($sp)
-  addi $sp, $sp, 4
-  lw $fp, 0($sp)
-  addi $sp, $sp, 4
-  lw $a0, 0($sp)
-  addi $sp, $sp, 4
-label5:
-  j label17
-label2:
-  li $t0, 100
-  beq $t1, $t0, label7
-  j label8
-label7:
-  li $t0, 100
-  blt $t2, $t0, label9
-  j label10
-label9:
+  lw $t0, -8($fp)
+  lw $t1, -4($fp)
+  add $t2, $t0, $t1
   addi $sp, $sp, -4
   sw $a0, 0($sp)
   move $a0, $t2
@@ -97,13 +61,16 @@ label9:
   addi $sp, $sp, 4
   lw $a0, 0($sp)
   addi $sp, $sp, 4
-  j label11
-label10:
-  li $t0, 100
-  sub $t3, $t2, $t0
+  sw $t1, -4($fp)
+  sw $t0, -8($fp)
+  j label5
+label4:
+  lw $t0, -8($fp)
+  lw $t1, -4($fp)
+  sub $t2, $t0, $t1
   addi $sp, $sp, -4
   sw $a0, 0($sp)
-  move $a0, $t3
+  move $a0, $t2
   addi $sp, $sp, -4
   sw $fp, 0($sp)
   addi $sp, $sp, -4
@@ -116,21 +83,26 @@ label10:
   addi $sp, $sp, 4
   lw $a0, 0($sp)
   addi $sp, $sp, 4
-label11:
+  sw $t1, -4($fp)
+  sw $t0, -8($fp)
+label5:
   j label17
-label8:
-  li $t0, 100
-  blt $t1, $t0, label13
-  j label17
-label13:
-  add $t0, $t2, $t1
-  li $t3, 100
-  bgt $t0, $t3, label15
-  j label16
-label15:
-  addi $t0, $t1, 100
+label2:
+  lw $t0, -4($fp)
+  li $t1, 100
+  sw $t0, -4($fp)
+  beq $t0, $t1, label7
+  j label8
+label7:
+  lw $t0, -8($fp)
+  li $t1, 100
+  sw $t0, -8($fp)
+  blt $t0, $t1, label9
+  j label10
+label9:
   addi $sp, $sp, -4
   sw $a0, 0($sp)
+  lw $t0, -8($fp)
   move $a0, $t0
   addi $sp, $sp, -4
   sw $fp, 0($sp)
@@ -144,6 +116,64 @@ label15:
   addi $sp, $sp, 4
   lw $a0, 0($sp)
   addi $sp, $sp, 4
+  sw $t0, -8($fp)
+  j label11
+label10:
+  lw $t0, -8($fp)
+  li $t1, 100
+  sub $t2, $t0, $t1
+  addi $sp, $sp, -4
+  sw $a0, 0($sp)
+  move $a0, $t2
+  addi $sp, $sp, -4
+  sw $fp, 0($sp)
+  addi $sp, $sp, -4
+  sw $ra, 0($sp)
+  move $fp, $sp
+  jal write
+  lw $ra, 0($sp)
+  addi $sp, $sp, 4
+  lw $fp, 0($sp)
+  addi $sp, $sp, 4
+  lw $a0, 0($sp)
+  addi $sp, $sp, 4
+  sw $t0, -8($fp)
+label11:
+  j label17
+label8:
+  lw $t0, -4($fp)
+  li $t1, 100
+  sw $t0, -4($fp)
+  blt $t0, $t1, label13
+  j label17
+label13:
+  lw $t0, -8($fp)
+  lw $t1, -4($fp)
+  add $t2, $t0, $t1
+  li $t3, 100
+  sw $t1, -4($fp)
+  sw $t0, -8($fp)
+  bgt $t2, $t3, label15
+  j label16
+label15:
+  lw $t0, -4($fp)
+  addi $t1, $t0, 100
+  addi $sp, $sp, -4
+  sw $a0, 0($sp)
+  move $a0, $t1
+  addi $sp, $sp, -4
+  sw $fp, 0($sp)
+  addi $sp, $sp, -4
+  sw $ra, 0($sp)
+  move $fp, $sp
+  jal write
+  lw $ra, 0($sp)
+  addi $sp, $sp, 4
+  lw $fp, 0($sp)
+  addi $sp, $sp, 4
+  lw $a0, 0($sp)
+  addi $sp, $sp, 4
+  sw $t0, -4($fp)
   j label17
 label16:
   addi $sp, $sp, -4
@@ -163,10 +193,12 @@ label16:
   lw $a0, 0($sp)
   addi $sp, $sp, 4
 label17:
-  add $t0, $t1, $t2
+  lw $t0, -4($fp)
+  lw $t1, -8($fp)
+  add $t2, $t0, $t1
   addi $sp, $sp, -4
   sw $a0, 0($sp)
-  move $a0, $t0
+  move $a0, $t2
   addi $sp, $sp, -4
   sw $fp, 0($sp)
   addi $sp, $sp, -4
@@ -180,6 +212,9 @@ label17:
   lw $a0, 0($sp)
   addi $sp, $sp, 4
   li $v0, 0
+  addi $sp, $sp, 8
+  sw $t0, -4($fp)
+  sw $t1, -8($fp)
   jr $ra
   
 read:

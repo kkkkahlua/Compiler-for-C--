@@ -13,6 +13,7 @@ extern int layer;
 extern InterCodeIterator iter;
 extern int temp_no;
 extern int in_fundef;
+extern FILE* stream;
 
 void TranslateAssign(Operand* dst_op, Operand src_op);
 
@@ -130,6 +131,13 @@ void TranslateWrite(Operand* op_dst) {
 
 void TranslateAssignOrReplace(Operand* op_dst, Operand op_src) {
     if (!op_dst) return;
+    if ((*op_dst)->kind == kTemporary && (*op_dst)->u.temp_no == 39) {
+        fprintf(stream, "qaq");
+        OutputOperand(*op_dst, 0);
+        OutputOperand(op_src, 0);
+        fprintf(stream, "\n");
+        TranslateAssign(op_dst, op_src);
+    }
     if ((*op_dst)->kind == kVariable
         || (*op_dst)->kind == kTemporaryPointer
         || (*op_dst)->kind == kVariablePointer) {
@@ -278,7 +286,9 @@ Type TranslateCond(TreeNode* exp, Operand label_true, Operand label_false) {
         || (exp_1->bro->type != kRELOP 
             && !CheckSymbolName(exp_1->bro, "AND")
             && !CheckSymbolName(exp_1->bro, "OR"))) {
-        Operand op = NewOperandTemporary();
+        Operand op = NewOperandVariable();
+        TranslateDeclare(op, 4);
+        MoveDeclareForward();
         Type type = ProcessExp(exp, &op);
         TranslateConditionalJump(op, NewOperandConstantInt(0), label_true, kNE);
         TranslateGoto(label_false);
@@ -339,6 +349,8 @@ void TranslateLabel(Operand label) {
     code->u.label.op = label;
     AddCodeToCodes(code);
 }
+
+extern FILE* stream;
 
 void TranslateConditionalJump(Operand op_1, Operand op_2, Operand op_label, RelopType relop_type) {
     InterCode code = (InterCode)malloc(sizeof(InterCode_));

@@ -42,10 +42,6 @@ void GenerateFinalCode(InterCodes codes) {
 
     ConstructBasicBlock(codes);
     
-    // RetrieveActiveInfo();
-
-    // OutputBlockInfo();
-
     TranslateToFinalCodes();
 
     AppendIO();
@@ -587,8 +583,7 @@ void GenerateJc(InterCode inter_code) {
             AddFinalCodeToFinalCodes(NewFinalCodeJc(type, reg_1, reg_temp, name));
         }
         FreeRegForValue(op_1);
-    } else {
-        assert(type_1 == kPointer);
+    } else if (type_1 == kPointer) {
         int reg_1 = GetReg(op_1);
         int reg_10 = GetRegForTemporary();
         AddFinalCodeToFinalCodes(NewFinalCodeLw(reg_10, reg_1, 0));
@@ -612,6 +607,18 @@ void GenerateJc(InterCode inter_code) {
         }
         FreeRegForValue(op_1);
         FreeRegForTemporary(reg_10);
+    } else {
+        assert(type_1 == kIntermediate);
+        assert(type_2 == kIntermediate);
+        int int_1 = op_1->u.int_value;
+        int reg_temp_1 = GetRegForTemporary();
+        AddFinalCodeToFinalCodes(NewFinalCodeLi(reg_temp_1, int_1));
+        int int_2 = op_2->u.int_value;
+        int reg_temp_2 = GetRegForTemporary();
+        AddFinalCodeToFinalCodes(NewFinalCodeLi(reg_temp_2, int_2));
+        FreeRegForTemporary(reg_temp_1);
+        FreeRegForTemporary(reg_temp_2);
+        AddFinalCodeToFinalCodes(NewFinalCodeJc(type, reg_temp_1, reg_temp_2, name));
     }
 }
 
@@ -881,7 +888,6 @@ void GenerateFunction(InterCode code) {
 }
 
 void TranslateToFinalCode(InterCode code) {
-    OutputInterCode(code, 1);
     switch (code->kind) {
         case kLabel:
             GenerateLabel(GetLabelName(code->u.label.op));
@@ -978,7 +984,6 @@ void TranslateToFinalCodes() {
         if (rbegin->code->kind == kFunEnd) {
             AddFinalCodeToFinalCodes(NewFinalCodeFunEnd());
         }
-        fprintf(stream, "\n");
     }
 }
 

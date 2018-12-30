@@ -1,0 +1,14 @@
+int gcd(int a, int b) {
+    if (b == 0) return a;
+    return gcd(b, a - a/b*b);
+}
+
+int main() {
+    int a, b, c, d;
+    a = read();
+    b = read();
+    c = read();
+    d = read();
+    write(gcd(gcd(a, b), gcd(c,d)));
+    return 0;
+}

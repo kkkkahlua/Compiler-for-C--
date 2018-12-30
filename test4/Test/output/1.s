@@ -5,9 +5,13 @@ _ret: .asciiz "\n"
 .text
 main:
   move $fp, $sp
+  addi $sp, $sp, -4
   li $t0, 0
+  addi $sp, $sp, -4
   li $t1, 1
+  addi $sp, $sp, -4
   li $t2, 0
+  addi $sp, $sp, -4
   addi $sp, $sp, -4
   sw $fp, 0($sp)
   addi $sp, $sp, -4
@@ -20,11 +24,22 @@ main:
   addi $sp, $sp, 4
   move $t3, $v0
   move $t4, $t3
+  sw $t0, -4($fp)
+  sw $t1, -8($fp)
+  sw $t2, -12($fp)
+  sw $t4, -16($fp)
 label1:
-  blt $t2, $t4, label2
+  lw $t0, -12($fp)
+  lw $t1, -16($fp)
+  sw $t0, -12($fp)
+  sw $t1, -16($fp)
+  blt $t0, $t1, label2
   j label3
 label2:
-  add $t3, $t0, $t1
+  addi $sp, $sp, -4
+  lw $t0, -4($fp)
+  lw $t1, -8($fp)
+  add $t2, $t0, $t1
   addi $sp, $sp, -4
   sw $a0, 0($sp)
   move $a0, $t1
@@ -41,11 +56,17 @@ label2:
   lw $a0, 0($sp)
   addi $sp, $sp, 4
   move $t0, $t1
-  move $t1, $t3
-  addi $t2, $t2, 1
+  move $t1, $t2
+  lw $t3, -12($fp)
+  addi $t3, $t3, 1
+  sw $t0, -4($fp)
+  sw $t1, -8($fp)
+  sw $t3, -12($fp)
+  sw $t2, -20($fp)
   j label1
 label3:
   li $v0, 0
+  addi $sp, $sp, 20
   jr $ra
   
 read:

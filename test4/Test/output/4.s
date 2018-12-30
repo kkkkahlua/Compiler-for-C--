@@ -4,6 +4,13 @@ _ret: .asciiz "\n"
 .text
 main:
   move $fp, $sp
+  addi $sp, $sp, -4
+  addi $sp, $sp, -4
+  addi $sp, $sp, -4
+  addi $sp, $sp, -4
+  addi $sp, $sp, -4
+  addi $sp, $sp, -4
+  addi $sp, $sp, -4
   li $t0, 3
   li $t1, 12
   mul $t2, $t1, $t1
@@ -71,6 +78,13 @@ main:
   lw $a0, 0($sp)
   addi $sp, $sp, 4
   li $v0, 0
+  addi $sp, $sp, 28
+  sw $t1, -4($fp)
+  sw $t2, -8($fp)
+  sw $t6, -12($fp)
+  sw $t3, -20($fp)
+  sw $t4, -24($fp)
+  sw $t0, -28($fp)
   jr $ra
   
 write:

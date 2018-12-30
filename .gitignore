@@ -1,6 +1,9 @@
 .vscode/
 test4/Test/output/*.ir
 test4/TestA/output/*.ir
+test4/TestB/output/*.ir
+test4/TestC/output/*.ir
+test4/TestD/output/*.ir
 *.o
 lex.yy.c
 parser

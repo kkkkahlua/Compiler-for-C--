@@ -186,6 +186,23 @@ Operand NewOperandConstantFloat(float val) {
     return operand;
 }
 
+void MoveDeclareForward() {
+    InterCodes code_declare = iter->end;
+    iter->end = iter->end->prev;
+    iter->end->next = NULL;
+    for (InterCodes codes = iter->end->prev; ; codes = codes->prev) {
+        if (codes->code->kind == kDeclare) {
+            InterCodes ori_next = codes->next;
+            code_declare->next = ori_next;
+            ori_next->prev = code_declare;
+            codes->next = code_declare;
+            code_declare->prev = codes;
+            return;
+        }
+        if (codes == iter->begin) break;
+    }
+}
+
 void AddCodeToCodes(InterCode code) {
     // OutputInterCode(code);
     InterCodes cur_code = (InterCodes)malloc(sizeof(InterCodes_));
@@ -207,7 +224,7 @@ void OutputInterCode(InterCode code, int flag);
 void OutputInterCodes(InterCodes codes, int flag) {
     while (1) {
         if (!codes) return;
-        fprintf(stream, "%d: ", codes->lineno);
+        // fprintf(stream, "%d: ", codes->lineno);
         OutputInterCode(codes->code, flag);
         codes = codes->next;
     }

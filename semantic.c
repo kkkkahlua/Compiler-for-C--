@@ -37,7 +37,7 @@ void ProcessProgram(TreeNode* root) {
     CheckFunctionDefinition();
     if (!error_semantic) {
         optimize(iter->begin);
-        OutputInterCodes(iter->begin, 0);
+        // OutputInterCodes(iter->begin, 0);
         GenerateFinalCode(iter->begin);
     }
 }
@@ -167,10 +167,10 @@ int CheckLvalue(TreeNode* exp) {
 Type ProcessCond(TreeNode* exp, Operand* op_dst) {
     Operand label_true = NewOperandLabel(),
             label_false = NewOperandLabel();
-    TranslateAssignOrReplace(op_dst, NewOperandConstantInt(0));
+    TranslateAssign(op_dst, NewOperandConstantInt(0));
     Type type = TranslateCond(exp, label_true, label_false);
     TranslateLabel(label_true);
-    TranslateAssignOrReplace(op_dst, NewOperandConstantInt(1));
+    TranslateAssign(op_dst, NewOperandConstantInt(1));
     TranslateLabel(label_false);
     return type;    
 }

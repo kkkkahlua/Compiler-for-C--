@@ -11,8 +11,8 @@ while (left <= right) {
 index = (left + right) / 2;
 middle = x[index];
 if (middle == target) {return index;}
-if ((middle > x[left] && target >= x[left] && target < middle) ) {
-//|| (middle < x[left] && (target >= x[left] || target < middle))) {
+if ((middle > x[left] && target >= x[left] && target < middle)
+|| (middle < x[left] && (target >= x[left] || target < middle))) {
 right = index -1;
 } else {
 left = index + 1;

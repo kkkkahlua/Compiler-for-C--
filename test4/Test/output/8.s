@@ -20,6 +20,7 @@ swap:
   sw $s6, 0($sp)
   addi $sp, $sp, -4
   sw $s7, 0($sp)
+  addi $sp, $sp, -4
   lw $t1, 8($fp)
   move $t0, $t1
   lw $t2, 12($fp)
@@ -56,6 +57,7 @@ swap:
   lw $a0, 0($sp)
   addi $sp, $sp, 4
   move $v0, $t1
+  addi $sp, $sp, 4
   lw $s7, 0($sp)
   addi $sp, $sp, 4
   lw $s6, 0($sp)
@@ -72,15 +74,22 @@ swap:
   addi $sp, $sp, 4
   lw $s0, 0($sp)
   addi $sp, $sp, 4
+  sw $t1, 8($fp)
+  sw $t2, 12($fp)
+  sw $t0, -36($fp)
   jr $ra
   
 main:
   move $fp, $sp
   addi $sp, $sp, -20
-  li $t3, 0
+  addi $sp, $sp, -4
+  li $t0, 0
+  sw $t0, -24($fp)
 label1:
-  li $t4, 5
-  blt $t3, $t4, label2
+  lw $t0, -24($fp)
+  li $t1, 5
+  sw $t0, -24($fp)
+  blt $t0, $t1, label2
   j label3
 label2:
   addi $sp, $sp, -4
@@ -93,32 +102,35 @@ label2:
   addi $sp, $sp, 4
   lw $fp, 0($sp)
   addi $sp, $sp, 4
-  move $t4, $v0
-  li $t5, 4
-  mul $t6, $t3, $t5
-  addi $t5, $fp, -20
-  add $t7, $t6, $t5
-  sw $t4, 0($t7)
-  li $t4, 0
-  bgt $t3, $t4, label4
+  move $t0, $v0
+  lw $t1, -24($fp)
+  li $t2, 4
+  mul $t3, $t1, $t2
+  addi $t2, $fp, -20
+  add $t4, $t3, $t2
+  sw $t0, 0($t4)
+  li $t0, 0
+  sw $t1, -24($fp)
+  bgt $t1, $t0, label4
   j label5
 label4:
-  li $t4, 4
-  mul $t5, $t3, $t4
-  addi $t4, $fp, -20
-  add $t6, $t5, $t4
-  lw $t4, 0($t6)
+  lw $t0, -24($fp)
+  li $t1, 4
+  mul $t2, $t0, $t1
+  addi $t1, $fp, -20
+  add $t3, $t2, $t1
+  lw $t1, 0($t3)
   addi $sp, $sp, -4
-  sw $t4, 0($sp)
-  li $t4, 1
-  sub $t5, $t3, $t4
-  li $t4, 4
-  mul $t6, $t5, $t4
-  addi $t4, $fp, -20
-  add $t5, $t6, $t4
-  lw $t4, 0($t5)
+  sw $t1, 0($sp)
+  li $t1, 1
+  sub $t2, $t0, $t1
+  li $t1, 4
+  mul $t3, $t2, $t1
+  addi $t1, $fp, -20
+  add $t2, $t3, $t1
+  lw $t1, 0($t2)
   addi $sp, $sp, -4
-  sw $t4, 0($sp)
+  sw $t1, 0($sp)
   addi $sp, $sp, -4
   sw $fp, 0($sp)
   addi $sp, $sp, -4
@@ -170,12 +182,16 @@ label4:
   lw $fp, 0($sp)
   addi $sp, $sp, 4
   addi $sp, $sp, 8
-  move $t4, $v0
+  move $t1, $v0
+  sw $t0, -24($fp)
 label5:
-  addi $t3, $t3, 1
+  lw $t0, -24($fp)
+  addi $t0, $t0, 1
+  sw $t0, -24($fp)
   j label1
 label3:
   li $v0, 0
+  addi $sp, $sp, 24
   jr $ra
   
 read:

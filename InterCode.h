@@ -104,6 +104,8 @@ char* GetLabelName(Operand op);
 
 OperandType GetOperandType(Operand op);
 
+void MoveDeclareForward();
+
 Operand NewOperandConstantInt(int val);
 
 Operand NewOperandConstantFloat(float val);

@@ -132,6 +132,12 @@ output:
   addi $sp, $sp, 4
   lw $s0, 0($sp)
   addi $sp, $sp, 4
+  sw $t0, 8($fp)
+  sw $t1, 12($fp)
+  sw $t2, 16($fp)
+  sw $t3, 20($fp)
+  sw $t4, 24($fp)
+  sw $t5, 28($fp)
   jr $ra
   
 output2:
@@ -153,8 +159,8 @@ output2:
   sw $s7, 0($sp)
   addi $sp, $sp, -4
   sw $a0, 0($sp)
-  lw $t6, 8($fp)
-  move $a0, $t6
+  lw $t0, 8($fp)
+  move $a0, $t0
   addi $sp, $sp, -4
   sw $fp, 0($sp)
   addi $sp, $sp, -4
@@ -169,8 +175,8 @@ output2:
   addi $sp, $sp, 4
   addi $sp, $sp, -4
   sw $a0, 0($sp)
-  lw $t7, 12($fp)
-  move $a0, $t7
+  lw $t1, 12($fp)
+  move $a0, $t1
   addi $sp, $sp, -4
   sw $fp, 0($sp)
   addi $sp, $sp, -4
@@ -183,8 +189,8 @@ output2:
   addi $sp, $sp, 4
   lw $a0, 0($sp)
   addi $sp, $sp, 4
-  add $s0, $t6, $t7
-  move $v0, $s0
+  add $t2, $t0, $t1
+  move $v0, $t2
   lw $s7, 0($sp)
   addi $sp, $sp, 4
   lw $s6, 0($sp)
@@ -201,43 +207,45 @@ output2:
   addi $sp, $sp, 4
   lw $s0, 0($sp)
   addi $sp, $sp, 4
+  sw $t0, 8($fp)
+  sw $t1, 12($fp)
   jr $ra
   
 main:
   move $fp, $sp
-  li $s1, 6
+  li $t0, 6
   addi $sp, $sp, -4
-  sw $s1, 0($sp)
-  li $s1, 5
+  sw $t0, 0($sp)
+  li $t0, 5
   addi $sp, $sp, -4
-  sw $s1, 0($sp)
-  li $s1, 4
+  sw $t0, 0($sp)
+  li $t0, 4
   addi $sp, $sp, -4
-  sw $s1, 0($sp)
-  li $s1, 3
+  sw $t0, 0($sp)
+  li $t0, 3
   addi $sp, $sp, -4
-  sw $s1, 0($sp)
-  li $s1, 2
+  sw $t0, 0($sp)
+  li $t0, 2
   addi $sp, $sp, -4
-  sw $s1, 0($sp)
-  li $s1, 6
+  sw $t0, 0($sp)
+  li $t0, 6
   addi $sp, $sp, -4
-  sw $s1, 0($sp)
-  li $s1, 5
+  sw $t0, 0($sp)
+  li $t0, 5
   addi $sp, $sp, -4
-  sw $s1, 0($sp)
-  li $s1, 4
+  sw $t0, 0($sp)
+  li $t0, 4
   addi $sp, $sp, -4
-  sw $s1, 0($sp)
-  li $s1, 3
+  sw $t0, 0($sp)
+  li $t0, 3
   addi $sp, $sp, -4
-  sw $s1, 0($sp)
-  li $s1, 2
+  sw $t0, 0($sp)
+  li $t0, 2
   addi $sp, $sp, -4
-  sw $s1, 0($sp)
-  li $s1, 1
+  sw $t0, 0($sp)
+  li $t0, 1
   addi $sp, $sp, -4
-  sw $s1, 0($sp)
+  sw $t0, 0($sp)
   addi $sp, $sp, -4
   sw $fp, 0($sp)
   addi $sp, $sp, -4
@@ -289,9 +297,9 @@ main:
   lw $fp, 0($sp)
   addi $sp, $sp, 4
   addi $sp, $sp, 24
-  move $s1, $v0
+  move $t0, $v0
   addi $sp, $sp, -4
-  sw $s1, 0($sp)
+  sw $t0, 0($sp)
   addi $sp, $sp, -4
   sw $fp, 0($sp)
   addi $sp, $sp, -4
@@ -343,16 +351,16 @@ main:
   lw $fp, 0($sp)
   addi $sp, $sp, 4
   addi $sp, $sp, 24
-  move $s1, $v0
-  li $s2, 3
+  move $t0, $v0
+  li $t1, 3
   addi $sp, $sp, -4
-  sw $s2, 0($sp)
-  li $s2, 2
+  sw $t1, 0($sp)
+  li $t1, 2
   addi $sp, $sp, -4
-  sw $s2, 0($sp)
-  li $s2, 1
+  sw $t1, 0($sp)
+  li $t1, 1
   addi $sp, $sp, -4
-  sw $s2, 0($sp)
+  sw $t1, 0($sp)
   addi $sp, $sp, -4
   sw $fp, 0($sp)
   addi $sp, $sp, -4
@@ -404,9 +412,9 @@ main:
   lw $fp, 0($sp)
   addi $sp, $sp, 4
   addi $sp, $sp, 8
-  move $s2, $v0
+  move $t1, $v0
   addi $sp, $sp, -4
-  sw $s2, 0($sp)
+  sw $t1, 0($sp)
   addi $sp, $sp, -4
   sw $fp, 0($sp)
   addi $sp, $sp, -4
@@ -458,7 +466,7 @@ main:
   lw $fp, 0($sp)
   addi $sp, $sp, 4
   addi $sp, $sp, 8
-  move $s2, $v0
+  move $t1, $v0
   li $v0, 0
   jr $ra
   

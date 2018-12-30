@@ -105,7 +105,7 @@ void OutputFinalCode(FinalCode code) {
 }
 
 void AddFinalCodeToFinalCodes(FinalCode code) {
-    OutputFinalCode(code);
+    // OutputFinalCode(code);
     FinalCodes cur_code = (FinalCodes)malloc(sizeof(FinalCodes_));
     cur_code->code = code;
     cur_code->next = NULL;
@@ -254,7 +254,7 @@ FinalCodeIterator NewFinalCodeIterator() {
 
 void OutputFinalCodes() {
     fclose(stream);
-    stream = fopen(output_files[1], "w");
+    stream = fopen(output_files[0], "w");
     if (code_read || code_write) {
         fprintf(stream, ".data\n");
         if (code_read) {
