@@ -1,11 +1,11 @@
-#include "semantic.h"
+#include "../header/semantic.h"
 
-#include "FinalCode.h"
-#include "generate.h"
-#include "InterCode.h"
-#include "optimize.h"
-#include "SymbolTable.h"
-#include "translate.h"
+#include "../header/FinalCode.h"
+#include "../header/generate.h"
+#include "../header/InterCode.h"
+#include "../header/optimize.h"
+#include "../header/SymbolTable.h"
+#include "../header/translate.h"
 
 #include <assert.h>
 #include <stdio.h>

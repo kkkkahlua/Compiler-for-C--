@@ -1,4 +1,4 @@
-#include "optimize.h"
+#include "../header/optimize.h"
 
 #include <stdio.h>
 #include <stdlib.h>

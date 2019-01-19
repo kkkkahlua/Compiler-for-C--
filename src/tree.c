@@ -1,4 +1,4 @@
-#include "tree.h"
+#include "../header/tree.h"
 
 #include <stdio.h>
 #include <stdlib.h>

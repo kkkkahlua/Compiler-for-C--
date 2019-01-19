@@ -1,4 +1,4 @@
-#include "InterCode.h"
+#include "../header/InterCode.h"
 
 #include <assert.h>
 #include <stdio.h>

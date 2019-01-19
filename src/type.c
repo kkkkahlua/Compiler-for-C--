@@ -1,7 +1,7 @@
-#include "type.h"
+#include "../header/type.h"
 
-#include "semantic.h"
-#include "SymbolTable.h"
+#include "../header/semantic.h"
+#include "../header/SymbolTable.h"
 
 #include <assert.h>
 #include <stdio.h>

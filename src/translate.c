@@ -1,8 +1,8 @@
-#include "translate.h"
+#include "../header/translate.h"
 
-#include "tree.h"
-#include "type.h"
-#include "SymbolTable.h"
+#include "../header/tree.h"
+#include "../header/type.h"
+#include "../header/SymbolTable.h"
 
 #include <assert.h>
 #include <stdlib.h>

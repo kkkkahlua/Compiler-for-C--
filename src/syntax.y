@@ -3,7 +3,7 @@
 #define YYERROR_VERBOSE 1
 
 #include "lex.yy.c"
-#include "semantic.h"
+#include "../header/semantic.h"
 
 #include <stdio.h>
 

@@ -1,5 +1,5 @@
 %{
-#include "tree.h"
+#include "../header/tree.h"
 #define YYSTYPE TreeNode*
 
 #include "syntax.tab.h"

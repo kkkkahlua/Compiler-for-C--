@@ -2,15 +2,27 @@
 
 ## Introduction
 
-compiler for language C-- (simplified version of C language)
+Experiment of Compiler Principle, Nanjing University.
 
-## Test command
+Compiler for language C-- (simplified version of C language).
 
-  cd Code
+## Run command
   
-  make
-  
-  ./parser path/to/test path/to/output
+'''shell
+make
+'''
+
+### Single Test  
+
+'''shell
+./parser path/to/test path/to/output
+'''
+
+### Multiple Test
+
+'''shell
+./test.sh
+'''
 
 ## Stages
 

@@ -3,6 +3,17 @@
     "C_Cpp.errorSquiggles": "Enabled",
     "files.associations": {
         "finalcode.h": "c",
-        "generate.h": "c"
+        "generate.h": "c",
+        "reg.h": "c",
+        "translate.h": "c",
+        "optimize.h": "c",
+        "semantic.h": "c",
+        "symboltable.h": "c",
+        "intercode.h": "c",
+        "string.h": "c",
+        "tree.h": "c",
+        "type.h": "c",
+        "assert.h": "c",
+        "stdlib.h": "c"
     }
 }

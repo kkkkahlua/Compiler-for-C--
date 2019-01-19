@@ -1,7 +1,7 @@
-#include "reg.h"
+#include "../header/reg.h"
 
-#include "FinalCode.h"
-#include "generate.h"
+#include "../header/FinalCode.h"
+#include "../header/generate.h"
 
 #include <assert.h>
 #include <stdio.h>

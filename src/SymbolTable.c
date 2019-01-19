@@ -1,7 +1,7 @@
-#include "SymbolTable.h"
+#include "../header/SymbolTable.h"
 
-#include "InterCode.h"
-#include "semantic.h"
+#include "../header/InterCode.h"
+#include "../header/semantic.h"
 
 #include <string.h>
 #include <stdlib.h>

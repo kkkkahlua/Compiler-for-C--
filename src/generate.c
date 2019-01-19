@@ -1,8 +1,8 @@
-#include "generate.h"
+#include "../header/generate.h"
 
-#include "FinalCode.h"
-#include "reg.h"
-#include "translate.h"
+#include "../header/FinalCode.h"
+#include "../header/reg.h"
+#include "../header/translate.h"
 
 #include <assert.h>
 #include <stdio.h>

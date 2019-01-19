@@ -1,6 +1,6 @@
-#include "FinalCode.h"
+#include "../header/FinalCode.h"
 
-#include "reg.h"
+#include "../header/reg.h"
 
 #include <stdio.h>
 #include <stdlib.h>
