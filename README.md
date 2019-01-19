@@ -8,21 +8,21 @@ Compiler for language C-- (simplified version of C language).
 
 ## Run command
   
-'''shell
+```shell
 make
-'''
+```
 
 ### Single Test  
 
-'''shell
+```shell
 ./parser path/to/test path/to/output
-'''
+```
 
 ### Multiple Test
 
-'''shell
+```shell
 ./test.sh
-'''
+```
 
 ## Stages
 
